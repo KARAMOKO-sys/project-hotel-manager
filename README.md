@@ -1,4 +1,4 @@
 ========================================    # DOCUMENTATION     =====================================
 
 
-![Logo](src/assets/images/img1.png)
+![Logo](img-front/home.html)
