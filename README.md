@@ -1,5 +1,8 @@
-==================================   # DOCUMENTATION     =====================================
+==================================   # DOCUMENTATION     ================================
 
+1-Architecture hexagonale;
+2-Front et Back fait avec Next JS;
+3-Mongo DB
 
 ![Logo](img-front/img-1.png)
 ![Logo](img-front/img-2.png)
