@@ -1,7 +1,7 @@
 // src/contexts/SpinnerContext.tsx
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, ReactNode } from "react";
 
 interface SpinnerContextType {
   loading: boolean;

@@ -1,14 +1,21 @@
-// src/app/page.tsx
 "use client";
 
-import { useSpinner } from "./shared/contexts/SpinnerContext";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Footer from "./shared/components/layouts/Footer";
+import Header from "./shared/components/layouts/Header";
+
+import Navbar from "./shared/components/Navbar";
+import Search from "./shared/components/Search";
+import HomePage from "./home/page";
 
 export default function Home() {
-  const { showSpinner, hideSpinner } = useSpinner();
-
   return (
-    <main className="container mt-5">
-      <h1>Ma Page</h1>
-    </main>
+    <div className="bg-white">
+      <Navbar />
+      <Header />
+      <Search />
+      <HomePage />
+      <Footer />
+    </div>
   );
 }
