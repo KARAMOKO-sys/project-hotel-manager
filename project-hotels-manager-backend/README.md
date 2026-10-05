@@ -1,98 +1,158 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# PleasantStay — Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Backend du système de gestion hôtelière **PleasantStay**, construit avec
+[NestJS](https://nestjs.com) et [Mongoose](https://mongoosejs.com) (MongoDB).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Stack technique
 
-## Description
+| Domaine            | Technologie                              |
+| ------------------ | ---------------------------------------- |
+| Framework          | NestJS 11 (TypeScript)                   |
+| Base de données    | MongoDB via Mongoose 9                   |
+| Validation         | `class-validator` / `class-transformer`  |
+| Documentation API  | Swagger (`@nestjs/swagger`)              |
+| Tests              | Jest + `@nestjs/testing`                 |
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Architecture
 
-## Project setup
+Le code est organisé en **modules** (un dossier par domaine), chacun contenant :
 
-```bash
-$ npm install
+```
+src/<domaine>/
+├── <domaine>.module.ts      # câblage NestJS + Mongoose
+├── schemas/<domaine>.entity.ts
+├── dto/create-<domaine>.dto.ts
+├── dto/update-<domaine>.dto.ts
+├── controllers/<domaine>.controller.ts
+└── services/<domaine>.service.ts
 ```
 
-## Compile and run the project
+### Couche commune (`src/common/`)
 
-```bash
-# development
-$ npm run start
+Pour éviter la duplication, une fondation réutilisable a été mise en place :
 
-# watch mode
-$ npm run start:dev
+- **`BaseRepository`** (`common/repositories/base.repository.ts`) : opérations
+  Mongoose de bas niveau (CRUD, suppression logique, restauration, comptage).
+- **`BaseCrudService`** (`common/services/base-crud.service.ts`) : implémentation
+  standard de `create`, `findAll` (paginé), `findOne`, `update`, `remove` et
+  `restore`. Les services concrets étendent cette classe et injectent leur modèle.
+- **`PaginationQueryDto`** (`common/dto/pagination-query.dto.ts`) : pagination
+  (`page`, `limit`), tri (`sort`) et recherche (`search`).
+- **`IdParamDto`** (`common/dto/id-param.dto.ts`) : validation des identifiants
+  MongoDB dans les routes `:id`.
 
-# production mode
-$ npm run start:prod
+La **suppression logique** repose sur les champs `is_deleted` / `deleted_at`
+définis dans `AuditableEntity` (`src/base-entities/embeddables/auditable.entity.ts`).
+
+## Modules implémentés (avec services, contrôleurs et tests)
+
+| Module         | Route de base  | Fonctionnalités clés                                     |
+| -------------- | -------------- | -------------------------------------------------------- |
+| `organization` | `/api/organizations` | CRUD, paramètres, membres (`addMember`, `removeMember`, `getMembers`), statistiques |
+| `property`     | `/api/properties`    | CRUD, recherche par organisation/propriétaire, paramètres, chambres & types de chambres |
+| `room-type`    | `/api/room-types`    | CRUD, prix de base, chambres rattachées                  |
+| `room`         | `/api/rooms`         | CRUD, statut, blocage, chambres disponibles/maintenance  |
+| `guest`        | `/api/guests`        | CRUD, recherche, profil, activation, points de fidélité  |
+| `role`         | `/api/roles`         | CRUD, permissions, recherche, statistiques (déjà existant, tests complétés) |
+| `reservation`  | `/api/reservations`  | CRUD, code de confirmation, cycle de vie (confirmer, annuler, check-in/out, no-show), arrivées/départs |
+| `reservation-room` | `/api/reservation-rooms` | CRUD, chambres rattachées à une réservation |
+| `invoice`      | `/api/invoices`      | CRUD, numéro auto, lignes de facture (`addItem`/`removeItem`), cycle de vie (payée, en retard, annulée), impayés |
+| `invoice-item` | `/api/invoice-items` | CRUD, lignes de facture avec calcul du total |
+| `payment`      | `/api/payments`      | CRUD, numéro auto, monnaie rendue, remboursement, transaction, rapport de caisse journalier |
+| `housekeeping` | `/api/housekeeping`  | CRUD, assignation, démarrage, complétion, report, planning par employé/chambre, tâches en attente |
+| `maintenance-request` | `/api/maintenance-requests` | CRUD, assignation, démarrage, complétion, annulation, demandes urgentes |
+| `guest-request` | `/api/guest-requests` | CRUD, assignation, complétion, annulation, demandes par client/chambre, en attente |
+| `guest-preference` | `/api/guest-preferences` | CRUD, préférences par client, mise à jour/upsert, suppression, recommandations |
+| `guest-segment` | `/api/guest-segments` | CRUD, segments par propriété, activation/désactivation, statistiques |
+| `campaign`     | `/api/campaigns`     | CRUD, programmation, annulation, envoi, statistiques |
+| `campaign-analytic` | `/api/campaign-analytics` | Suivi des ouvertures/clics/conversions, statistiques temps réel |
+
+### Exemple d'endpoints
+
+```
+POST   /api/organizations
+GET    /api/organizations?page=1&limit=10&sort=-created_at
+GET    /api/organizations/:id
+PATCH  /api/organizations/:id
+DELETE /api/organizations/:id
+GET    /api/organizations/:id/members
+POST   /api/organizations/:id/members
+DELETE /api/organizations/:id/members/:userId
+
+GET    /api/properties/organization/:organizationId
+GET    /api/properties/:id/rooms
+GET    /api/properties/:id/room-types
+
+PATCH  /api/rooms/:id/status
+PATCH  /api/rooms/:id/block
+GET    /api/rooms/property/:propertyId/available
+
+POST   /api/guests/:id/loyalty-points
+GET    /api/guests/:id/loyalty-history
 ```
 
-## Run tests
+La documentation Swagger est disponible sur `http://localhost:3000/api/docs`.
+
+## Variables d'environnement
+
+Copiez `.env.example` vers `.env` puis renseignez :
+
+| Variable          | Description                        | Exemple                        |
+| ----------------- | ---------------------------------- | ------------------------------ |
+| `PORT`            | Port HTTP                          | `3000`                         |
+| `MONGODB_URI`     | URI de connexion MongoDB           | `mongodb://localhost:27017`    |
+| `MONGODB_DB_NAME` | Nom de la base                     | `bd_pleasantstay`              |
+| `CORS_ORIGIN`     | Origines CORS (séparées par `,`)   | `http://localhost:4200`        |
+
+## Commandes
 
 ```bash
-# unit tests
-$ npm run test
+# Installation
+npm install
 
-# e2e tests
-$ npm run test:e2e
+# Développement (watch)
+npm run start:dev
 
-# test coverage
-$ npm run test:cov
+# Compilation
+npm run build
+
+# Tests unitaires
+npm test
+
+# Tests avec couverture
+npm run test:cov
+
+# Tests end-to-end
+npm run test:e2e
+
+# Lint (auto-fix)
+npm run lint
 ```
 
-## Deployment
+## Tests
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+La suite couvre **94 suites / 182 tests**, dont :
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- `common/services/base-crud.service.spec.ts` — comportement du CRUD générique ;
+- un spec de service et de contrôleur pour chaque module implémenté ;
+- le spec du service `role` (corrigé pour fournir le modèle Mongoose mocké).
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
+Les tests de service mockent le modèle Mongoose (`getModelToken(...)`) pour rester
+isolés de la base de données.
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Statut / Prochaines étapes
 
-## Resources
+La fondation et les modules métier cœur (établissements, chambres, clients, rôles,
+réservations, facturation, paiements, opérations et CRM) sont implémentés et
+testés. Les modules restants (tarification, IA, intégrations, reporting, POS,
+taxe, waitlist…) sont encore des squelettes générés par la CLI et doivent être
+implémentés selon le même patron. Voir `README_SOLO.md` pour la liste complète
+des services attendus.
 
-Check out a few resources that may come in handy when working with NestJS:
+Pour implémenter un nouveau module, il suffit de :
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+1. compléter l'entité (`schemas/*.entity.ts`) ;
+2. remplir les DTOs (`dto/`) avec la validation ;
+3. étendre `BaseCrudService` dans le service et ajouter les méthodes métier ;
+4. câbler `MongooseModule.forFeature` dans le module ;
+5. écrire les specs service + contrôleur.

@@ -1,21 +1,18 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  // Ignorer les erreurs ESLint pendant le build (optionnel)
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  // Bloque le build de production en cas d'erreur ESLint.
   eslint: {
-    ignoreDuringBuilds: false, // Met à true pour ignorer, false pour bloquer
+    ignoreDuringBuilds: false,
   },
-  // Ignorer les erreurs TypeScript pendant le build
+  // Bloque le build de production en cas d'erreur TypeScript.
   typescript: {
-    // !! ATTENTION !!
-    // Cela permet aux builds de production de se terminer même avec des erreurs TypeScript
-    // À utiliser avec précaution
-    ignoreBuildErrors: false, // Met à false pour bloquer le build en cas d'erreur
+    ignoreBuildErrors: false,
   },
-  // Options de compilation
   compiler: {
-    // Supprime console.log en production
+    // Supprime les console.log en production.
     removeConsole: process.env.NODE_ENV === "production",
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;

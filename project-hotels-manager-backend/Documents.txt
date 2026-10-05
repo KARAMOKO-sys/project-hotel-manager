@@ -1,0 +1,1119 @@
+ Liens de recherche:
+ https://chat.deepseek.com/a/chat/s/15450296-6f81-4a98-a9f5-2fadfde47b85
+
+ # Types d'utilisateurs sur la plateforme PleasantStay
+
+En vous basant sur votre cahier des charges et les personas définis, voici une classification complète des types d'utilisateurs pour votre plateforme.
+
+## 1. Classification par rôles système
+
+### 1.1. Utilisateurs internes (Staff)
+
+#### **Super Administrateur (Super Admin)**
+- **Accès**: Toutes les organisations, toutes les propriétés
+- **Permissions**:
+  - Gestion complète du système
+  - Création/modification/suppression d'organisations
+  - Gestion des abonnements et facturation
+  - Configuration système globale
+  - Audit logs complets
+  - Support technique niveau 3
+- **Interface**: Dashboard d'administration globale
+
+#### **Propriétaire (Owner)**
+- **Accès**: Une ou plusieurs propriétés (chaîne hôtelière)
+- **Permissions**:
+  - Gestion financière complète
+  - Configuration des tarifs et promotions
+  - Rapports et analytics avancés
+  - Gestion des utilisateurs de ses propriétés
+  - Signature des contrats et factures
+- **Interface**: Dashboard propriétaire multi-propriétés
+
+#### **Gestionnaire Général (General Manager)**
+- **Accès**: Une propriété spécifique
+- **Permissions**:
+  - Supervision opérationnelle quotidienne
+  - Gestion du personnel
+  - Validation des réservations groupe
+  - Approbation des remises exceptionnelles
+  - Rapports de performance
+- **Interface**: Dashboard management complet
+
+#### **Réceptionniste (Receptionist)**
+- **Accès**: Une propriété, module réception
+- **Permissions**:
+  - Création/modification/annulation réservations
+  - Check-in/check-out
+  - Gestion des arrivées/départs
+  - Attribution des chambres
+  - Facturation basique
+  - Communication clients
+- **Interface**: Interface réception optimisée (rapide, ergonomique)
+
+#### **Comptable (Accountant)**
+- **Accès**: Module financier de la propriété
+- **Permissions**:
+  - Gestion des factures
+  - Traitement des paiements
+  - Rapprochements bancaires
+  - Déclarations fiscales
+  - Rapports financiers
+- **Interface**: Dashboard comptable
+
+#### **Personnel de Ménage (Housekeeping)**
+- **Accès**: Module ménage (mobile/web)
+- **Permissions**:
+  - Visualisation des tâches assignées
+  - Mise à jour des statuts chambres
+  - Signalement des problèmes
+  - Check-list nettoyage
+  - Photos avant/après
+- **Interface**: Application mobile simplifiée
+
+#### **Personnel de Maintenance (Maintenance Staff)**
+- **Accès**: Module maintenance
+- **Permissions**:
+  - Visualisation des demandes
+  - Intervention sur pannes
+  - Signalement des problèmes
+  - Gestion des équipements
+  - Maintenance préventive
+- **Interface**: Application mobile/web
+
+#### **Agent Commercial (Sales Agent)**
+- **Accès**: Module commercial
+- **Permissions**:
+  - Gestion des groupes et événements
+  - Devis et contrats
+  - Suivi des prospects
+  - Négociation tarifs groupes
+- **Interface**: Dashboard commercial
+
+#### **Responsable Marketing (Marketing Manager)**
+- **Accès**: Module marketing
+- **Permissions**:
+  - Création campagnes email/SMS
+  - Segmentation clients
+  - Gestion promotions
+  - Analyse des campagnes
+  - Réseaux sociaux
+- **Interface**: Dashboard marketing
+
+---
+
+### 1.2. Utilisateurs externes (Clients)
+
+#### **Client Voyageur (Guest)**
+- **Accès**: Portail client public
+- **Permissions**:
+  - Consultation disponibilités
+  - Réservation en ligne
+  - Modification/annulation réservation
+  - Demandes spéciales
+  - Avis et évaluations
+  - Historique des séjours
+  - Programme fidélité
+- **Interface**: Site web + Application mobile client
+
+#### **Client Professionnel (Corporate Client)**
+- **Accès**: Portail entreprise
+- **Permissions**:
+  - Réservations pour employés
+  - Suivi des dépenses
+  - Facturation centralisée
+  - Rapports d'activité
+  - Tarifs négociés
+- **Interface**: Dashboard corporate
+
+#### **Agent de Voyage (Travel Agent)**
+- **Accès**: Portail agent
+- **Permissions**:
+  - Réservations commissionnées
+  - Tarifs agent
+  - Suivi commissions
+  - Documentation
+- **Interface**: Portail agent dédié
+
+---
+
+### 1.3. Utilisateurs partenaires
+
+#### **Partenaire OTA (OTA Partner)**
+- **Accès**: API uniquement
+- **Permissions**:
+  - Synchronisation disponibilités
+  - Envoi/réception réservations
+  - Mise à jour tarifs
+- **Interface**: API REST
+
+#### **Partenaire Service (Service Partner)**
+- **Accès**: Module partenaire
+- **Permissions**:
+  - Gestion des services (SPA, restaurant, etc.)
+  - Consultation réservations services
+  - Facturation des services
+- **Interface**: Portail partenaire
+
+#### **Intégrateur/Dev (Developer)**
+- **Accès**: API publique
+- **Permissions**:
+  - Accès API (limité par clé)
+  - Développement extensions
+  - Webhooks
+- **Interface**: Documentation API + Console développeur
+
+---
+
+## 2. Tableau des permissions par rôle
+
+| Fonctionnalité | Super Admin | Owner | Manager | Receptionist | Housekeeping | Accountant | Guest |
+|----------------|-------------|-------|---------|--------------|--------------|------------|-------|
+| **Gestion utilisateurs** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Configuration système** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Réservations** | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ (self) |
+| **Check-in/out** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| **Facturation** | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ |
+| **Paiements** | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ |
+| **État chambres** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Tâches ménage** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Reporting** | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Marketing** | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Maintenance** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ |
+| **Support client** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+
+---
+
+## 3. Structure de la base de données pour les rôles
+
+### Table `user_roles`
+```sql
+CREATE TABLE user_roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(100) NOT NULL,
+    code VARCHAR(50) NOT NULL UNIQUE,
+    description TEXT,
+    role_level INTEGER DEFAULT 0, -- 0=system, 1=admin, 2=management, 3=staff, 4=external
+    is_system BOOLEAN DEFAULT false,
+    permissions JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insertion des rôles système
+INSERT INTO user_roles (name, code, description, role_level, is_system) VALUES
+    ('Super Administrateur', 'super_admin', 'Accès complet au système', 0, true),
+    ('Propriétaire', 'owner', 'Propriétaire d\'établissement', 1, true),
+    ('Gestionnaire', 'manager', 'Gestionnaire général', 1, true),
+    ('Réceptionniste', 'receptionist', 'Gestion des réservations et accueil', 2, true),
+    ('Comptable', 'accountant', 'Gestion financière', 2, true),
+    ('Personnel Ménage', 'housekeeping', 'Gestion des chambres', 3, true),
+    ('Maintenance', 'maintenance', 'Gestion technique', 3, true),
+    ('Commercial', 'sales', 'Gestion des groupes et événements', 2, true),
+    ('Marketing', 'marketing', 'Gestion des campagnes', 2, true),
+    ('Client', 'guest', 'Client de l\'établissement', 4, true),
+    ('Agent Voyage', 'travel_agent', 'Agent de voyage partenaire', 4, false),
+    ('Partenaire', 'partner', 'Partenaire service', 4, false),
+    ('Développeur', 'developer', 'Accès API', 4, false);
+```
+
+### Table `permissions`
+```sql
+CREATE TABLE permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    resource VARCHAR(100) NOT NULL, -- reservations, rooms, billing, etc.
+    action VARCHAR(50) NOT NULL, -- create, read, update, delete, manage
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Insertion des permissions de base
+INSERT INTO permissions (resource, action, description) VALUES
+    ('reservations', 'create', 'Créer des réservations'),
+    ('reservations', 'read', 'Consulter les réservations'),
+    ('reservations', 'update', 'Modifier les réservations'),
+    ('reservations', 'delete', 'Annuler/supprimer les réservations'),
+    ('reservations', 'manage', 'Gestion complète des réservations'),
+    ('rooms', 'update_status', 'Modifier statut des chambres'),
+    ('billing', 'create_invoice', 'Créer des factures'),
+    ('billing', 'process_payment', 'Traiter les paiements'),
+    ('users', 'manage', 'Gérer les utilisateurs'),
+    ('reports', 'view', 'Consulter les rapports'),
+    ('reports', 'export', 'Exporter les rapports'),
+    ('marketing', 'create_campaign', 'Créer des campagnes'),
+    ('settings', 'configure', 'Configurer le système');
+```
+
+### Table `role_permissions`
+```sql
+CREATE TABLE role_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    role_id UUID NOT NULL REFERENCES user_roles(id),
+    permission_id UUID NOT NULL REFERENCES permissions(id),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(role_id, permission_id)
+);
+```
+
+### Table `user_assignments` (mise à jour)
+```sql
+CREATE TABLE user_assignments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    role_id UUID NOT NULL REFERENCES user_roles(id),
+    property_id UUID REFERENCES properties(id),
+    organization_id UUID REFERENCES organizations(id),
+    is_active BOOLEAN DEFAULT true,
+    assigned_by UUID REFERENCES users(id),
+    expires_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    CONSTRAINT chk_assign_target CHECK (
+        (property_id IS NOT NULL AND organization_id IS NULL) OR
+        (property_id IS NULL AND organization_id IS NOT NULL) OR
+        (property_id IS NULL AND organization_id IS NULL)
+    )
+);
+```
+
+---
+
+## 4. Interface par type d'utilisateur
+
+### 4.1. Super Admin
+- Dashboard global avec toutes les organisations
+- Métriques système (utilisateurs actifs, propriétés, revenus SaaS)
+- Gestion des abonnements
+- Logs système et audits
+- Configuration globale
+
+### 4.2. Owner/Manager
+- Dashboard multi-propriétés
+- KPIs consolidés (occupation, RevPAR, ADR)
+- Gestion du personnel
+- Rapports financiers
+- Configuration des propriétés
+
+### 4.3. Receptionist
+- Interface simplifiée et rapide
+- Calendrier des réservations
+- Check-in/out express
+- Recherche rapide clients
+- Gestion des appels
+
+### 4.4. Housekeeping
+- Application mobile
+- Liste des chambres à nettoyer
+- Mise à jour statuts en temps réel
+- Signalement des problèmes
+- Photos avant/après
+
+### 4.5. Guest
+- Portail client self-service
+- Réservation en ligne
+- Modification réservation
+- Demandes spéciales
+- Historique des séjours
+- Programme fidélité
+
+---
+
+## 5. Évolution des rôles et permissions
+
+### Matrice d'évolution
+| Rôle initial | Évolution possible | Conditions |
+|--------------|-------------------|------------|
+| Housekeeping | Maintenance, Receptionist | Formation, expérience |
+| Receptionist | Manager | Performance, ancienneté |
+| Manager | Owner (multi-propriétés) | Performance, investissement |
+| Guest | Corporate Client | Volume réservations |
+
+### Système de validation
+```sql
+CREATE TABLE role_change_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    current_role_id UUID NOT NULL REFERENCES user_roles(id),
+    requested_role_id UUID NOT NULL REFERENCES user_roles(id),
+    justification TEXT,
+    status VARCHAR(50) DEFAULT 'pending',
+    reviewed_by UUID REFERENCES users(id),
+    reviewed_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+---
+
+## 6. Considérations de sécurité
+
+### 6.1. Authentification
+- MFA obligatoire pour Super Admin, Owner, Manager
+- Session timeout: 30 minutes pour staff, 24h pour guest
+- IP whitelisting pour Super Admin (optionnel)
+
+### 6.2. Audit
+```sql
+CREATE TABLE user_activity_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    action VARCHAR(100) NOT NULL,
+    resource_type VARCHAR(50),
+    resource_id UUID,
+    ip_address INET,
+    user_agent TEXT,
+    details JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+### 6.3. Isolation des données
+- **Multi-tenancy**: Isolation stricte par `property_id` et `organization_id`
+- **Row Level Security**: Chaque requête filtre par les propriétés accessibles
+
+---
+
+Cette structure vous permet de gérer tous les types d'utilisateurs de votre plateforme avec une flexibilité maximale pour l'évolution future des rôles et permissions.
+
+
+
+# Tables et attributs pour chaque type d'utilisateur
+
+## 1. Table principale des utilisateurs
+
+### `users` - Table de base commune
+
+```sql
+CREATE TABLE users (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    phone VARCHAR(50),
+    password_hash VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(100),
+    avatar_url TEXT,
+    language VARCHAR(10) DEFAULT 'fr',
+    timezone VARCHAR(100) DEFAULT 'Africa/Abidjan',
+
+    -- Statut du compte
+    is_active BOOLEAN DEFAULT true,
+    is_email_verified BOOLEAN DEFAULT false,
+    is_phone_verified BOOLEAN DEFAULT false,
+
+    -- Sécurité
+    two_factor_secret VARCHAR(255),
+    two_factor_enabled BOOLEAN DEFAULT false,
+    last_login_at TIMESTAMPTZ,
+    last_login_ip INET,
+    password_changed_at TIMESTAMPTZ,
+    failed_login_attempts INTEGER DEFAULT 0,
+    locked_until TIMESTAMPTZ,
+
+    -- Métadonnées
+    metadata JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_phone ON users(phone);
+CREATE INDEX idx_users_status ON users(is_active, is_email_verified);
+```
+
+---
+
+## 2. Tables spécifiques par type d'utilisateur
+
+### 2.1. Super Administrateur
+
+```sql
+CREATE TABLE super_admins (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+
+    -- Informations professionnelles
+    employee_id VARCHAR(100),
+    department VARCHAR(100),
+    position VARCHAR(100),
+
+    -- Niveaux d'accès
+    access_level INTEGER DEFAULT 5, -- 1-5, 5 = accès total
+    can_manage_system BOOLEAN DEFAULT true,
+    can_manage_users BOOLEAN DEFAULT true,
+    can_view_all_orgs BOOLEAN DEFAULT true,
+
+    -- Alertes et notifications
+    receive_system_alerts BOOLEAN DEFAULT true,
+    alert_email VARCHAR(255),
+    alert_phone VARCHAR(50),
+
+    -- Approbations
+    approval_limit DECIMAL(12,2) DEFAULT 0, -- 0 = illimité
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_super_admins_user ON super_admins(user_id);
+```
+
+### 2.2. Propriétaire / Gestionnaire
+
+```sql
+CREATE TABLE owners (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+
+    -- Informations professionnelles
+    company_name VARCHAR(255),
+    company_registration VARCHAR(100),
+    tax_id VARCHAR(100),
+
+    -- Informations personnelles
+    birth_date DATE,
+    nationality VARCHAR(100),
+    id_type VARCHAR(50) CHECK (id_type IN ('passport', 'national_id', 'driver_license')),
+    id_number VARCHAR(100),
+    id_document_url TEXT,
+
+    -- Adresse
+    address TEXT,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    country VARCHAR(100),
+    postal_code VARCHAR(20),
+
+    -- Contact
+    emergency_contact_name VARCHAR(255),
+    emergency_contact_phone VARCHAR(50),
+
+    -- Contrat
+    contract_signed_at TIMESTAMPTZ,
+    contract_document_url TEXT,
+
+    -- Limites
+    max_properties INTEGER DEFAULT 1,
+    subscription_plan VARCHAR(50) DEFAULT 'basic',
+    subscription_expires_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_owners_user ON owners(user_id);
+CREATE INDEX idx_owners_company ON owners(company_name);
+```
+
+### 2.3. Réceptionniste
+
+```sql
+CREATE TABLE receptionists (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    property_id UUID NOT NULL REFERENCES properties(id),
+
+    -- Informations professionnelles
+    employee_code VARCHAR(50) UNIQUE,
+    hire_date DATE,
+    position VARCHAR(100),
+
+    -- Permissions spécifiques
+    can_modify_reservations BOOLEAN DEFAULT true,
+    can_override_prices BOOLEAN DEFAULT false,
+    max_discount_percent INTEGER DEFAULT 10,
+    can_check_in_out BOOLEAN DEFAULT true,
+
+    -- Horaires
+    shift_schedule JSONB,
+
+    -- Performance
+    reservations_processed INTEGER DEFAULT 0,
+    satisfaction_score DECIMAL(3,2),
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_receptionists_user ON receptionists(user_id);
+CREATE INDEX idx_receptionists_property ON receptionists(property_id);
+```
+
+### 2.4. Personnel de Ménage
+
+```sql
+CREATE TABLE housekeeping_staff (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    property_id UUID NOT NULL REFERENCES properties(id),
+
+    -- Informations professionnelles
+    employee_code VARCHAR(50) UNIQUE,
+    hire_date DATE,
+    specialization VARCHAR(100), -- 'rooms', 'public_areas', 'deep_cleaning'
+
+    -- Horaires
+    shift_start TIME,
+    shift_end TIME,
+    working_days JSONB, -- ['monday', 'tuesday', ...]
+
+    -- Performance
+    rooms_cleaned_today INTEGER DEFAULT 0,
+    rooms_cleaned_total INTEGER DEFAULT 0,
+    avg_cleaning_time INTEGER, -- en minutes
+    quality_score DECIMAL(3,2),
+
+    -- Équipement
+    assigned_equipment JSONB,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_housekeeping_user ON housekeeping_staff(user_id);
+CREATE INDEX idx_housekeeping_property ON housekeeping_staff(property_id);
+```
+
+### 2.5. Comptable
+
+```sql
+CREATE TABLE accountants (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    property_id UUID NOT NULL REFERENCES properties(id),
+
+    -- Informations professionnelles
+    employee_code VARCHAR(50) UNIQUE,
+    certification VARCHAR(100),
+
+    -- Permissions
+    can_create_invoices BOOLEAN DEFAULT true,
+    can_process_refunds BOOLEAN DEFAULT false,
+    can_export_reports BOOLEAN DEFAULT true,
+    approval_limit DECIMAL(10,2) DEFAULT 5000,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_accountants_user ON accountants(user_id);
+```
+
+---
+
+## 3. Clients (avec inscription simple et sécurisée)
+
+### 3.1. Table des clients
+
+```sql
+CREATE TABLE guests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE, -- Optionnel pour clients non inscrits
+
+    -- Informations minimales (obligatoires pour réservation)
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(50),
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+
+    -- Informations complémentaires (optionnelles)
+    preferred_language VARCHAR(10) DEFAULT 'fr',
+    nationality VARCHAR(100),
+    birth_date DATE,
+
+    -- Préférences
+    preferences JSONB DEFAULT '{}',
+    tags JSONB DEFAULT '[]',
+
+    -- Programme fidélité
+    loyalty_points INTEGER DEFAULT 0,
+    loyalty_tier VARCHAR(50) DEFAULT 'bronze', -- bronze, silver, gold, platinum
+    total_stays INTEGER DEFAULT 0,
+    total_spent DECIMAL(12,2) DEFAULT 0,
+    last_stay_date DATE,
+
+    -- Consentements (RGPD)
+    marketing_consent BOOLEAN DEFAULT false,
+    newsletter_consent BOOLEAN DEFAULT false,
+    data_processing_consent BOOLEAN DEFAULT false,
+    consent_granted_at TIMESTAMPTZ,
+
+    -- Métadonnées
+    metadata JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_guests_email ON guests(email);
+CREATE INDEX idx_guests_phone ON guests(phone);
+CREATE INDEX idx_guests_name ON guests(last_name, first_name);
+CREATE INDEX idx_guests_loyalty ON guests(loyalty_tier, loyalty_points);
+```
+
+### 3.2. Mode d'inscription client (simple et sécurisé)
+
+#### Étape 1: Inscription minimale
+```typescript
+// DTO pour inscription client
+interface GuestRegistrationDto {
+  email: string;
+  password?: string; // Optionnel - si fourni, crée un compte complet
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  marketing_consent?: boolean;
+}
+
+// Workflow d'inscription
+async function registerGuest(dto: GuestRegistrationDto) {
+  // 1. Vérifier si l'email existe déjà
+  const existingGuest = await guestRepository.findOne({
+    where: { email: dto.email }
+  });
+
+  if (existingGuest) {
+    // Si existe, envoyer un code OTP pour connexion
+    return sendOtpCode(dto.email);
+  }
+
+  // 2. Créer un utilisateur sans mot de passe (guest only)
+  const user = await userRepository.create({
+    email: dto.email,
+    first_name: dto.first_name,
+    last_name: dto.last_name,
+    phone: dto.phone,
+    is_email_verified: false,
+    password_hash: dto.password ? await hashPassword(dto.password) : null,
+  });
+
+  // 3. Créer le profil guest
+  const guest = await guestRepository.create({
+    user_id: user.id,
+    email: dto.email,
+    first_name: dto.first_name,
+    last_name: dto.last_name,
+    phone: dto.phone,
+    marketing_consent: dto.marketing_consent || false,
+    data_processing_consent: true,
+    consent_granted_at: new Date(),
+  });
+
+  // 4. Envoyer email de vérification avec lien magique
+  await sendVerificationEmail(dto.email, generateMagicLink());
+
+  return {
+    message: "Inscription réussie! Vérifiez votre email.",
+    guest_id: guest.id
+  };
+}
+```
+
+#### Étape 2: Connexion sans mot de passe (Magic Link)
+```sql
+CREATE TABLE guest_magic_links (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    guest_id UUID NOT NULL REFERENCES guests(id),
+    email VARCHAR(255) NOT NULL,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_magic_links_token ON guest_magic_links(token);
+CREATE INDEX idx_magic_links_guest ON guest_magic_links(guest_id);
+```
+
+#### API d'inscription client
+```typescript
+// Endpoints d'authentification client
+POST /api/auth/guest/register
+{
+  "email": "client@example.com",
+  "first_name": "Jean",
+  "last_name": "Dupont",
+  "phone": "+22507070707",
+  "marketing_consent": true
+}
+// Réponse: { "message": "Email de vérification envoyé", "requires_verification": true }
+
+POST /api/auth/guest/verify
+{
+  "token": "magic_link_token_123456"
+}
+// Réponse: { "access_token": "jwt_token", "guest": {...} }
+
+POST /api/auth/guest/login
+{
+  "email": "client@example.com"
+}
+// Réponse: { "message": "Magic link envoyé à votre email" }
+```
+
+---
+
+## 4. Partenaires (Annonces immobilières)
+
+### 4.1. Table des partenaires
+
+```sql
+CREATE TABLE partners (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+
+    -- Informations société
+    company_name VARCHAR(255) NOT NULL,
+    company_registration VARCHAR(100),
+    tax_id VARCHAR(100),
+    company_logo_url TEXT,
+    company_website VARCHAR(255),
+
+    -- Type de partenaire
+    partner_type VARCHAR(50) NOT NULL CHECK (partner_type IN (
+        'real_estate_agency',     -- Agence immobilière
+        'property_owner',          -- Propriétaire immobilier
+        'property_manager',        -- Gestionnaire de biens
+        'developer',               -- Promoteur immobilier
+        'investment_fund'          -- Fonds d'investissement
+    )),
+
+    -- Contact principal
+    contact_name VARCHAR(255),
+    contact_phone VARCHAR(50),
+    contact_email VARCHAR(255),
+
+    -- Adresse
+    address TEXT,
+    city VARCHAR(100),
+    state VARCHAR(100),
+    country VARCHAR(100),
+    postal_code VARCHAR(20),
+
+    -- Documents légaux
+    registration_document_url TEXT,
+    tax_document_url TEXT,
+    contract_signed_at TIMESTAMPTZ,
+    contract_document_url TEXT,
+
+    -- Commission
+    commission_rate DECIMAL(5,2) DEFAULT 10.00, -- Pourcentage de commission
+    commission_payment_method VARCHAR(50) DEFAULT 'monthly',
+
+    -- Statut et limites
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'suspended', 'blocked')),
+    max_properties INTEGER DEFAULT 10,
+    max_listings_per_month INTEGER DEFAULT 50,
+
+    -- Comptes bancaires
+    bank_account_name VARCHAR(255),
+    bank_account_number VARCHAR(100),
+    bank_name VARCHAR(255),
+    bank_code VARCHAR(50),
+
+    -- Métadonnées
+    metadata JSONB,
+    verified_at TIMESTAMPTZ,
+    verified_by UUID REFERENCES users(id),
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_partners_user ON partners(user_id);
+CREATE INDEX idx_partners_type ON partners(partner_type);
+CREATE INDEX idx_partners_status ON partners(status);
+```
+
+### 4.2. Propriétés immobilières des partenaires
+
+```sql
+CREATE TABLE partner_properties (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    partner_id UUID NOT NULL REFERENCES partners(id),
+
+    -- Informations du bien
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    property_type VARCHAR(50) NOT NULL CHECK (property_type IN (
+        'apartment', 'house', 'villa', 'studio', 'commercial', 'land'
+    )),
+
+    -- Caractéristiques
+    bedrooms INTEGER,
+    bathrooms INTEGER,
+    surface_area DECIMAL(10,2),
+    land_area DECIMAL(10,2),
+
+    -- Localisation
+    address TEXT NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100),
+    country VARCHAR(100) NOT NULL,
+    postal_code VARCHAR(20),
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+
+    -- Prix et disponibilité
+    price DECIMAL(12,2) NOT NULL,
+    price_type VARCHAR(50) DEFAULT 'night' CHECK (price_type IN ('night', 'week', 'month', 'sale')),
+    currency VARCHAR(3) DEFAULT 'XOF',
+    is_available BOOLEAN DEFAULT true,
+    available_from DATE,
+    available_to DATE,
+
+    -- Médias
+    main_image_url TEXT,
+    images JSONB DEFAULT '[]',
+    virtual_tour_url TEXT,
+    video_url TEXT,
+
+    -- Équipements
+    amenities JSONB DEFAULT '[]',
+    rules JSONB DEFAULT '[]',
+
+    -- Statut
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'active', 'rejected', 'inactive')),
+    rejection_reason TEXT,
+
+    -- Visibilité
+    is_featured BOOLEAN DEFAULT false,
+    featured_until TIMESTAMPTZ,
+
+    -- Métriques
+    views_count INTEGER DEFAULT 0,
+    inquiries_count INTEGER DEFAULT 0,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    published_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_partner_properties_partner ON partner_properties(partner_id);
+CREATE INDEX idx_partner_properties_status ON partner_properties(status);
+CREATE INDEX idx_partner_properties_city ON partner_properties(city);
+CREATE INDEX idx_partner_properties_price ON partner_properties(price);
+```
+
+### 4.3. Demandes d'ajout de biens
+
+```sql
+CREATE TABLE property_listing_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    partner_id UUID NOT NULL REFERENCES partners(id),
+    property_id UUID REFERENCES partner_properties(id),
+
+    -- Type de demande
+    request_type VARCHAR(50) NOT NULL CHECK (request_type IN ('create', 'update', 'delete')),
+
+    -- Données de la demande
+    data JSONB NOT NULL,
+    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected', 'cancelled')),
+
+    -- Validation
+    reviewed_by UUID REFERENCES users(id),
+    reviewed_at TIMESTAMPTZ,
+    rejection_reason TEXT,
+    approval_notes TEXT,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_listing_requests_partner ON property_listing_requests(partner_id);
+CREATE INDEX idx_listing_requests_status ON property_listing_requests(status);
+```
+
+### 4.4. Mode d'inscription pour les partenaires
+
+```typescript
+// DTO pour inscription partenaire
+interface PartnerRegistrationDto {
+  // Informations personnelles
+  email: string;
+  password: string;
+  first_name: string;
+  last_name: string;
+  phone: string;
+
+  // Informations société
+  company_name: string;
+  company_registration?: string;
+  tax_id?: string;
+  partner_type: string; // 'real_estate_agency', 'property_owner', etc.
+
+  // Contact
+  contact_name?: string;
+  contact_phone?: string;
+  contact_email?: string;
+
+  // Documents
+  registration_document?: File; // À uploader
+  tax_document?: File;
+
+  // Acceptation des conditions
+  terms_accepted: boolean;
+  data_processing_accepted: boolean;
+}
+
+// Workflow d'inscription partenaire
+async function registerPartner(dto: PartnerRegistrationDto) {
+  // 1. Vérifier que l'email n'existe pas
+  const existingUser = await userRepository.findOne({
+    where: { email: dto.email }
+  });
+
+  if (existingUser) {
+    throw new Error('Email déjà utilisé');
+  }
+
+  // 2. Créer l'utilisateur
+  const user = await userRepository.create({
+    email: dto.email,
+    password_hash: await hashPassword(dto.password),
+    first_name: dto.first_name,
+    last_name: dto.last_name,
+    phone: dto.phone,
+    is_email_verified: false,
+    is_active: true,
+  });
+
+  // 3. Upload des documents
+  const registrationDocUrl = await uploadDocument(dto.registration_document);
+  const taxDocUrl = await uploadDocument(dto.tax_document);
+
+  // 4. Créer le profil partenaire
+  const partner = await partnerRepository.create({
+    user_id: user.id,
+    company_name: dto.company_name,
+    company_registration: dto.company_registration,
+    tax_id: dto.tax_id,
+    partner_type: dto.partner_type,
+    contact_name: dto.contact_name || `${dto.first_name} ${dto.last_name}`,
+    contact_phone: dto.contact_phone || dto.phone,
+    contact_email: dto.contact_email || dto.email,
+    registration_document_url: registrationDocUrl,
+    tax_document_url: taxDocUrl,
+    status: 'pending', // En attente de validation admin
+    metadata: {
+      terms_accepted_at: new Date(),
+      terms_version: '1.0',
+      ip_address: getClientIp(),
+    }
+  });
+
+  // 5. Envoyer email de confirmation
+  await sendPartnerConfirmationEmail(dto.email, {
+    partner_id: partner.id,
+    company_name: dto.company_name
+  });
+
+  // 6. Notifier les admins pour validation
+  await notifyAdminsForPartnerApproval(partner.id);
+
+  return {
+    message: "Inscription partenaire soumise avec succès! En attente de validation.",
+    partner_id: partner.id,
+    status: 'pending'
+  };
+}
+```
+
+### 4.5. API pour les partenaires
+
+```typescript
+// Endpoints partenaires
+POST /api/partners/register
+{
+  "email": "agency@example.com",
+  "password": "secure_password",
+  "first_name": "Jean",
+  "last_name": "Koffi",
+  "phone": "+22507070707",
+  "company_name": "Immobilier Côte d'Ivoire",
+  "company_registration": "RC12345",
+  "partner_type": "real_estate_agency",
+  "terms_accepted": true,
+  "data_processing_accepted": true
+}
+// Réponse: { "message": "Inscription soumise", "partner_id": "uuid", "status": "pending" }
+
+// Ajouter un bien immobilier
+POST /api/partners/properties
+{
+  "title": "Magnifique appartement 3 pièces",
+  "description": "Superbe vue sur la mer...",
+  "property_type": "apartment",
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "surface_area": 120.5,
+  "address": "Cocody, Abidjan",
+  "city": "Abidjan",
+  "country": "Côte d'Ivoire",
+  "price": 50000,
+  "price_type": "night",
+  "amenities": ["wifi", "parking", "pool"],
+  "images": ["url1", "url2"]
+}
+// Réponse: { "property_id": "uuid", "status": "pending_review" }
+```
+
+---
+
+## 5. Table d'audit pour tous les utilisateurs
+
+```sql
+CREATE TABLE user_audit_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id),
+    user_type VARCHAR(50) NOT NULL, -- super_admin, owner, guest, partner, etc.
+    action VARCHAR(100) NOT NULL,
+    entity_type VARCHAR(100),
+    entity_id UUID,
+    old_values JSONB,
+    new_values JSONB,
+    ip_address INET,
+    user_agent TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_user_audit_user ON user_audit_logs(user_id);
+CREATE INDEX idx_user_audit_entity ON user_audit_logs(entity_type, entity_id);
+CREATE INDEX idx_user_audit_created ON user_audit_logs(created_at);
+```
+
+---
+
+## 6. Résumé des attributs par type d'utilisateur
+
+| Type | Table | Attributs spécifiques | Mode d'inscription |
+|------|-------|----------------------|-------------------|
+| **Super Admin** | `super_admins` | access_level, department, alert_email | Création interne par équipe technique |
+| **Owner** | `owners` | company_name, tax_id, contract, subscription | Inscription avec validation admin |
+| **Receptionist** | `receptionists` | employee_code, shift_schedule, max_discount | Création par Owner/Manager |
+| **Housekeeping** | `housekeeping_staff` | employee_code, specialization, working_days | Création par Manager |
+| **Accountant** | `accountants` | certification, approval_limit | Création par Owner |
+| **Guest** | `guests` | loyalty_points, preferences, consentements | Magic link / OTP / Email |
+| **Partner** | `partners` | company_name, partner_type, commission_rate | Inscription + validation admin + documents légaux |
+
+Cette structure permet une gestion flexible et sécurisée de tous les types d'utilisateurs avec des workflows d'inscription adaptés à chaque cas d'usage.
+
+
+
+# Démarrer MongoDB
+sudo systemctl start mongod
+
+# Vérifier le statut
+sudo systemctl status mongod
+
+# Si vous voyez "active (running)", c'est bon !
+
+
+https://chat.deepseek.com/a/chat/s/b4e28f89-47a1-49d5-a489-935f62dcb73a
+
+https://chat.deepseek.com/a/chat/s/ba105cc2-5f3e-4ab6-9f94-d90d63e63e70
+
+
+https://chat.deepseek.com/a/chat/s/dc3e10cc-fa2d-4d88-96f0-b99e6f26eb05
