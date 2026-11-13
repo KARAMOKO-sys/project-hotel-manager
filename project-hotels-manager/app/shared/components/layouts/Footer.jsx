@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { subscribeNewsletter } from "@/services/newsletter.service";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "primeicons/primeicons.css";
 
@@ -56,11 +57,30 @@ export default function Footer() {
     { name: "FQAs", href: "/faqs" },
   ];
 
-  const handleNewsletterSubmit = (e) => {
+  const [email, setEmail] = useState("");
+  const [newsStatus, setNewsStatus] = useState(null);
+  const [newsSubmitting, setNewsSubmitting] = useState(false);
+  const [newsMessage, setNewsMessage] = useState("");
+
+  const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
-    const email = e.target.querySelector('input[type="email"]').value;
-    console.log("Newsletter signup:", email);
-    // Ajoutez votre logique d'inscription ici
+    setNewsSubmitting(true);
+    setNewsStatus(null);
+    try {
+      const result = await subscribeNewsletter(email);
+      setNewsMessage(result.message);
+      setNewsStatus("success");
+      setEmail("");
+    } catch (error) {
+      setNewsMessage(
+        error instanceof Error && error.name !== "ZodError"
+          ? error.message
+          : "Email invalide. Veuillez réessayer.",
+      );
+      setNewsStatus("error");
+    } finally {
+      setNewsSubmitting(false);
+    }
   };
 
   return (
@@ -148,15 +168,24 @@ export default function Footer() {
                     className="form-control bg-transparent w-100 py-3 ps-4 pe-5 text-white"
                     placeholder="Your email"
                     required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     style={{ border: "1px solid rgba(255,255,255,0.2)" }}
                   />
                   <button
                     type="submit"
                     className="btn btn-success py-2 position-absolute top-0 end-0 mt-2 me-2"
+                    disabled={newsSubmitting}
                   >
-                    SignUp
+                    {newsSubmitting ? "..." : "SignUp"}
                   </button>
                 </div>
+                {newsStatus === "success" && (
+                  <p className="text-success small mt-2 mb-0">{newsMessage}</p>
+                )}
+                {newsStatus === "error" && (
+                  <p className="text-danger small mt-2 mb-0">{newsMessage}</p>
+                )}
               </form>
             </div>
           </div>

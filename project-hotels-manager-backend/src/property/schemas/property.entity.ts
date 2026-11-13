@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { AuditableEntity } from '../../base-entities/embeddables/auditable.entity';
 import {
   AddressEmbeddable,
@@ -26,14 +26,14 @@ export enum PropertyStatus {
 })
 export class Property extends AuditableEntity {
   @Prop({
-    type: Types.ObjectId,
+    type: SchemaTypes.ObjectId,
     ref: 'Organization',
     required: true,
     index: true,
   })
   organization_id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', index: true })
   owner_id?: Types.ObjectId;
 
   @Prop({

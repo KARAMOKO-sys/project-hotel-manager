@@ -35,6 +35,12 @@ describe('ReservationService', () => {
     ModelMock.findOne = jest
       .fn()
       .mockReturnValue({ exec: jest.fn().mockResolvedValue(reservation) });
+    ModelMock.findOneAndUpdate = jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        ...reservation,
+        status: ReservationStatus.CHECKED_IN,
+      }),
+    });
     ModelMock.find = jest.fn().mockReturnValue({
       sort: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
@@ -97,6 +103,95 @@ describe('ReservationService', () => {
       'Client request',
     );
     expect(result.status).toBe(ReservationStatus.CANCELLED);
+  });
+
+  it('allows a confirmed reservation holder to check in during the stay', async () => {
+    const startsAt = new Date(Date.now() - 86_400_000);
+    const endsAt = new Date(Date.now() + 86_400_000);
+    model.findOne.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        ...reservation,
+        status: ReservationStatus.CONFIRMED,
+        check_in: startsAt,
+        check_out: endsAt,
+      }),
+    });
+
+    const result = await service.selfCheckIn(
+      reservation._id.toString(),
+      reservation.guest_id.toString(),
+    );
+
+    expect(result.status).toBe(ReservationStatus.CHECKED_IN);
+    expect(model.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guest_id: reservation.guest_id,
+        status: ReservationStatus.CONFIRMED,
+      }),
+      { $set: { status: ReservationStatus.CHECKED_IN } },
+      { new: true },
+    );
+  });
+
+  it('does not find a reservation that belongs to a different guest', async () => {
+    model.findOne.mockReturnValue({ exec: jest.fn().mockResolvedValue(null) });
+
+    await expect(
+      service.selfCheckIn(
+        reservation._id.toString(),
+        new Types.ObjectId().toString(),
+      ),
+    ).rejects.toThrow('Réservation introuvable');
+    expect(model.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it('rejects autonomous check-in before the arrival date', async () => {
+    model.findOne.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        ...reservation,
+        status: ReservationStatus.CONFIRMED,
+        check_in: new Date(Date.now() + 86_400_000),
+        check_out: new Date(Date.now() + 172_800_000),
+      }),
+    });
+
+    await expect(
+      service.selfCheckIn(
+        reservation._id.toString(),
+        reservation.guest_id.toString(),
+      ),
+    ).rejects.toThrow("Le check-in autonome n'est pas disponible");
+    expect(model.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
+  it('allows the reservation holder to check out an active stay', async () => {
+    model.findOne.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        ...reservation,
+        status: ReservationStatus.CHECKED_IN,
+      }),
+    });
+    model.findOneAndUpdate.mockReturnValue({
+      exec: jest.fn().mockResolvedValue({
+        ...reservation,
+        status: ReservationStatus.CHECKED_OUT,
+      }),
+    });
+
+    const result = await service.selfCheckOut(
+      reservation._id.toString(),
+      reservation.guest_id.toString(),
+    );
+
+    expect(result.status).toBe(ReservationStatus.CHECKED_OUT);
+    expect(model.findOneAndUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        guest_id: reservation.guest_id,
+        status: ReservationStatus.CHECKED_IN,
+      }),
+      { $set: { status: ReservationStatus.CHECKED_OUT } },
+      { new: true },
+    );
   });
 
   it('should list upcoming arrivals', async () => {

@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { AuditableEntity } from '../../base-entities/embeddables/auditable.entity';
 import {
   AddressEmbeddable,
@@ -29,10 +29,10 @@ export enum OrganizationStatus {
 /** Membre de l'organisation (sous-document embarqué). */
 @Schema({ _id: false, timestamps: false })
 export class OrganizationMember {
-  @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
+  @Prop({ type: SchemaTypes.ObjectId, required: true, ref: 'User' })
   user_id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, required: false, ref: 'Role' })
+  @Prop({ type: SchemaTypes.ObjectId, required: false, ref: 'Role' })
   role_id?: Types.ObjectId;
 
   @Prop({ type: Date, default: Date.now })

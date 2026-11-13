@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { AuditableEntity } from '../../base-entities/embeddables/auditable.entity';
 import { TaskPriority } from '../../base-entities/enums/task-priority.enum';
 import { TaskStatus } from '../../base-entities/enums/task-status.enum';
@@ -14,13 +14,13 @@ export type HousekeepingDocument = HydratedDocument<Housekeeping>;
   collection: 'housekeeping_tasks',
 })
 export class Housekeeping extends AuditableEntity {
-  @Prop({ type: Types.ObjectId, ref: 'Property', required: true, index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Property', required: true, index: true })
   property_id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Room', required: true, index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Room', required: true, index: true })
   room_id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'User', index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User', index: true })
   staff_id?: Types.ObjectId;
 
   @Prop({ type: Date, required: true })

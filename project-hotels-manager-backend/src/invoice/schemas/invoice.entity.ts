@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { AuditableEntity } from '../../base-entities/embeddables/auditable.entity';
 import { InvoiceStatus } from '../../base-entities/enums/invoice-status.enum';
 
@@ -21,13 +21,13 @@ export class Invoice extends AuditableEntity {
   })
   invoice_number!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Reservation', index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Reservation', index: true })
   reservation_id?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Guest', index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Guest', index: true })
   guest_id?: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Property', index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Property', index: true })
   property_id?: Types.ObjectId;
 
   @Prop({

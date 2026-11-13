@@ -31,8 +31,13 @@ export class GuestService extends BaseCrudService<
     const guest = new this.guestModel(rest as any);
 
     await guest.setPassword(password);
+    await guest.save();
 
-    return (await guest.save()) as unknown as Guest;
+    // Le hash est présent sur le document fraîchement créé : on renvoie une
+    // copie sans lui (sans toucher au document, pour ne pas l'effacer en base).
+    const safe = guest.toObject<Record<string, unknown>>();
+    delete safe.password_hash;
+    return safe as unknown as Guest;
   }
 
   /** Recherche un client par email. */

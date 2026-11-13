@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { RoleController } from './role.controller';
 import { RoleService } from '../services/role.service';
+import { PermissionCatalogService } from '../../auth/permissions/permission-catalog.service';
 
 describe('RoleController', () => {
   let controller: RoleController;
@@ -10,6 +11,10 @@ describe('RoleController', () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [RoleController],
       providers: [
+        {
+          provide: PermissionCatalogService,
+          useValue: { list: jest.fn().mockReturnValue([]) },
+        },
         {
           provide: RoleService,
           useValue: {

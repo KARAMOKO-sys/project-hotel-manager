@@ -1,6 +1,7 @@
 // src/guest/schemas/guest.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { attachClassMethods } from '../../base-entities/utils/attach-class-methods';
+import { Document, Types, SchemaTypes } from 'mongoose';
 import { User } from '../../base-entities/user.abstract';
 
 export type GuestDocument = Guest & Document;
@@ -202,7 +203,7 @@ export class Guest extends User {
   referral_code?: string;
 
   @Prop({
-    type: Types.ObjectId,
+    type: SchemaTypes.ObjectId,
     ref: 'Guest',
     required: false,
   })
@@ -610,6 +611,9 @@ export class Guest extends User {
 }
 
 export const GuestSchema = SchemaFactory.createForClass(Guest);
+
+// Rend disponibles setPassword, addLoyaltyPoints, etc. sur les documents.
+attachClassMethods(GuestSchema, Guest);
 
 // Ajout des index supplémentaires
 GuestSchema.index({ loyalty_points: -1 });

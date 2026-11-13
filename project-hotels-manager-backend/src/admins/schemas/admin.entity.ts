@@ -1,9 +1,16 @@
 // src/super-admin/schemas/super-admin.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 import { User } from '../../base-entities/user.abstract';
 
 export type SuperAdminDocument = SuperAdmin & Document;
+
+/** Statuts possibles d'un super administrateur. */
+export enum AdminStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+}
 
 @Schema({
   timestamps: true,
@@ -90,10 +97,10 @@ export class SuperAdmin extends User {
   // Propriétés supplémentaires pour MongoDB
   @Prop({
     type: String,
-    enum: ['active', 'inactive', 'suspended'],
-    default: 'active',
+    enum: Object.values(AdminStatus),
+    default: AdminStatus.ACTIVE,
   })
-  status?: string;
+  status?: AdminStatus;
 
   @Prop({
     type: Date,
@@ -158,7 +165,7 @@ export class SuperAdmin extends User {
   }
 
   isActive(): boolean {
-    return this.status === 'active';
+    return this.status === AdminStatus.ACTIVE;
   }
 
   isInWhitelist(ip: string): boolean {
@@ -184,7 +191,7 @@ SuperAdminSchema.index({ department: 1 });
 SuperAdminSchema.index({ 'system_preferences.notifications': 1 });
 
 // Middleware pre-save
-SuperAdminSchema.pre('save', function (next) {
+SuperAdminSchema.pre('save', function () {
   // Validation du niveau d'accès
   /*
   if (this.access_level < 1 || this.access_level > 5) {
@@ -208,21 +215,23 @@ SuperAdminSchema.pre('save', function (next) {
 // Middleware post-save pour l'audit
 SuperAdminSchema.post('save', function (doc) {
   // Log des modifications pour audit
-  console.log(`SuperAdmin ${doc.email} has been saved at ${new Date()}`);
+  console.log(
+    `SuperAdmin ${doc.email} has been saved at ${new Date().toISOString()}`,
+  );
 });
 
 // Méthodes statiques
 SuperAdminSchema.statics.findByDepartment = function (department: string) {
   return this.find({
     department: department,
-    status: 'active',
+    status: AdminStatus.ACTIVE,
   });
 };
 
 /*
 SuperAdminSchema.statics.findActiveAdmins = function () {
   return this.find({
-    status: 'active',
+    status: AdminStatus.ACTIVE,
   }).sort({ access_level: -1 });
 };
 */
@@ -230,13 +239,13 @@ SuperAdminSchema.statics.findActiveAdmins = function () {
 SuperAdminSchema.statics.findByAccessLevel = function (level: number) {
   return this.find({
     access_level: { $gte: level },
-    status: 'active',
+    status: AdminStatus.ACTIVE,
   });
 };
 
 SuperAdminSchema.statics.findWithApprovalLimit = function (minAmount: number) {
   return this.find({
     $or: [{ approval_limit: 0 }, { approval_limit: { $gte: minAmount } }],
-    status: 'active',
+    status: AdminStatus.ACTIVE,
   });
 };

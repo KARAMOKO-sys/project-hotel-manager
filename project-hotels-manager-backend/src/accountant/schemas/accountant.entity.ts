@@ -1,9 +1,16 @@
 // src/accountant/schemas/accountant.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 import { User } from '../../base-entities/user.abstract';
 
 export type AccountantDocument = Accountant & Document;
+
+/** Statuts possibles d'un comptable. */
+export enum AccountantStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  SUSPENDED = 'suspended',
+}
 
 @Schema({
   timestamps: true,
@@ -12,7 +19,7 @@ export type AccountantDocument = Accountant & Document;
 })
 export class Accountant extends User {
   @Prop({
-    type: Types.ObjectId,
+    type: SchemaTypes.ObjectId,
     ref: 'Property',
     required: true,
     index: true,
@@ -64,10 +71,10 @@ export class Accountant extends User {
   // Propriétés supplémentaires pour MongoDB
   @Prop({
     type: String,
-    enum: ['active', 'inactive', 'suspended'],
-    default: 'active',
+    enum: Object.values(AccountantStatus),
+    default: AccountantStatus.ACTIVE,
   })
-  status?: string;
+  status?: AccountantStatus;
 
   @Prop({
     type: Date,
@@ -119,7 +126,7 @@ export class Accountant extends User {
   }
 
   isActive(): boolean {
-    return this.status === 'active';
+    return this.status === AccountantStatus.ACTIVE;
   }
 }
 
@@ -152,7 +159,10 @@ AccountantSchema.pre('save', function (next) {
 AccountantSchema.statics.findByProperty = function (
   propertyId: Types.ObjectId,
 ) {
-  return this.find({ property_id: propertyId, status: 'active' });
+  return this.find({
+    property_id: propertyId,
+    status: AccountantStatus.ACTIVE,
+  });
 };
 
 // Méthode statique pour trouver les comptables avec leurs permissions

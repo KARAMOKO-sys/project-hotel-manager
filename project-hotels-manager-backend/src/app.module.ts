@@ -2,13 +2,14 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
 import { AdminsModule } from './admins/admins.module';
 import { OwnersModule } from './owners/owners.module';
 import { ReceptionistModule } from './receptionist/receptionist.module';
 import { HousekeepingStaffModule } from './housekeeping-staff/housekeeping-staff.module';
 import { AccountantModule } from './accountant/accountant.module';
 import { GuestModule } from './guest/guest.module';
-//import { PartnerModule } from './partner/partner.module';
+import { PartnerModule } from './partner/partner.module';
 import { StaffModule } from './staff/staff.module';
 import { OrganizationModule } from './organization/organization.module';
 import { PropertyModule } from './property/property.module';
@@ -48,6 +49,12 @@ import { RoleModule } from './role/role.module';
 import { UserRoleModule } from './user-role/user-role.module';
 import { AuditLogModule } from './audit-log/audit-log.module';
 import { SessionModule } from './session/session.module';
+import { AuthModule } from './auth/auth.module';
+import { ContactMessageModule } from './contact-message/contact-message.module';
+import { NewsletterSubscriptionModule } from './newsletter-subscription/newsletter-subscription.module';
+import { SiteConfigModule } from './site-config/site-config.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 
 @Module({
   imports: [
@@ -92,7 +99,7 @@ import { SessionModule } from './session/session.module';
 
     GuestModule,
 
-    //PartnerModule,
+    PartnerModule,
 
     StaffModule,
 
@@ -171,6 +178,17 @@ import { SessionModule } from './session/session.module';
     AuditLogModule,
 
     SessionModule,
+
+    AuthModule,
+
+    // Site public
+    ContactMessageModule,
+    NewsletterSubscriptionModule,
+    SiteConfigModule,
+  ],
+  providers: [
+    { provide: APP_GUARD, useExisting: JwtAuthGuard },
+    { provide: APP_GUARD, useExisting: RolesGuard },
   ],
 })
 export class AppModule {}

@@ -1,6 +1,6 @@
 // src/housekeeping-staff/schemas/housekeeping-staff.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Model, Types, SchemaTypes } from 'mongoose';
 import { User } from '../../base-entities/user.abstract';
 
 export type HousekeepingStaffDocument = HousekeepingStaff & Document;
@@ -38,7 +38,7 @@ export enum ShiftType {
 })
 export class HousekeepingStaff extends User {
   @Prop({
-    type: Types.ObjectId,
+    type: SchemaTypes.ObjectId,
     ref: 'Property',
     required: true,
     index: true,
@@ -153,7 +153,7 @@ export class HousekeepingStaff extends User {
   supervisor_name?: string;
 
   @Prop({
-    type: Types.ObjectId,
+    type: SchemaTypes.ObjectId,
     ref: 'User',
     required: false,
   })
@@ -218,7 +218,7 @@ export class HousekeepingStaff extends User {
     type: [
       {
         date: { type: Date },
-        room_id: { type: Types.ObjectId },
+        room_id: { type: SchemaTypes.ObjectId },
         room_number: { type: String },
         cleaning_time: { type: Number }, // en minutes
         quality_score: { type: Number },
@@ -613,7 +613,9 @@ HousekeepingStaffSchema.statics.findBySpecialization = function (
   });
 };
 
-HousekeepingStaffSchema.statics.findActive = function () {
+HousekeepingStaffSchema.statics.findActive = function (
+  this: Model<HousekeepingStaffDocument>,
+) {
   return this.find({
     status: HousekeepingStatus.ACTIVE,
   }).sort({ quality_score: -1 });

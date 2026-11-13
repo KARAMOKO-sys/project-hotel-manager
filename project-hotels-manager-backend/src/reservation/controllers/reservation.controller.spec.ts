@@ -24,6 +24,8 @@ describe('ReservationController', () => {
             cancel: jest.fn(),
             checkIn: jest.fn(),
             checkOut: jest.fn(),
+            selfCheckIn: jest.fn(),
+            selfCheckOut: jest.fn(),
             markAsNoShow: jest.fn(),
             getUpcomingArrivals: jest.fn(),
             getDepartures: jest.fn(),
@@ -43,5 +45,14 @@ describe('ReservationController', () => {
   it('should delegate confirm to the service', () => {
     controller.confirm({ id: '507f1f77bcf86cd799439011' } as any);
     expect(service.confirm).toHaveBeenCalledWith('507f1f77bcf86cd799439011');
+  });
+
+  it('should delegate autonomous check-in to the service', () => {
+    const user = { sub: 'guest-id', user_type: 'guest' } as any;
+    controller.selfCheckIn({ id: '507f1f77bcf86cd799439011' } as any, user);
+    expect(service.selfCheckIn).toHaveBeenCalledWith(
+      '507f1f77bcf86cd799439011',
+      'guest-id',
+    );
   });
 });

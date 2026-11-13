@@ -4,10 +4,13 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "primereact/button";
+import Image from "next/image";
+import { useSiteConfig } from "@/app/shared/contexts/SiteConfigContext";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "primeicons/primeicons.css";
 
 export default function Navbar() {
+  const { config } = useSiteConfig();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -25,7 +28,7 @@ export default function Navbar() {
     { name: "About", href: "/about", icon: "pi pi-info-circle" },
     {
       name: "Property",
-      href: "/property-list",
+      href: "/properties",
       icon: "pi pi-building",
       hasDropdown: true,
     },
@@ -34,9 +37,10 @@ export default function Navbar() {
   ];
 
   const propertyDropdown = [
-    { name: "Property List", href: "/property-list", icon: "pi pi-list" },
-    { name: "Property Type", href: "/property-type", icon: "pi pi-tags" },
-    { name: "Property Agent", href: "/property-agent", icon: "pi pi-users" },
+    { name: "Toutes les propriétés", href: "/properties", icon: "pi pi-list" },
+    { name: "Hôtels", href: "/properties?type=hotel", icon: "pi pi-building" },
+    { name: "Résidences", href: "/properties?type=residence", icon: "pi pi-home" },
+    { name: "Appartements", href: "/properties?type=apartment", icon: "pi pi-tags" },
   ];
 
   const pagesDropdown = [
@@ -65,10 +69,12 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="navbar-brand d-flex align-items-center">
             <div className="logo-icon me-2">
-              <img
+              <Image
                 src="/img/icon-deal.png"
                 alt="Logo"
-                style={{ width: "35px", height: "35px" }}
+                width={35}
+                height={35}
+                priority
               />
             </div>
             <h1
@@ -76,11 +82,11 @@ export default function Navbar() {
               style={{
                 fontSize: "1.8rem",
                 fontWeight: "700",
-                color: "#22c55e",
+                color: config.primaryColor,
                 transition: "color 0.3s ease",
               }}
             >
-              Makaan
+              {config.brandName}
             </h1>
           </Link>
 
@@ -90,7 +96,7 @@ export default function Navbar() {
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             style={{
-              backgroundColor: "#22c55e",
+              backgroundColor: config.primaryColor,
               boxShadow: "0 2px 10px rgba(34, 197, 94, 0.3)",
             }}
           >
@@ -119,7 +125,7 @@ export default function Navbar() {
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
                         style={{
-                          color: "#22c55e",
+                          color: config.primaryColor,
                           fontWeight: "500",
                           padding: "0.5rem 1rem",
                           transition: "color 0.3s ease",
@@ -166,7 +172,7 @@ export default function Navbar() {
                         isActive(link.href) ? "active" : ""
                       }`}
                       style={{
-                        color: "#22c55e",
+                        color: config.primaryColor,
                         fontWeight: "500",
                         padding: "0.5rem 1rem",
                         transition: "color 0.3s ease",
@@ -186,7 +192,7 @@ export default function Navbar() {
               icon="pi pi-plus"
               className="add-property-btn"
               style={{
-                background: "#22c55e",
+                background: config.primaryColor,
                 border: "none",
                 borderRadius: "50px",
                 padding: "0.6rem 1.5rem",
@@ -262,16 +268,16 @@ export default function Navbar() {
         .nav-link {
           position: relative;
           transition: all 0.3s ease;
-          color: #22c55e !important;
+          color: var(--primary-color) !important;
         }
 
         .nav-link:hover {
-          color: #16a34a !important;
+          color: var(--primary-color-hover) !important;
           transform: translateY(-2px);
         }
 
         .nav-link.active {
-          color: #16a34a !important;
+          color: var(--primary-color-hover) !important;
           font-weight: 600;
         }
 
@@ -283,7 +289,7 @@ export default function Navbar() {
           transform: translateX(-50%);
           width: 30px;
           height: 3px;
-          background: #22c55e;
+          background: var(--primary-color);
           border-radius: 3px;
           box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
         }
@@ -314,23 +320,23 @@ export default function Navbar() {
         .dropdown-item {
           transition: all 0.3s ease;
           padding: 0.6rem 1.5rem;
-          color: #22c55e !important;
+          color: var(--primary-color) !important;
         }
 
         .dropdown-item:hover {
           background: rgba(34, 197, 94, 0.1);
-          color: #16a34a !important;
+          color: var(--primary-color-hover) !important;
           transform: translateX(5px);
         }
 
         .dropdown-item i {
           width: 20px;
-          color: #22c55e;
+          color: var(--primary-color);
         }
 
         /* Add Property Button */
         .add-property-btn {
-          background: #22c55e !important;
+          background: var(--primary-color) !important;
           border: none !important;
           transition: all 0.3s ease !important;
           box-shadow: 0 8px 25px rgba(34, 197, 94, 0.55);
@@ -338,7 +344,7 @@ export default function Navbar() {
         }
 
         .add-property-btn:hover {
-          background: #16a34a !important;
+          background: var(--primary-color-hover) !important;
           transform: translateY(-2px);
           box-shadow: 0 15px 35px rgba(34, 197, 94, 0.7);
         }
@@ -369,7 +375,7 @@ export default function Navbar() {
           }
 
           .nav-link {
-            color: #22c55e !important;
+            color: var(--primary-color) !important;
             padding: 0.75rem 1rem !important;
           }
 
@@ -385,7 +391,7 @@ export default function Navbar() {
           }
 
           .dropdown-item {
-            color: #22c55e !important;
+            color: var(--primary-color) !important;
           }
 
           .add-property-btn {

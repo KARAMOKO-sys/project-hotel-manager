@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { AuditableEntity } from '../../base-entities/embeddables/auditable.entity';
 
 export type GuestPreferenceDocument = HydratedDocument<GuestPreference>;
@@ -12,7 +12,7 @@ export type GuestPreferenceDocument = HydratedDocument<GuestPreference>;
   collection: 'guest_preferences',
 })
 export class GuestPreference extends AuditableEntity {
-  @Prop({ type: Types.ObjectId, ref: 'Guest', required: true, index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Guest', required: true, index: true })
   guest_id!: Types.ObjectId;
 
   @Prop({ type: String, required: true, trim: true, maxlength: 100 })

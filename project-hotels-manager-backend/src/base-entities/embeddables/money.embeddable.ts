@@ -36,6 +36,7 @@ export interface IMoney {
 })
 */
 
+@Schema({ _id: false, timestamps: false })
 export class MoneyEmbeddable implements IMoney {
   @Prop({
     type: Number,

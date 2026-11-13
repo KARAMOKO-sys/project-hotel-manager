@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Bloque le build de production en cas d'erreur ESLint.
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
   // Bloque le build de production en cas d'erreur TypeScript.
   typescript: {
     ignoreBuildErrors: false,

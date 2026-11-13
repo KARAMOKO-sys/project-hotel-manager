@@ -1,9 +1,38 @@
 // src/receptionist/schemas/receptionist.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Model, Types, SchemaTypes } from 'mongoose';
 import { User } from '../../base-entities/user.abstract';
 
 export type ReceptionistDocument = Receptionist & Document;
+
+/** Statuts possibles d'un réceptionniste. */
+export enum ReceptionistStatus {
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+  ON_LEAVE = 'on_leave',
+  SUSPENDED = 'suspended',
+}
+
+/** Types de service (shift) d'un réceptionniste. */
+export enum ReceptionistShiftType {
+  MORNING = 'morning',
+  AFTERNOON = 'afternoon',
+  NIGHT = 'night',
+  FLEXIBLE = 'flexible',
+}
+
+/** Jours de la semaine utilisés dans le planning (`shift_schedule`). */
+export const WEEK_DAYS = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+] as const;
+
+export type WeekDay = (typeof WEEK_DAYS)[number];
 
 @Schema({
   timestamps: true,
@@ -12,7 +41,7 @@ export type ReceptionistDocument = Receptionist & Document;
 })
 export class Receptionist extends User {
   @Prop({
-    type: Types.ObjectId,
+    type: SchemaTypes.ObjectId,
     ref: 'Property',
     required: true,
     index: true,
@@ -100,17 +129,17 @@ export class Receptionist extends User {
   // Propriétés supplémentaires pour MongoDB
   @Prop({
     type: String,
-    enum: ['active', 'inactive', 'on_leave', 'suspended'],
-    default: 'active',
+    enum: Object.values(ReceptionistStatus),
+    default: ReceptionistStatus.ACTIVE,
   })
-  status?: string;
+  status?: ReceptionistStatus;
 
   @Prop({
     type: String,
-    enum: ['morning', 'afternoon', 'night', 'flexible'],
-    default: 'flexible',
+    enum: Object.values(ReceptionistShiftType),
+    default: ReceptionistShiftType.FLEXIBLE,
   })
-  shift_type?: string;
+  shift_type?: ReceptionistShiftType;
 
   @Prop({
     type: [String],
@@ -211,19 +240,23 @@ export class Receptionist extends User {
   }
 
   canProcessCheckin(): boolean {
-    return this.can_check_in_out && this.status === 'active';
+    return this.can_check_in_out && this.status === ReceptionistStatus.ACTIVE;
   }
 
   canProcessCheckout(): boolean {
-    return this.can_check_in_out && this.status === 'active';
+    return this.can_check_in_out && this.status === ReceptionistStatus.ACTIVE;
   }
 
   canModifyReservation(): boolean {
-    return this.can_modify_reservations && this.status === 'active';
+    return (
+      this.can_modify_reservations && this.status === ReceptionistStatus.ACTIVE
+    );
   }
 
   canOverridePrice(): boolean {
-    return this.can_override_prices && this.status === 'active';
+    return (
+      this.can_override_prices && this.status === ReceptionistStatus.ACTIVE
+    );
   }
 
   getFullName(): string {
@@ -235,7 +268,7 @@ export class Receptionist extends User {
   }
 
   isActive(): boolean {
-    return this.status === 'active';
+    return this.status === ReceptionistStatus.ACTIVE;
   }
 
   isOnDuty(): boolean {
@@ -273,17 +306,8 @@ export class Receptionist extends User {
 
   getShiftSchedule(day: string): { start: string; end: string } | null {
     if (!this.shift_schedule) return null;
-    const days = [
-      'monday',
-      'tuesday',
-      'wednesday',
-      'thursday',
-      'friday',
-      'saturday',
-      'sunday',
-    ];
-    const dayLower = day.toLowerCase();
-    if (days.includes(dayLower)) {
+    const dayLower = day.toLowerCase() as WeekDay;
+    if (WEEK_DAYS.includes(dayLower)) {
       return this.shift_schedule[dayLower] || null;
     }
     return null;
@@ -297,7 +321,7 @@ export class Receptionist extends User {
   getWorkingDays(): string[] {
     if (!this.shift_schedule) return [];
     return Object.entries(this.shift_schedule)
-      .filter(([_, schedule]) => schedule && schedule.start !== 'off')
+      .filter(([, schedule]) => schedule && schedule.start !== 'off')
       .map(([day]) => day);
   }
 
@@ -322,25 +346,25 @@ export class Receptionist extends User {
 
   // Méthodes de statut
   setOnLeave(): void {
-    this.status = 'on_leave';
+    this.status = ReceptionistStatus.ON_LEAVE;
   }
 
   setActive(): void {
-    this.status = 'active';
+    this.status = ReceptionistStatus.ACTIVE;
   }
 
   setInactive(): void {
-    this.status = 'inactive';
+    this.status = ReceptionistStatus.INACTIVE;
   }
 
   setSuspended(): void {
-    this.status = 'suspended';
+    this.status = ReceptionistStatus.SUSPENDED;
   }
 
   // Méthodes de shift
   startShift(): void {
     this.last_shift_start = new Date();
-    this.status = 'active';
+    this.status = ReceptionistStatus.ACTIVE;
   }
 
   endShift(): void {
@@ -401,50 +425,65 @@ ReceptionistSchema.pre('save', function (next) {
 ReceptionistSchema.post('save', function (doc) {
   // Log des modifications pour audit
   console.log(
-    `Receptionist ${doc.employee_code} (${doc.email}) saved at ${new Date()}`,
+    `Receptionist ${doc.employee_code} (${doc.email}) saved at ${new Date().toISOString()}`,
   );
 });
 
 // Méthodes statiques
-ReceptionistSchema.statics.findByProperty = function (propertyId: string) {
+ReceptionistSchema.statics.findByProperty = function (
+  this: Model<ReceptionistDocument>,
+  propertyId: string,
+) {
   return this.find({
     property_id: new Types.ObjectId(propertyId),
-    status: 'active',
+    status: ReceptionistStatus.ACTIVE,
   });
 };
 
-ReceptionistSchema.statics.findByShiftType = function (shiftType: string) {
+ReceptionistSchema.statics.findByShiftType = function (
+  this: Model<ReceptionistDocument>,
+  shiftType: ReceptionistShiftType,
+) {
   return this.find({
     shift_type: shiftType,
-    status: 'active',
+    status: ReceptionistStatus.ACTIVE,
   });
 };
 
-ReceptionistSchema.statics.findActive = function () {
+ReceptionistSchema.statics.findActive = function (
+  this: Model<ReceptionistDocument>,
+) {
   return this.find({
-    status: 'active',
+    status: ReceptionistStatus.ACTIVE,
   }).sort({ created_at: -1 });
 };
 
-ReceptionistSchema.statics.findOnDuty = function () {
+ReceptionistSchema.statics.findOnDuty = function (
+  this: Model<ReceptionistDocument>,
+) {
   const now = new Date();
   return this.find({
-    status: 'active',
+    status: ReceptionistStatus.ACTIVE,
     last_shift_start: { $lte: now },
     last_shift_end: { $gte: now },
   });
 };
 
-ReceptionistSchema.statics.findAvailable = function () {
+ReceptionistSchema.statics.findAvailable = function (
+  this: Model<ReceptionistDocument>,
+) {
   return this.find({
-    status: 'active',
+    status: ReceptionistStatus.ACTIVE,
     $or: [{ last_shift_end: { $lt: new Date() } }, { last_shift_end: null }],
   });
 };
 
-ReceptionistSchema.statics.findTopPerformers = function (limit: number = 10) {
+ReceptionistSchema.statics.findTopPerformers = function (
+  this: Model<ReceptionistDocument>,
+  limit: number = 10,
+) {
   return this.find({
-    status: 'active',
+    status: ReceptionistStatus.ACTIVE,
     satisfaction_score: { $ne: null },
   })
     .sort({ satisfaction_score: -1, reservations_processed: -1 })
@@ -452,13 +491,19 @@ ReceptionistSchema.statics.findTopPerformers = function (limit: number = 10) {
 };
 
 ReceptionistSchema.statics.findByEmployeeCode = function (
+  this: Model<ReceptionistDocument>,
   employeeCode: string,
 ) {
   return this.findOne({ employee_code: employeeCode });
 };
 
-ReceptionistSchema.statics.getStats = function (propertyId?: string) {
-  const match: any = { status: 'active' };
+ReceptionistSchema.statics.getStats = function (
+  this: Model<ReceptionistDocument>,
+  propertyId?: string,
+) {
+  const match: Record<string, unknown> = {
+    status: ReceptionistStatus.ACTIVE,
+  };
   if (propertyId) {
     match.property_id = new Types.ObjectId(propertyId);
   }

@@ -4,8 +4,11 @@ import { useEffect } from "react";
 import Link from "next/link";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "primeicons/primeicons.css";
+import { useSiteConfig } from "@/app/shared/contexts/SiteConfigContext";
+import Image from "next/image";
 
 export default function CallToAction() {
+  const { config } = useSiteConfig();
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -36,10 +39,13 @@ export default function CallToAction() {
             <div className="row g-5 align-items-center">
               {/* Image à gauche */}
               <div className="col-lg-6 wow fadeIn" data-wow-delay="0.1s">
-                <img
+                <Image
                   className="img-fluid rounded w-100"
-                  src="/img/call-to-action.jpg"
+                  src={config.callToAction.imageUrl}
                   alt="Call to Action"
+                  width={800}
+                  height={600}
+                  unoptimized
                   style={{
                     objectFit: "cover",
                     height: "100%",
@@ -52,11 +58,10 @@ export default function CallToAction() {
               <div className="col-lg-6 wow fadeIn" data-wow-delay="0.5s">
                 <div className="mb-4">
                   <h1 className="mb-3 display-6">
-                    Contact With Our Certified Agent
+                    {config.callToAction.title}
                   </h1>
                   <p className="text-muted">
-                    Eirmod sed ipsum dolor sit rebum magna erat. Tempor lorem
-                    kasd vero ipsum sit sit diam justo sed vero dolor duo.
+                    {config.callToAction.description}
                   </p>
                 </div>
                 <div className="d-flex gap-3 flex-wrap">
@@ -65,7 +70,7 @@ export default function CallToAction() {
                     className="btn btn-success py-3 px-4 d-inline-flex align-items-center gap-2"
                   >
                     <i className="pi pi-phone"></i>
-                    Make A Call
+                    {config.callToAction.buttonLabel}
                   </Link>
                   <Link
                     href="/appointment"

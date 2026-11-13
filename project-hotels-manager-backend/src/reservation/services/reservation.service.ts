@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { randomBytes } from 'crypto';
@@ -80,6 +84,81 @@ export class ReservationService extends BaseCrudService<
     } as UpdateReservationDto);
   }
 
+  /** Check-in autonome, limité au titulaire et à la période de séjour. */
+  async selfCheckIn(id: string, guestId: string): Promise<Reservation> {
+    const filter = this.ownedReservationFilter(id, guestId);
+    const reservation = await this.reservationModel.findOne(filter).exec();
+    if (!reservation) {
+      throw new NotFoundException('Réservation introuvable');
+    }
+    if (reservation.status !== ReservationStatus.CONFIRMED) {
+      throw new ConflictException(
+        'Seule une réservation confirmée peut être enregistrée à l’arrivée',
+      );
+    }
+
+    const now = new Date();
+    const checkInTime = reservation.check_in?.getTime();
+    const checkOutTime = reservation.check_out?.getTime();
+    if (
+      !Number.isFinite(checkInTime) ||
+      !Number.isFinite(checkOutTime) ||
+      checkInTime > now.getTime() ||
+      checkOutTime <= now.getTime()
+    ) {
+      throw new ConflictException(
+        "Le check-in autonome n'est pas disponible pour cette période",
+      );
+    }
+
+    const updated = await this.reservationModel
+      .findOneAndUpdate(
+        {
+          ...filter,
+          status: ReservationStatus.CONFIRMED,
+          check_in: { $lte: now },
+          check_out: { $gt: now },
+        },
+        { $set: { status: ReservationStatus.CHECKED_IN } },
+        { new: true },
+      )
+      .exec();
+    if (!updated) {
+      throw new ConflictException(
+        "La réservation a changé d'état ; veuillez actualiser puis réessayer",
+      );
+    }
+    return updated;
+  }
+
+  /** Check-out autonome d'une réservation appartenant au client connecté. */
+  async selfCheckOut(id: string, guestId: string): Promise<Reservation> {
+    const filter = this.ownedReservationFilter(id, guestId);
+    const reservation = await this.reservationModel.findOne(filter).exec();
+    if (!reservation) {
+      throw new NotFoundException('Réservation introuvable');
+    }
+    if (reservation.status !== ReservationStatus.CHECKED_IN) {
+      throw new ConflictException(
+        'Seul un séjour en cours peut être clôturé par check-out',
+      );
+    }
+
+    const updated = await this.reservationModel
+      .findOneAndUpdate(
+        { ...filter, status: ReservationStatus.CHECKED_IN },
+        { $set: { status: ReservationStatus.CHECKED_OUT } },
+        { new: true },
+      )
+      .exec();
+    if (!updated) {
+      throw new ConflictException(
+        "La réservation a changé d'état ; veuillez actualiser puis réessayer",
+      );
+    }
+    return updated;
+  }
+
   /** Marque une réservation comme « non présentée ». */
   async markAsNoShow(id: string): Promise<Reservation> {
     return this.update(id, {
@@ -129,5 +208,19 @@ export class ReservationService extends BaseCrudService<
   private generateConfirmationCode(): string {
     const suffix = randomBytes(3).toString('hex').toUpperCase();
     return `RSV-${suffix}`;
+  }
+
+  private ownedReservationFilter(
+    id: string,
+    guestId: string,
+  ): Record<string, unknown> {
+    if (!Types.ObjectId.isValid(id) || !Types.ObjectId.isValid(guestId)) {
+      throw new NotFoundException('Réservation introuvable');
+    }
+    return {
+      _id: new Types.ObjectId(id),
+      guest_id: new Types.ObjectId(guestId),
+      is_deleted: { $ne: true },
+    };
   }
 }

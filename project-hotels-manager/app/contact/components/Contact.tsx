@@ -1,15 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, ChangeEvent, FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { contactSchema, type ContactFormValues } from "@/lib/validation";
+import { sendContactMessage } from "@/services/contact.service";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "primeicons/primeicons.css";
-
-interface FormData {
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-}
 
 interface ContactInfo {
   id: number;
@@ -19,17 +16,20 @@ interface ContactInfo {
 }
 
 export default function Contact() {
-  const [formData, setFormData] = useState<FormData>({
-    name: "",
-    email: "",
-    subject: "",
-    message: "",
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: { name: "", email: "", subject: "", message: "" },
   });
 
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(
     null,
   );
+  const [statusMessage, setStatusMessage] = useState("");
   const contactRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Fonction utilitaire pour définir les refs
@@ -57,32 +57,22 @@ export default function Contact() {
     return () => observer.disconnect();
   }, []);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.id]: e.target.value,
-    });
-  };
-
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const onSubmit = async (values: ContactFormValues) => {
     setSubmitStatus(null);
-
-    // Simulation d'envoi (remplacez par votre logique API)
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Form submitted:", formData);
+      const result = await sendContactMessage(values);
+      setStatusMessage(result.message);
       setSubmitStatus("success");
-      setFormData({ name: "", email: "", subject: "", message: "" });
+      reset();
       setTimeout(() => setSubmitStatus(null), 5000);
     } catch (error) {
+      setStatusMessage(
+        error instanceof Error
+          ? error.message
+          : "Une erreur est survenue. Veuillez réessayer.",
+      );
       setSubmitStatus("error");
       setTimeout(() => setSubmitStatus(null), 5000);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -186,62 +176,74 @@ export default function Contact() {
                 .
               </p>
 
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit(onSubmit)} noValidate>
                 <div className="row g-3">
                   <div className="col-md-6">
                     <div className="form-floating">
                       <input
                         type="text"
-                        className="form-control"
+                        className={`form-control ${errors.name ? "is-invalid" : ""}`}
                         id="name"
                         placeholder="Your Name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        required
+                        {...register("name")}
                       />
                       <label htmlFor="name">Your Name</label>
+                      {errors.name && (
+                        <div className="invalid-feedback">
+                          {errors.name.message}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-md-6">
                     <div className="form-floating">
                       <input
                         type="email"
-                        className="form-control"
+                        className={`form-control ${errors.email ? "is-invalid" : ""}`}
                         id="email"
                         placeholder="Your Email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
+                        {...register("email")}
                       />
                       <label htmlFor="email">Your Email</label>
+                      {errors.email && (
+                        <div className="invalid-feedback">
+                          {errors.email.message}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-12">
                     <div className="form-floating">
                       <input
                         type="text"
-                        className="form-control"
+                        className={`form-control ${errors.subject ? "is-invalid" : ""}`}
                         id="subject"
                         placeholder="Subject"
-                        value={formData.subject}
-                        onChange={handleChange}
-                        required
+                        {...register("subject")}
                       />
                       <label htmlFor="subject">Subject</label>
+                      {errors.subject && (
+                        <div className="invalid-feedback">
+                          {errors.subject.message}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-12">
                     <div className="form-floating">
                       <textarea
-                        className="form-control"
+                        className={`form-control ${errors.message ? "is-invalid" : ""}`}
                         placeholder="Leave a message here"
                         id="message"
                         style={{ height: "150px" }}
-                        value={formData.message}
-                        onChange={handleChange}
-                        required
+                        {...register("message")}
                       ></textarea>
                       <label htmlFor="message">Message</label>
+                      {errors.message && (
+                        <div className="invalid-feedback">
+                          {errors.message.message}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="col-12">
@@ -268,14 +270,10 @@ export default function Contact() {
 
               {/* Message de statut */}
               {submitStatus === "success" && (
-                <div className="alert alert-success mt-3">
-                  Message sent successfully! We'll get back to you soon.
-                </div>
+                <div className="alert alert-success mt-3">{statusMessage}</div>
               )}
               {submitStatus === "error" && (
-                <div className="alert alert-danger mt-3">
-                  Something went wrong. Please try again later.
-                </div>
+                <div className="alert alert-danger mt-3">{statusMessage}</div>
               )}
             </div>
           </div>

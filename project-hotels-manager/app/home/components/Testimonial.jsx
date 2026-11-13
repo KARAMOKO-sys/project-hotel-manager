@@ -1,50 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTestimonials } from "@/hooks/useContent";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "primeicons/primeicons.css";
 
 export default function Testimonial() {
+  const { testimonials, loading, error } = useTestimonials();
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  const testimonials = [
-    {
-      id: 1,
-      name: "John Doe",
-      profession: "Homeowner",
-      image: "/img/testimonial-1.jpg",
-      text: "Tempor stet labore dolor clita stet diam amet ipsum dolor duo ipsum rebum stet dolor amet diam stet. Est stet ea lorem amet est kasd kasd erat eos",
-    },
-    {
-      id: 2,
-      name: "Jane Smith",
-      profession: "Investor",
-      image: "/img/testimonial-2.jpg",
-      text: "Tempor stet labore dolor clita stet diam amet ipsum dolor duo ipsum rebum stet dolor amet diam stet. Est stet ea lorem amet est kasd kasd erat eos",
-    },
-    {
-      id: 3,
-      name: "Michael Brown",
-      profession: "Property Developer",
-      image: "/img/testimonial-3.jpg",
-      text: "Tempor stet labore dolor clita stet diam amet ipsum dolor duo ipsum rebum stet dolor amet diam stet. Est stet ea lorem amet est kasd kasd erat eos",
-    },
-    {
-      id: 4,
-      name: "Emily Davis",
-      profession: "Real Estate Agent",
-      image: "/img/testimonial-4.jpg",
-      text: "Tempor stet labore dolor clita stet diam amet ipsum dolor duo ipsum rebum stet dolor amet diam stet. Est stet ea lorem amet est kasd kasd erat eos",
-    },
-  ];
-
   useEffect(() => {
+    if (testimonials.length === 0) return;
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length);
     }, 5000);
 
     return () => clearInterval(timer);
   }, [testimonials.length]);
+
+  if (loading || error || testimonials.length === 0) {
+    return (
+      <div className="container-xxl py-5 text-center">
+        {loading ? (
+          <div className="spinner-border text-success" role="status"></div>
+        ) : (
+          <p className="text-muted">{error ?? "Aucun témoignage pour le moment."}</p>
+        )}
+      </div>
+    );
+  }
+
+  const current = testimonials[currentIndex % testimonials.length];
 
   const nextSlide = () => {
     setCurrentIndex((prevIndex) => (prevIndex + 1) % testimonials.length);
@@ -83,13 +69,13 @@ export default function Testimonial() {
               <div className="testimonial-item bg-light rounded p-3">
                 <div className="bg-white border rounded p-4">
                   <p className="mb-4 fst-italic text-muted">
-                    "{testimonials[currentIndex].text}"
+                    &ldquo;{current.text}&rdquo;
                   </p>
                   <div className="d-flex align-items-center">
                     <img
                       className="img-fluid flex-shrink-0 rounded-circle"
-                      src={testimonials[currentIndex].image}
-                      alt={testimonials[currentIndex].name}
+                      src={current.image}
+                      alt={current.name}
                       style={{
                         width: "60px",
                         height: "60px",
@@ -98,10 +84,10 @@ export default function Testimonial() {
                     />
                     <div className="ps-3">
                       <h6 className="fw-bold mb-1">
-                        {testimonials[currentIndex].name}
+                        {current.name}
                       </h6>
                       <small className="text-muted">
-                        {testimonials[currentIndex].profession}
+                        {current.profession}
                       </small>
                     </div>
                   </div>

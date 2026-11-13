@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * Routes qui nécessitent une session authentifiée.
- * Le flux de connexion n'étant pas encore branché, cette liste sert de
- * socle : dès qu'un utilisateur se connecte, un token est déposé dans le
- * cookie `makaan_access_token` et ces routes deviennent accessibles.
+ * Les routes de gestion sont protégées par le cookie de session partagé avec
+ * le client API. La page de connexion du backoffice reste publique.
  */
-const PROTECTED_ROUTES = ["/dashboard", "/account", "/appointment"];
+const PROTECTED_ROUTES = [
+  "/dashboard",
+  "/account",
+  "/appointment",
+  "/backoffice",
+];
 
 /**
  * Middleware d'authentification : redirige les visiteurs non authentifiés
@@ -16,14 +20,17 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get("makaan_access_token")?.value;
   const { pathname } = request.nextUrl;
 
-  const isProtected = PROTECTED_ROUTES.some((route) =>
-    pathname.startsWith(route),
-  );
+  const isBackofficeLogin = pathname === "/backoffice/login";
+  const isProtected =
+    !isBackofficeLogin &&
+    PROTECTED_ROUTES.some((route) => pathname.startsWith(route));
 
   if (isProtected && !token) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
-    url.search = "?auth=required";
+    url.pathname = pathname.startsWith("/backoffice")
+      ? "/backoffice/login"
+      : "/";
+    url.search = pathname.startsWith("/backoffice") ? "" : "?auth=required";
     return NextResponse.redirect(url);
   }
 

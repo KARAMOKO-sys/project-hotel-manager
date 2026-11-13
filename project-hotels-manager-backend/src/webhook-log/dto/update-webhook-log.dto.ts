@@ -1,4 +1,15 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType, PickType } from '@nestjs/mapped-types';
 import { CreateWebhookLogDto } from './create-webhook-log.dto';
 
-export class UpdateWebhookLogDto extends PartialType(CreateWebhookLogDto) {}
+/**
+ * La charge utile, la signature et le statut sont immuables via la mise à
+ * jour générique (utiliser les routes de traitement dédiées).
+ */
+export class UpdateWebhookLogDto extends PartialType(
+  PickType(CreateWebhookLogDto, [
+    'property_id',
+    'related_entity_type',
+    'related_entity_id',
+    'notes',
+  ] as const),
+) {}

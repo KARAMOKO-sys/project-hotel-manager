@@ -1,4 +1,5 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateAuditLogDto } from './create-audit-log.dto';
-
-export class UpdateAuditLogDto extends PartialType(CreateAuditLogDto) {}
+/**
+ * Le journal d'audit est en écriture seule : aucune mise à jour n'est
+ * autorisée. Ce DTO vide n'existe que pour typer `BaseCrudService`.
+ */
+export class UpdateAuditLogDto {}

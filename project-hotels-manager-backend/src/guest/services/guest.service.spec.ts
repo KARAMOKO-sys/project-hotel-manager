@@ -28,6 +28,7 @@ describe('GuestService', () => {
     const ModelMock: any = function (data: any) {
       const doc = { ...guest, ...data };
       doc.save = jest.fn().mockResolvedValue(doc);
+      doc.toObject = () => ({ ...data, password_hash: 'hashed' });
       return doc;
     };
     ModelMock.findById = jest
@@ -69,6 +70,7 @@ describe('GuestService', () => {
     } as any);
     expect(result.email).toBe('new@example.com');
     expect(guest.setPassword).toHaveBeenCalledWith('secret123');
+    expect(result).not.toHaveProperty('password_hash');
   });
 
   it('should find a guest by email', async () => {

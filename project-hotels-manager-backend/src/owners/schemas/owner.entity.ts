@@ -1,6 +1,6 @@
 // src/owner/schemas/owner.schema.ts
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document, Types, SchemaTypes } from 'mongoose';
 import { User } from '../../base-entities/user.abstract';
 
 export type OwnerDocument = Owner & Document;
@@ -282,14 +282,14 @@ export class Owner extends User {
   verified_at?: Date;
 
   @Prop({
-    type: Types.ObjectId,
+    type: SchemaTypes.ObjectId,
     ref: 'User',
     required: false,
   })
   verified_by?: Types.ObjectId;
 
   @Prop({
-    type: [Types.ObjectId],
+    type: [SchemaTypes.ObjectId],
     ref: 'Property',
     default: [],
   })

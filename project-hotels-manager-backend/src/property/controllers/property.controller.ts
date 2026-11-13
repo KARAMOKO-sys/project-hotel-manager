@@ -12,6 +12,7 @@ import { PropertyService } from '../services/property.service';
 import { CreatePropertyDto } from '../dto/create-property.dto';
 import { UpdatePropertyDto } from '../dto/update-property.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
+import { PropertyQueryDto } from '../dto/property-query.dto';
 import { IdParamDto } from '../../common/dto/id-param.dto';
 
 @Controller('properties')
@@ -24,8 +25,18 @@ export class PropertyController {
   }
 
   @Get()
-  findAll(@Query() query: PaginationQueryDto) {
-    return this.propertyService.findAll(query);
+  findAll(@Query() query: PropertyQueryDto) {
+    return this.propertyService.findFiltered(query);
+  }
+
+  @Get('stats/types')
+  countByType() {
+    return this.propertyService.countByType();
+  }
+
+  @Get('cities')
+  findCities() {
+    return this.propertyService.findCities();
   }
 
   @Get('organization/:organizationId')

@@ -14,7 +14,7 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3001](http://localhost:3001) with your browser to see the result. The backend should be running on port `3000`.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
@@ -34,3 +34,24 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Backoffice et personnalisation du site
+
+Le backoffice est disponible sur `/backoffice`. Il nécessite un compte
+administrateur du backend et propose une vue d’ensemble ainsi qu’un catalogue
+de gestion relié aux modules de l’API. Les enregistrements sont édités au
+format JSON conforme aux DTO du backend ; les opérations non autorisées restent
+refusées par les rôles et permissions de l’API.
+
+La page `/backoffice/site` permet au super-administrateur de modifier l’identité
+du site, son thème, les contenus de la bannière et des sections de présentation,
+ainsi que l’affichage des sections de la page d’accueil. Les changements sont
+persistés dans la collection MongoDB `site_configs` du backend. La lecture de
+`GET /api/site-config` est publique ; la mise à jour via
+`PATCH /api/site-config` nécessite le rôle `super_admin`.
+
+Lancer le backend sur le port `3000`, puis le frontend avec `npm run dev` (port
+`3001`). Si l’API utilise une autre adresse, définir
+`NEXT_PUBLIC_BACKEND_API_URL` (par exemple `http://localhost:3000/api`).
+L’interface du backoffice et les pages publiques s’adaptent aux écrans mobiles,
+tablettes et ordinateurs.

@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 import { Button } from "primereact/button";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "primeicons/primeicons.css";
+import { useSiteConfig } from "@/app/shared/contexts/SiteConfigContext";
+import Image from "next/image";
 
 interface Feature {
   id: number;
@@ -12,6 +14,7 @@ interface Feature {
 }
 
 export default function AboutHome() {
+  const { config } = useSiteConfig();
   const aboutRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Fonction utilitaire pour définir les refs
@@ -69,10 +72,13 @@ export default function AboutHome() {
             ref={setRef(0)}
           >
             <div className="about-img position-relative overflow-hidden p-5 pe-0">
-              <img
+              <Image
                 className="img-fluid w-100 rounded-4"
-                src="/img/about.jpg"
+                src={config.about.imageUrl}
                 alt="About Us"
+                width={800}
+                height={600}
+                unoptimized
                 style={{ objectFit: "cover" }}
               />
             </div>
@@ -85,12 +91,10 @@ export default function AboutHome() {
             ref={setRef(1)}
           >
             <h1 className="mb-4 display-6">
-              #1 Place To Find The Perfect Property
+              {config.about.title}
             </h1>
             <p className="mb-4 text-muted">
-              Tempor erat elitr rebum at clita. Diam dolor diam ipsum sit. Aliqu
-              diam amet diam et eos. Clita erat ipsum et lorem et sit, sed stet
-              lorem sit clita duo justo magna dolore erat amet
+              {config.about.description}
             </p>
 
             {/* Liste des fonctionnalités */}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Button } from "primereact/button";
 import { Carousel } from "primereact/carousel";
+import Image from "next/image";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "primeicons/primeicons.css";
 import "bootstrap/dist/css/bootstrap.min.css";
+import { useSiteConfig } from "@/app/shared/contexts/SiteConfigContext";
 
 interface CarouselImage {
   id: number;
@@ -15,24 +16,23 @@ interface CarouselImage {
 }
 
 export default function Header() {
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
+  const { config } = useSiteConfig();
 
   const images: CarouselImage[] = [
-    { id: 1, src: "/img/carousel-1.jpg", alt: "Property 1" },
+    { id: 1, src: config.hero.imageUrl, alt: config.hero.title },
     { id: 2, src: "/img/carousel-2.jpg", alt: "Property 2" },
   ];
 
   const carouselItemTemplate = (item: CarouselImage) => {
     return (
       <div className="position-relative" style={{ height: "550px" }}>
-        <img
+        <Image
           className="img-fluid w-100 h-100"
           src={item.src}
           alt={item.alt}
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
+          unoptimized
           style={{ objectFit: "cover" }}
         />
         <div
@@ -53,26 +53,24 @@ export default function Header() {
           {/* Texte à gauche */}
           <div className="col-lg-6">
             <div
-              className={`header-content ${isVisible ? "fade-in-left" : ""}`}
+              className="header-content fade-in-left"
             >
               <div className="mb-4">
                 <span className="welcome-badge">
                   <i className="pi pi-home me-2"></i>
-                  Welcome to Makaan
+                  {config.hero.eyebrow}
                 </span>
               </div>
               <h1 className="display-5 mb-4">
-                Find A <span className="text-gradient">Perfect Home</span> To
-                Live With Your Family
+                {config.hero.title}{" "}
+                <span className="text-gradient">{config.hero.highlight}</span>
               </h1>
               <p className="mb-4 pb-2 text-muted fs-5">
-                Vero elitr justo clita lorem. Ipsum dolor at sed stet sit diam
-                no. Kasd rebum ipsum et diam justo clita et kasd rebum sea
-                elitr.
+                {config.hero.description}
               </p>
               <div className="d-flex flex-wrap gap-3 mb-5">
                 <Button
-                  label="Get Started"
+                  label={config.hero.ctaLabel}
                   icon="pi pi-arrow-right"
                   iconPos="right"
                   className="btn-get-started"
@@ -120,7 +118,7 @@ export default function Header() {
           {/* Image/Carrousel à droite */}
           <div className="col-lg-6">
             <div
-              className={`carousel-wrapper ${isVisible ? "fade-in-right" : ""}`}
+              className="carousel-wrapper fade-in-right"
             >
               <Carousel
                 value={images}

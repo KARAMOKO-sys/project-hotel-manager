@@ -2,17 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePropertyTypeCounts } from "@/hooks/useProperties";
+import { PROPERTY_TYPE_META } from "@/lib/property-types";
 import "bootstrap/dist/css/bootstrap.min.css";
 
-interface Category {
-  id: number;
-  name: string;
-  icon: string;
-  properties: number;
-  delay: number;
-}
-
 export default function Category() {
+  const { typeCounts, loading, error } = usePropertyTypeCounts();
   const categoryRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Fonction utilitaire pour définir les refs
@@ -39,66 +34,7 @@ export default function Category() {
     });
 
     return () => observer.disconnect();
-  }, []);
-
-  const categories: Category[] = [
-    {
-      id: 1,
-      name: "Apartment",
-      icon: "/img/icon-apartment.png",
-      properties: 123,
-      delay: 100,
-    },
-    {
-      id: 2,
-      name: "Villa",
-      icon: "/img/icon-villa.png",
-      properties: 123,
-      delay: 300,
-    },
-    {
-      id: 3,
-      name: "Home",
-      icon: "/img/icon-house.png",
-      properties: 123,
-      delay: 500,
-    },
-    {
-      id: 4,
-      name: "Office",
-      icon: "/img/icon-housing.png",
-      properties: 123,
-      delay: 700,
-    },
-    {
-      id: 5,
-      name: "Building",
-      icon: "/img/icon-building.png",
-      properties: 123,
-      delay: 100,
-    },
-    {
-      id: 6,
-      name: "Townhouse",
-      icon: "/img/icon-neighborhood.png",
-      properties: 123,
-      delay: 300,
-    },
-    {
-      id: 7,
-      name: "Shop",
-      icon: "/img/icon-condominium.png",
-      properties: 123,
-      delay: 500,
-    },
-    {
-      id: 8,
-      name: "Garage",
-      icon: "/img/icon-luxury.png",
-      properties: 123,
-      delay: 700,
-    },
-  ];
+  }, [typeCounts]);
 
   return (
     <div className="container-xxl py-5">
@@ -113,31 +49,43 @@ export default function Category() {
           </p>
         </div>
 
+        {loading && (
+          <div className="text-center py-4">
+            <div className="spinner-border text-success" role="status"></div>
+          </div>
+        )}
+        {error && <p className="text-center text-danger">{error}</p>}
+        {!loading && !error && typeCounts.length === 0 && (
+          <p className="text-center text-muted">
+            Aucune propriété disponible pour le moment.
+          </p>
+        )}
+
         {/* Categories Grid */}
         <div className="row g-4">
-          {categories.map((category, index) => (
+          {typeCounts.map(({ type, count }, index) => (
             <div
-              key={category.id}
+              key={type}
               ref={setRef(index)}
               className="col-lg-3 col-sm-6 wow"
-              style={{ animationDelay: `${category.delay}ms` }}
+              style={{ animationDelay: `${(index % 4) * 200 + 100}ms` }}
             >
               <Link
-                href={`/property-type/${category.name.toLowerCase()}`}
+                href={`/properties?type=${type}`}
                 className="cat-item d-block bg-light text-center rounded p-3 text-decoration-none"
               >
                 <div className="rounded p-4">
                   <div className="icon mb-3">
                     <img
                       className="img-fluid"
-                      src={category.icon}
-                      alt={category.name}
+                      src={PROPERTY_TYPE_META[type].icon}
+                      alt={PROPERTY_TYPE_META[type].label}
                       style={{ width: "60px", height: "60px" }}
                     />
                   </div>
-                  <h6 className="mb-2">{category.name}</h6>
+                  <h6 className="mb-2">{PROPERTY_TYPE_META[type].label}</h6>
                   <span className="text-muted">
-                    {category.properties} Properties
+                    {count} {count > 1 ? "propriétés" : "propriété"}
                   </span>
                 </div>
               </Link>

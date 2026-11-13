@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { AuditableEntity } from '../../base-entities/embeddables/auditable.entity';
 import {
   MoneyEmbeddable,
@@ -13,7 +13,7 @@ export type RoomTypeDocument = HydratedDocument<RoomType>;
   collection: 'room_types',
 })
 export class RoomType extends AuditableEntity {
-  @Prop({ type: Types.ObjectId, ref: 'Property', required: true, index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Property', required: true, index: true })
   property_id!: Types.ObjectId;
 
   @Prop({

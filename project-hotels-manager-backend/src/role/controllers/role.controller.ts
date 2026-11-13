@@ -10,7 +10,6 @@ import {
   Query,
   HttpStatus,
   HttpCode,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -28,27 +27,26 @@ import {
   PermissionCheckResponseDto,
 } from '../dto/permission.dto';
 import { RoleResponseDto } from '../dto/role-response.dto';
-// IMPORTER LE TYPE ROLE
 import { Role } from '../schemas/role.schema';
-
-// COMMENTAIRES TEMPORAIRES - À décommenter quand les fichiers d'auth existeront
-// import { AuthGuard } from '../../auth/guards/auth.guard';
-// import { RolesGuard } from '../../auth/guards/roles.guard';
-// import { Roles } from '../../auth/decorators/roles.decorator';
+import { Roles } from '../../auth/decorators/roles.decorator';
+import { Permissions } from '../../auth/decorators/permissions.decorator';
+import { PermissionCatalogService } from '../../auth/permissions/permission-catalog.service';
 
 @ApiTags('roles')
 @ApiBearerAuth()
 @Controller('roles')
-// @UseGuards(AuthGuard, RolesGuard) // À décommenter quand les guards existeront
+@Roles('super_admin')
 export class RoleController {
-  constructor(private readonly roleService: RoleService) {}
+  constructor(
+    private readonly roleService: RoleService,
+    private readonly permissionCatalogService: PermissionCatalogService,
+  ) {}
 
   // ========================
   // CRUD
   // ========================
 
   @Post()
-  // @Roles('super_admin', 'admin') // À décommenter quand le décorateur existera
   @ApiOperation({ summary: 'Créer un nouveau rôle' })
   @ApiResponse({
     status: 201,
@@ -80,6 +78,17 @@ export class RoleController {
   })
   findActive(): Promise<Role[]> {
     return this.roleService.findActive();
+  }
+
+  @Get('permissions/catalog')
+  @Permissions('roles:read')
+  @ApiOperation({ summary: 'Lister les permissions disponibles par module' })
+  @ApiResponse({
+    status: 200,
+    description: 'Catalogue des permissions disponibles',
+  })
+  getPermissionCatalog() {
+    return this.permissionCatalogService.list();
   }
 
   @Get('search')
@@ -141,7 +150,6 @@ export class RoleController {
   }
 
   @Patch(':id')
-  // @Roles('super_admin', 'admin') // À décommenter quand le décorateur existera
   @ApiOperation({ summary: 'Mettre à jour un rôle' })
   @ApiParam({ name: 'id', description: 'ID du rôle' })
   @ApiResponse({
@@ -158,7 +166,6 @@ export class RoleController {
   }
 
   @Post(':id/permissions')
-  // @Roles('super_admin', 'admin') // À décommenter quand le décorateur existera
   @ApiOperation({ summary: 'Ajouter une permission à un rôle' })
   @ApiParam({ name: 'id', description: 'ID du rôle' })
   @ApiResponse({
@@ -174,7 +181,6 @@ export class RoleController {
   }
 
   @Delete(':id/permissions')
-  // @Roles('super_admin', 'admin') // À décommenter quand le décorateur existera
   @ApiOperation({ summary: "Retirer une permission d'un rôle" })
   @ApiParam({ name: 'id', description: 'ID du rôle' })
   @ApiResponse({
@@ -205,7 +211,6 @@ export class RoleController {
   }
 
   @Delete(':id')
-  // @Roles('super_admin') // À décommenter quand le décorateur existera
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Supprimer un rôle' })
   @ApiParam({ name: 'id', description: 'ID du rôle' })
@@ -216,7 +221,6 @@ export class RoleController {
   }
 
   @Get('stats/overview')
-  // @Roles('super_admin', 'admin') // À décommenter quand le décorateur existera
   @ApiOperation({ summary: 'Obtenir les statistiques des rôles' })
   @ApiResponse({ status: 200, description: 'Statistiques' })
   getStats(): Promise<any> {

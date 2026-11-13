@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { AuditableEntity } from '../../base-entities/embeddables/auditable.entity';
 
 export type CampaignAnalyticDocument = HydratedDocument<CampaignAnalytic>;
@@ -19,10 +19,10 @@ export enum CampaignEvent {
   collection: 'campaign_analytics',
 })
 export class CampaignAnalytic extends AuditableEntity {
-  @Prop({ type: Types.ObjectId, ref: 'Campaign', required: true, index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Campaign', required: true, index: true })
   campaign_id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Guest', index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Guest', index: true })
   guest_id?: Types.ObjectId;
 
   @Prop({

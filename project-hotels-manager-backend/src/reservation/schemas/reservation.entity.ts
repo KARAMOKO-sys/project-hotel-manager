@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Types, SchemaTypes } from 'mongoose';
 import { AuditableEntity } from '../../base-entities/embeddables/auditable.entity';
 import {
   MoneyEmbeddable,
@@ -35,13 +35,13 @@ export class Reservation extends AuditableEntity {
   })
   confirmation_code!: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Property', required: true, index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Property', required: true, index: true })
   property_id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'Guest', required: true, index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Guest', required: true, index: true })
   guest_id!: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: 'RoomType', index: true })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'RoomType', index: true })
   room_type_id?: Types.ObjectId;
 
   @Prop({ type: Date, required: true })

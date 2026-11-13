@@ -67,6 +67,36 @@ définis dans `AuditableEntity` (`src/base-entities/embeddables/auditable.entity
 | `campaign`     | `/api/campaigns`     | CRUD, programmation, annulation, envoi, statistiques |
 | `campaign-analytic` | `/api/campaign-analytics` | Suivi des ouvertures/clics/conversions, statistiques temps réel |
 
+## Contrôle d'accès et permissions
+
+Toutes les routes métier exigent un jeton d'accès et une permission au format
+`module:action` (`reservations:read`, `rooms:update`, etc.). Les actions CRUD
+sont déduites automatiquement de la méthode HTTP. Les routes métier spécifiques
+peuvent déclarer une permission précise avec `@Permissions(...)`. Les
+permissions d'un utilisateur sont résolues depuis ses rôles actifs à chaque
+requête ; une modification par un administrateur prend donc effet sans attendre
+le renouvellement du jeton. Le type de compte `super_admin` conserve l'accès
+complet. Les autres comptes sont refusés par défaut tant qu'un rôle actif
+n'accorde pas la permission requise ; configurez donc les permissions des rôles
+existants avant de remettre l'API métier à leurs utilisateurs.
+
+Le super administrateur peut consulter le catalogue dynamique des permissions
+avec `GET /api/roles/permissions/catalog`, créer ou modifier des rôles, puis
+attribuer les rôles avec `POST /api/user-roles`. Les permissions d'un rôle
+peuvent être modifiées dans `PATCH /api/roles/:id` ou via les routes
+`/api/roles/:id/permissions`. Les jokers `module:*` et `*` sont reconnus.
+Les routes publiques se limitent aux points d'entrée explicitement marqués
+`@Public()` (authentification, message de contact, inscription/désinscription
+newsletter et statut de l'API).
+
+Le check-in autonome utilise `PATCH /api/reservations/:id/self-check-in` et le
+check-out `PATCH /api/reservations/:id/self-check-out`. Ils sont réservés au
+client authentifié titulaire de la réservation ; le check-in n'est possible
+que pour une réservation confirmée pendant la période du séjour. Les rôles
+concernés doivent recevoir `reservations:self-check-in` et
+`reservations:self-check-out`. Ce parcours ne collecte ni ne stocke de pièce
+d'identité.
+
 ### Exemple d'endpoints
 
 ```

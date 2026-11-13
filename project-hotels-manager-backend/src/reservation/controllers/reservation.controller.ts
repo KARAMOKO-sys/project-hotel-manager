@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -13,6 +14,10 @@ import { CreateReservationDto } from '../dto/create-reservation.dto';
 import { UpdateReservationDto } from '../dto/update-reservation.dto';
 import { PaginationQueryDto } from '../../common/dto/pagination-query.dto';
 import { IdParamDto } from '../../common/dto/id-param.dto';
+import { CurrentUser } from '../../auth/decorators/current-user.decorator';
+import { Permissions } from '../../auth/decorators/permissions.decorator';
+import type { AuthenticatedUser } from '../../auth/interfaces/authenticated-user.interface';
+import { UserType } from '../../base-entities/enums/user-type.enum';
 
 @Controller('reservations')
 export class ReservationController {
@@ -93,6 +98,26 @@ export class ReservationController {
     return this.reservationService.checkOut(params.id);
   }
 
+  @Patch(':id/self-check-in')
+  @Permissions('reservations:self-check-in')
+  selfCheckIn(
+    @Param() params: IdParamDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    this.assertGuest(user);
+    return this.reservationService.selfCheckIn(params.id, user.sub);
+  }
+
+  @Patch(':id/self-check-out')
+  @Permissions('reservations:self-check-out')
+  selfCheckOut(
+    @Param() params: IdParamDto,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    this.assertGuest(user);
+    return this.reservationService.selfCheckOut(params.id, user.sub);
+  }
+
   @Patch(':id/no-show')
   markAsNoShow(@Param() params: IdParamDto) {
     return this.reservationService.markAsNoShow(params.id);
@@ -101,5 +126,13 @@ export class ReservationController {
   @Delete(':id')
   remove(@Param() params: IdParamDto) {
     return this.reservationService.remove(params.id);
+  }
+
+  private assertGuest(user: AuthenticatedUser): void {
+    if (user.user_type !== UserType.GUEST) {
+      throw new ForbiddenException(
+        'Le check-in autonome est réservé au client titulaire du séjour',
+      );
+    }
   }
 }

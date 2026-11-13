@@ -6,12 +6,12 @@ import "primeicons/primeicons.css";
 import "primereact/resources/themes/lara-light-blue/theme.css";
 import "primereact/resources/primereact.min.css";
 import "./globals.css";
-import { SpinnerProvider } from "./shared/contexts/SpinnerContext";
-import GlobalSpinner from "./shared/components/Spinner";
+import { Providers } from "./providers";
+import BootstrapClient from "./shared/components/BootstrapClient";
 
 export const metadata: Metadata = {
-  title: "Makaan - Real Estate",
-  description: "Find your perfect home",
+  title: "PleasantStay",
+  description: "Découvrez et gérez votre prochain séjour avec PleasantStay.",
 };
 
 export default function RootLayout({
@@ -22,10 +22,8 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body suppressHydrationWarning>
-        <SpinnerProvider>
-          <GlobalSpinner />
-          {children}
-        </SpinnerProvider>
+        <Providers>{children}</Providers>
+        <BootstrapClient />
       </body>
     </html>
   );
