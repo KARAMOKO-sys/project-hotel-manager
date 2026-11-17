@@ -55,3 +55,26 @@ Lancer le backend sur le port `3000`, puis le frontend avec `npm run dev` (port
 `NEXT_PUBLIC_BACKEND_API_URL` (par exemple `http://localhost:3000/api`).
 L’interface du backoffice et les pages publiques s’adaptent aux écrans mobiles,
 tablettes et ordinateurs.
+
+## Lancer toute la stack avec Docker
+
+Depuis la racine du dépôt (le dossier qui contient `docker-compose.yml`) :
+
+```bash
+docker compose up --build
+```
+
+Le frontend est accessible sur [http://localhost:3001](http://localhost:3001),
+l’application React/Vite sur [http://localhost:3002](http://localhost:3002),
+l’API sur [http://localhost:3000/api](http://localhost:3000/api) et Swagger sur
+[http://localhost:3000/api/docs](http://localhost:3000/api/docs). MongoDB écoute
+sur le port `27017` et ses données persistent dans le volume `mongo_data`.
+
+Les variables `NEXT_PUBLIC_API_URL` et `NEXT_PUBLIC_BACKEND_API_URL` sont
+intégrées au frontend lors de sa construction. Pour une autre adresse d’API,
+définissez-les avant `docker compose up --build`. La valeur `JWT_SECRET` par
+défaut est réservée au développement local ; définissez une valeur secrète
+forte dans l’environnement pour tout déploiement.
+
+Arrêter les conteneurs avec `docker compose down`. Pour supprimer aussi les
+données MongoDB locales, utilisez `docker compose down --volumes`.

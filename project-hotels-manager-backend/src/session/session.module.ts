@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { SessionService } from './services/session.service';
 import { SessionController } from './controllers/session.controller';
 import { Session, SessionSchema } from './schemas/session.entity';
+import { UserRoleModule } from '../user-role/user-role.module';
 
 /**
  * Module des sessions (refresh tokens).
@@ -13,6 +14,7 @@ import { Session, SessionSchema } from './schemas/session.entity';
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Session.name, schema: SessionSchema }]),
+    UserRoleModule,
   ],
   controllers: [SessionController],
   providers: [SessionService],

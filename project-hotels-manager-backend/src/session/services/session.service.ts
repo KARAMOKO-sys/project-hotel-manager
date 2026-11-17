@@ -53,7 +53,7 @@ export class SessionService {
 
   constructor(
     @InjectModel(Session.name)
-    private readonly sessionModel: Model<SessionDocument>,
+    private readonly sessionModel: Model<Session>,
     private readonly configService: ConfigService,
   ) {}
 

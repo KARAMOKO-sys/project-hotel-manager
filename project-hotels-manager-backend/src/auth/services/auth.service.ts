@@ -109,7 +109,7 @@ export class AuthService {
     private readonly totpService: TotpService,
     configService: ConfigService,
     @InjectModel(AuthToken.name)
-    private readonly authTokenModel: Model<AuthTokenDocument>,
+    private readonly authTokenModel: Model<AuthToken>,
     @Inject(AUTH_NOTIFIER) private readonly notifier: AuthNotifier,
   ) {
     this.config = buildAuthConfig(configService);

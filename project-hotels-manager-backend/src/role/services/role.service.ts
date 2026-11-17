@@ -19,7 +19,7 @@ import { PermissionCheckResponseDto } from '../dto/permission.dto';
 
 @Injectable()
 export class RoleService {
-  constructor(@InjectModel(Role.name) private roleModel: Model<RoleDocument>) {}
+  constructor(@InjectModel(Role.name) private roleModel: Model<Role>) {}
 
   // ========================
   // CRUD

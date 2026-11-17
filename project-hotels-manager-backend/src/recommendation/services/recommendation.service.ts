@@ -55,7 +55,7 @@ export class RecommendationService extends BaseCrudService<
 
   constructor(
     @InjectModel(Recommendation.name)
-    protected readonly recommendationModel: Model<RecommendationDocument>,
+    protected readonly recommendationModel: Model<Recommendation>,
   ) {
     super(recommendationModel, Recommendation.name);
   }

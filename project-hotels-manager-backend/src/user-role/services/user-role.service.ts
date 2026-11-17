@@ -83,9 +83,9 @@ export class UserRoleService {
 
   constructor(
     @InjectModel(UserRole.name)
-    private readonly userRoleModel: Model<UserRoleDocument>,
+    private readonly userRoleModel: Model<UserRole>,
     @InjectModel(Role.name)
-    private readonly roleModel: Model<RoleDocument>,
+    private readonly roleModel: Model<Role>,
   ) {}
 
   /**

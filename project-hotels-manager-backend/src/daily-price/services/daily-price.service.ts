@@ -67,7 +67,7 @@ export class DailyPriceService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(DailyPrice.name)
-    protected readonly dailyPriceModel: Model<DailyPriceDocument>,
+    protected readonly dailyPriceModel: Model<DailyPrice>,
   ) {
     super(dailyPriceModel, DailyPrice.name);
   }
@@ -151,7 +151,7 @@ export class DailyPriceService extends BaseCrudService<
 
     const result = await this.dailyPriceModel.bulkWrite(
       operations as unknown as Parameters<
-        Model<DailyPriceDocument>['bulkWrite']
+        Model<DailyPrice>['bulkWrite']
       >[0],
       { ordered: false },
     );

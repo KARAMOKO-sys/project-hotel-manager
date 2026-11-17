@@ -71,7 +71,7 @@ export class TaxRateService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(TaxRate.name)
-    protected readonly taxRateModel: Model<TaxRateDocument>,
+    protected readonly taxRateModel: Model<TaxRate>,
   ) {
     super(taxRateModel, TaxRate.name);
   }

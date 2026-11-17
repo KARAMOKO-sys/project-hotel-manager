@@ -46,7 +46,7 @@ export class PosItemService extends BaseCrudService<
 
   constructor(
     @InjectModel(PosItem.name)
-    protected readonly posItemModel: Model<PosItemDocument>,
+    protected readonly posItemModel: Model<PosItem>,
   ) {
     super(posItemModel, PosItem.name);
   }

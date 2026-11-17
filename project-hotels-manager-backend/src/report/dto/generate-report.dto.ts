@@ -1,4 +1,3 @@
-import { IntersectionType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -38,10 +37,18 @@ export class GenerateReportDto {
 }
 
 /** Création et génération en une seule requête. */
-export class CreateAndGenerateReportDto extends IntersectionType(
-  CreateReportDto,
-  GenerateReportDto,
-) {}
+export class CreateAndGenerateReportDto extends CreateReportDto {
+  @IsArray()
+  @ArrayMaxSize(50000)
+  @IsObject({ each: true })
+  rows!: Record<string, unknown>[];
+
+  // `columns` est hérité de CreateReportDto.
+
+  @IsOptional()
+  @IsMongoId()
+  generated_by?: string;
+}
 
 export class ScheduleReportDto {
   @IsEnum(ReportRecurrence)

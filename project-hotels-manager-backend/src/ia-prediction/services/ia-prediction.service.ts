@@ -52,7 +52,7 @@ export class IaPredictionService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(IaPrediction.name)
-    protected readonly predictionModel: Model<IaPredictionDocument>,
+    protected readonly predictionModel: Model<IaPrediction>,
   ) {
     super(predictionModel, IaPrediction.name);
   }

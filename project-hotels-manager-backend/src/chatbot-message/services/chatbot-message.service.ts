@@ -33,7 +33,7 @@ export class ChatbotMessageService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(ChatbotMessage.name)
-    protected readonly messageModel: Model<ChatbotMessageDocument>,
+    protected readonly messageModel: Model<ChatbotMessage>,
   ) {
     super(messageModel, ChatbotMessage.name);
   }

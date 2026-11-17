@@ -21,7 +21,7 @@ export class ReservationRoomService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(ReservationRoom.name)
-    protected readonly reservationRoomModel: Model<ReservationRoomDocument>,
+    protected readonly reservationRoomModel: Model<ReservationRoom>,
   ) {
     super(reservationRoomModel, ReservationRoom.name);
   }

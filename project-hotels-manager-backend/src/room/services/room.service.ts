@@ -19,7 +19,7 @@ export class RoomService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Room.name)
-    protected readonly roomModel: Model<RoomDocument>,
+    protected readonly roomModel: Model<Room>,
   ) {
     super(roomModel, Room.name);
   }

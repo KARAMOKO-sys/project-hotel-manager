@@ -67,7 +67,7 @@ export class KpiService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Kpi.name)
-    protected readonly kpiModel: Model<KpiDocument>,
+    protected readonly kpiModel: Model<Kpi>,
   ) {
     super(kpiModel, Kpi.name);
   }

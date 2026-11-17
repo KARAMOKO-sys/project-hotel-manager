@@ -21,7 +21,7 @@ export class GuestSegmentService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(GuestSegment.name)
-    protected readonly guestSegmentModel: Model<GuestSegmentDocument>,
+    protected readonly guestSegmentModel: Model<GuestSegment>,
   ) {
     super(guestSegmentModel, GuestSegment.name);
   }

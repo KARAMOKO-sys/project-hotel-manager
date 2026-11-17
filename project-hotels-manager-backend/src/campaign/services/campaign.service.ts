@@ -19,7 +19,7 @@ export class CampaignService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Campaign.name)
-    protected readonly campaignModel: Model<CampaignDocument>,
+    protected readonly campaignModel: Model<Campaign>,
   ) {
     super(campaignModel, Campaign.name);
   }

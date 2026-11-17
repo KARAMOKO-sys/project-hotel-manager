@@ -20,7 +20,7 @@ export class GuestPreferenceService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(GuestPreference.name)
-    protected readonly guestPreferenceModel: Model<GuestPreferenceDocument>,
+    protected readonly guestPreferenceModel: Model<GuestPreference>,
   ) {
     super(guestPreferenceModel, GuestPreference.name);
   }

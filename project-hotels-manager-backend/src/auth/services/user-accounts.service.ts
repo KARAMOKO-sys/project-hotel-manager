@@ -113,13 +113,13 @@ export class UserAccountsService {
 
     const results = await Promise.all(
       types.map(async (type) => {
-        let query = this.models
+        const query = this.models
           .get(type)!
           .findOne({ email: normalized, is_deleted: { $ne: true } });
-        if (options.withSecrets) {
-          query = query.select(SECRET_FIELDS);
-        }
-        const user = (await query.exec()) as AuthUserDocument | null;
+        const user = (await (options.withSecrets
+          ? query.select(SECRET_FIELDS)
+          : query
+        ).exec()) as AuthUserDocument | null;
         return user ? { type, user } : null;
       }),
     );
@@ -147,11 +147,11 @@ export class UserAccountsService {
     if (!model || !Types.ObjectId.isValid(id)) {
       return null;
     }
-    let query = model.findOne({ _id: id, is_deleted: { $ne: true } });
-    if (withSecrets) {
-      query = query.select(SECRET_FIELDS);
-    }
-    return (await query.exec()) as AuthUserDocument | null;
+    const query = model.findOne({ _id: id, is_deleted: { $ne: true } });
+    return (await (withSecrets
+      ? query.select(SECRET_FIELDS)
+      : query
+    ).exec()) as AuthUserDocument | null;
   }
 
   /** Met à jour un compte. */

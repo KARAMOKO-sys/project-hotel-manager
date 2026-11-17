@@ -30,7 +30,7 @@ export class ReservationService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Reservation.name)
-    protected readonly reservationModel: Model<ReservationDocument>,
+    protected readonly reservationModel: Model<Reservation>,
   ) {
     super(reservationModel, Reservation.name);
   }

@@ -20,9 +20,9 @@ export class RoomTypeService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(RoomType.name)
-    protected readonly roomTypeModel: Model<RoomTypeDocument>,
+    protected readonly roomTypeModel: Model<RoomType>,
     @InjectModel(Room.name)
-    private readonly roomModel: Model<RoomDocument>,
+    private readonly roomModel: Model<Room>,
   ) {
     super(roomTypeModel, RoomType.name);
   }

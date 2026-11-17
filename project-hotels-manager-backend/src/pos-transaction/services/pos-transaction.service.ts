@@ -79,7 +79,7 @@ export class PosTransactionService extends BaseCrudService<
 
   constructor(
     @InjectModel(PosTransaction.name)
-    protected readonly transactionModel: Model<PosTransactionDocument>,
+    protected readonly transactionModel: Model<PosTransaction>,
     private readonly posItemService: PosItemService,
   ) {
     super(transactionModel, PosTransaction.name);

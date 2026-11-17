@@ -82,9 +82,9 @@ export class ChatbotConversationService extends BaseCrudService<
 
   constructor(
     @InjectModel(ChatbotConversation.name)
-    protected readonly conversationModel: Model<ChatbotConversationDocument>,
+    protected readonly conversationModel: Model<ChatbotConversation>,
     @InjectModel(ChatbotMessage.name)
-    protected readonly messageModel: Model<ChatbotMessageDocument>,
+    protected readonly messageModel: Model<ChatbotMessage>,
   ) {
     super(conversationModel, ChatbotConversation.name);
     this.messageRepository = new BaseRepository<ChatbotMessage>(messageModel);

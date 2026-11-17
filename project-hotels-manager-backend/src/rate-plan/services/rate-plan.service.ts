@@ -63,7 +63,7 @@ export class RatePlanService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(RatePlan.name)
-    protected readonly ratePlanModel: Model<RatePlanDocument>,
+    protected readonly ratePlanModel: Model<RatePlan>,
   ) {
     super(ratePlanModel, RatePlan.name);
   }

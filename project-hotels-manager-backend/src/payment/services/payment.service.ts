@@ -21,7 +21,7 @@ export class PaymentService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Payment.name)
-    protected readonly paymentModel: Model<PaymentDocument>,
+    protected readonly paymentModel: Model<Payment>,
   ) {
     super(paymentModel, Payment.name);
   }

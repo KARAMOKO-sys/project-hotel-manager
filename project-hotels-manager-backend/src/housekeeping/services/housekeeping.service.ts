@@ -21,7 +21,7 @@ export class HousekeepingService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Housekeeping.name)
-    protected readonly housekeepingModel: Model<HousekeepingDocument>,
+    protected readonly housekeepingModel: Model<Housekeeping>,
   ) {
     super(housekeepingModel, Housekeeping.name);
   }

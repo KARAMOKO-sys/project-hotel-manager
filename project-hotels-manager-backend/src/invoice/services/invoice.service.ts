@@ -28,9 +28,9 @@ export class InvoiceService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Invoice.name)
-    protected readonly invoiceModel: Model<InvoiceDocument>,
+    protected readonly invoiceModel: Model<Invoice>,
     @InjectModel(InvoiceItem.name)
-    private readonly invoiceItemModel: Model<InvoiceItemDocument>,
+    private readonly invoiceItemModel: Model<InvoiceItem>,
   ) {
     super(invoiceModel, Invoice.name);
   }

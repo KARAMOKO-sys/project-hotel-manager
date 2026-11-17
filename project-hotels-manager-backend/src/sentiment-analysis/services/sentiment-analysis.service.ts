@@ -50,7 +50,7 @@ export class SentimentAnalysisService extends BaseCrudService<
 
   constructor(
     @InjectModel(SentimentAnalysis.name)
-    protected readonly sentimentModel: Model<SentimentAnalysisDocument>,
+    protected readonly sentimentModel: Model<SentimentAnalysis>,
   ) {
     super(sentimentModel, SentimentAnalysis.name);
   }

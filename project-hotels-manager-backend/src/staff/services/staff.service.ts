@@ -62,7 +62,7 @@ export class StaffService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Staff.name)
-    protected readonly staffModel: Model<StaffDocument>,
+    protected readonly staffModel: Model<Staff>,
   ) {
     super(staffModel, Staff.name);
   }

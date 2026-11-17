@@ -60,7 +60,7 @@ export class WaitlistService extends BaseCrudService<
 
   constructor(
     @InjectModel(Waitlist.name)
-    protected readonly waitlistModel: Model<WaitlistDocument>,
+    protected readonly waitlistModel: Model<Waitlist>,
   ) {
     super(waitlistModel, Waitlist.name);
   }

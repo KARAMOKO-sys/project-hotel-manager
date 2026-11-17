@@ -36,7 +36,7 @@ export class BlockedDateService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(BlockedDate.name)
-    protected readonly blockedDateModel: Model<BlockedDateDocument>,
+    protected readonly blockedDateModel: Model<BlockedDate>,
   ) {
     super(blockedDateModel, BlockedDate.name);
   }

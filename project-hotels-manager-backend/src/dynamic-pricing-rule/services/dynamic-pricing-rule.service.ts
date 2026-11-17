@@ -75,7 +75,7 @@ export class DynamicPricingRuleService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(DynamicPricingRule.name)
-    protected readonly ruleModel: Model<DynamicPricingRuleDocument>,
+    protected readonly ruleModel: Model<DynamicPricingRule>,
   ) {
     super(ruleModel, DynamicPricingRule.name);
   }

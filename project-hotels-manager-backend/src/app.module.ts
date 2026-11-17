@@ -187,8 +187,8 @@ import { RolesGuard } from './auth/guards/roles.guard';
     SiteConfigModule,
   ],
   providers: [
-    { provide: APP_GUARD, useExisting: JwtAuthGuard },
-    { provide: APP_GUARD, useExisting: RolesGuard },
+    { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AppModule {}

@@ -40,7 +40,7 @@ export class WebhookLogService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(WebhookLog.name)
-    protected readonly webhookLogModel: Model<WebhookLogDocument>,
+    protected readonly webhookLogModel: Model<WebhookLog>,
   ) {
     super(webhookLogModel, WebhookLog.name);
   }

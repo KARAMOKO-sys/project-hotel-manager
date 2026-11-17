@@ -17,7 +17,7 @@ export class NewsletterSubscriptionService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(NewsletterSubscription.name)
-    private readonly subscriptionModel: Model<NewsletterSubscriptionDocument>,
+    private readonly subscriptionModel: Model<NewsletterSubscription>,
   ) {
     super(subscriptionModel, NewsletterSubscription.name);
   }

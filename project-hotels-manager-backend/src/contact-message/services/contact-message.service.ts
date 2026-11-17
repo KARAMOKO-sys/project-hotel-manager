@@ -18,7 +18,7 @@ export class ContactMessageService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(ContactMessage.name)
-    model: Model<ContactMessageDocument>,
+    model: Model<ContactMessage>,
   ) {
     super(model, ContactMessage.name);
   }

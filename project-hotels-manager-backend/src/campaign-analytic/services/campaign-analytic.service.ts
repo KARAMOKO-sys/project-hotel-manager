@@ -21,7 +21,7 @@ export class CampaignAnalyticService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(CampaignAnalytic.name)
-    protected readonly campaignAnalyticModel: Model<CampaignAnalyticDocument>,
+    protected readonly campaignAnalyticModel: Model<CampaignAnalytic>,
   ) {
     super(campaignAnalyticModel, CampaignAnalytic.name);
   }

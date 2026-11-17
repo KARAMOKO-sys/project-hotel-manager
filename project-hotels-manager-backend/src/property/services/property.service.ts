@@ -43,11 +43,11 @@ export class PropertyService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Property.name)
-    protected readonly propertyModel: Model<PropertyDocument>,
+    protected readonly propertyModel: Model<Property>,
     @InjectModel(Room.name)
-    private readonly roomModel: Model<RoomDocument>,
+    private readonly roomModel: Model<Room>,
     @InjectModel(RoomType.name)
-    private readonly roomTypeModel: Model<RoomTypeDocument>,
+    private readonly roomTypeModel: Model<RoomType>,
   ) {
     super(propertyModel, Property.name);
   }

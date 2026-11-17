@@ -44,7 +44,7 @@ export class NotificationLogService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(NotificationLog.name)
-    protected readonly notificationLogModel: Model<NotificationLogDocument>,
+    protected readonly notificationLogModel: Model<NotificationLog>,
   ) {
     super(notificationLogModel, NotificationLog.name);
   }

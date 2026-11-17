@@ -52,7 +52,7 @@ export class ReportService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Report.name)
-    protected readonly reportModel: Model<ReportDocument>,
+    protected readonly reportModel: Model<Report>,
   ) {
     super(reportModel, Report.name);
   }

@@ -22,7 +22,7 @@ export class MaintenanceRequestService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(MaintenanceRequest.name)
-    protected readonly maintenanceRequestModel: Model<MaintenanceRequestDocument>,
+    protected readonly maintenanceRequestModel: Model<MaintenanceRequest>,
   ) {
     super(maintenanceRequestModel, MaintenanceRequest.name);
   }

@@ -34,7 +34,7 @@ export class AuditLogService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(AuditLog.name)
-    protected readonly auditLogModel: Model<AuditLogDocument>,
+    protected readonly auditLogModel: Model<AuditLog>,
   ) {
     super(auditLogModel, AuditLog.name);
   }

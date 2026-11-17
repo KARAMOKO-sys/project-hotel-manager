@@ -70,7 +70,7 @@ export class OtaConnectionService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(OtaConnection.name)
-    protected readonly otaConnectionModel: Model<OtaConnectionDocument>,
+    protected readonly otaConnectionModel: Model<OtaConnection>,
   ) {
     super(otaConnectionModel, OtaConnection.name);
   }

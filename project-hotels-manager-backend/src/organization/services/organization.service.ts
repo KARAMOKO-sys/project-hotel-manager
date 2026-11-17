@@ -22,7 +22,7 @@ export class OrganizationService extends BaseCrudService<
 > {
   constructor(
     @InjectModel(Organization.name)
-    protected readonly organizationModel: Model<OrganizationDocument>,
+    protected readonly organizationModel: Model<Organization>,
   ) {
     super(organizationModel, Organization.name);
   }
