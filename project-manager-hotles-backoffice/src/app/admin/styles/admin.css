@@ -1,0 +1,660 @@
+/* styles/admin.css
+   Styles globaux pour le backoffice PleasantStay Hotel Admin
+   Design cohérent avec le front office hôtelier
+*/
+
+/* ============================================
+   VARIABLES CSS
+   ============================================ */
+:root {
+    /* Couleurs principales */
+    --oskar-green: #22c55e;
+    --oskar-green-dark: #16a34a;
+    --oskar-green-light: #86efac;
+    --oskar-green-bg: rgba(34, 197, 94, 0.1);
+
+    /* Couleurs neutres */
+    --oskar-white: #ffffff;
+    --oskar-gray-50: #f8f9fa;
+    --oskar-gray-100: #f3f4f6;
+    --oskar-gray-200: #e5e7eb;
+    --oskar-gray-300: #d1d5db;
+    --oskar-gray-400: #9ca3af;
+    --oskar-gray-500: #6b7280;
+    --oskar-gray-600: #4b5563;
+    --oskar-gray-700: #374151;
+    --oskar-gray-800: #1f2937;
+    --oskar-gray-900: #111827;
+
+    /* Couleurs d'état */
+    --oskar-success: #22c55e;
+    --oskar-warning: #f59e0b;
+    --oskar-danger: #ef4444;
+    --oskar-info: #3b82f6;
+
+    /* Ombres */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md:
+        0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg:
+        0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl:
+        0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --shadow-green: 0 10px 25px rgba(34, 197, 94, 0.15);
+
+    /* Espacements */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+
+    /* Bordures */
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.5rem;
+    --radius-2xl: 2rem;
+    --radius-full: 9999px;
+
+    /* Transitions */
+    --transition-fast: 150ms;
+    --transition-base: 300ms;
+    --transition-slow: 500ms;
+}
+
+/* ============================================
+   LAYOUT PRINCIPAL
+   ============================================ */
+
+/* Layout Admin */
+.admin-layout {
+    display: flex;
+    min-height: 100vh;
+    background: var(--oskar-gray-50);
+}
+
+/* Contenu principal */
+.admin-main {
+    flex: 1;
+    min-width: 0;
+    margin-left: 280px;
+    transition: all var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 100vh;
+    background: var(--oskar-gray-50);
+}
+
+.admin-main.expanded {
+    margin-left: 80px;
+}
+
+/* Body du contenu */
+.admin-body {
+    padding: calc(80px + var(--spacing-xl)) var(--spacing-xl) var(--spacing-xl)
+        var(--spacing-xl);
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: calc(100vh - 80px);
+}
+
+/* ============================================
+   COMPOSANTS GLOBAUX
+   ============================================ */
+
+/* Cards */
+.card {
+    background: var(--oskar-white);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base) ease;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--oskar-gray-200);
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--oskar-gray-800);
+    margin: 0;
+}
+
+/* Boutons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-full);
+    font-weight: 500;
+    transition: all var(--transition-base) ease;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-primary {
+    background: var(--oskar-green);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--oskar-green-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-green);
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--oskar-green);
+    color: var(--oskar-green);
+}
+
+.btn-outline:hover {
+    background: var(--oskar-green);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Badges */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.badge-success {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--oskar-success);
+}
+
+.badge-warning {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--oskar-warning);
+}
+
+.badge-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--oskar-danger);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 40px, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes pulse {
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+}
+
+.fade-in {
+    animation: fadeIn var(--transition-base) ease forwards;
+}
+
+.fade-in-up {
+    animation: fadeInUp var(--transition-base) ease forwards;
+}
+
+.slide-in-left {
+    animation: slideInLeft var(--transition-base) ease forwards;
+}
+
+.slide-in-right {
+    animation: slideInRight var(--transition-base) ease forwards;
+}
+
+/* ============================================
+   LOADER / SPINNER
+   ============================================ */
+
+/* Spinner principal */
+.spinner-wrapper {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+}
+
+.spinner-circle,
+.spinner-circle-delayed {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-top-color: var(--oskar-green);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-circle-delayed {
+    border-top-color: var(--oskar-green-light);
+    animation: spin 1.2s linear infinite reverse;
+    opacity: 0.7;
+}
+
+/* Loader initial */
+.initial-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loader-wrapper {
+    text-align: center;
+}
+
+.loader-ring {
+    position: absolute;
+    width: 80px;
+    height: 80px;
+    border: 3px solid transparent;
+    border-radius: 50%;
+    animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+.loader-ring:nth-child(1) {
+    border-top-color: var(--oskar-green);
+    animation-delay: 0s;
+}
+
+.loader-ring:nth-child(2) {
+    border-right-color: var(--oskar-green-light);
+    animation-delay: 0.2s;
+}
+
+.loader-ring:nth-child(3) {
+    border-bottom-color: var(--oskar-green-dark);
+    animation-delay: 0.4s;
+}
+
+.loader-text {
+    margin-top: 100px;
+    color: var(--oskar-green);
+    font-weight: 500;
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+
+.table-container {
+    overflow-x: auto;
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    text-align: left;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--oskar-gray-50);
+    font-weight: 600;
+    color: var(--oskar-gray-700);
+    border-bottom: 1px solid var(--oskar-gray-200);
+}
+
+.admin-table td {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--oskar-gray-200);
+    color: var(--oskar-gray-600);
+}
+
+.admin-table tr:hover {
+    background: var(--oskar-gray-50);
+}
+
+/* ============================================
+   FORMULAIRES
+   ============================================ */
+
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+    color: var(--oskar-gray-700);
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.625rem var(--spacing-md);
+    border: 1px solid var(--oskar-gray-300);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base) ease;
+    font-size: 0.875rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--oskar-green);
+    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1);
+}
+
+.form-control::placeholder {
+    color: var(--oskar-gray-400);
+}
+
+/* ============================================
+   SCROLLBAR
+   ============================================ */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--oskar-gray-100);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--oskar-green);
+    border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--oskar-green-dark);
+}
+
+/* ============================================
+   UTILITAIRES
+   ============================================ */
+
+/* Texte */
+.text-success {
+    color: var(--oskar-success) !important;
+}
+.text-warning {
+    color: var(--oskar-warning) !important;
+}
+.text-danger {
+    color: var(--oskar-danger) !important;
+}
+.text-muted {
+    color: var(--oskar-gray-500) !important;
+}
+
+/* Fond */
+.bg-success {
+    background: var(--oskar-success) !important;
+}
+.bg-success-light {
+    background: rgba(34, 197, 94, 0.1) !important;
+}
+.bg-white {
+    background: var(--oskar-white) !important;
+}
+
+/* Bordures */
+.border-success {
+    border-color: var(--oskar-success) !important;
+}
+.border-light {
+    border-color: var(--oskar-gray-200) !important;
+}
+
+/* Ombres */
+.shadow-sm {
+    box-shadow: var(--shadow-sm) !important;
+}
+.shadow-md {
+    box-shadow: var(--shadow-md) !important;
+}
+.shadow-lg {
+    box-shadow: var(--shadow-lg) !important;
+}
+.shadow-green {
+    box-shadow: var(--shadow-green) !important;
+}
+
+/* Espacements */
+.m-0 {
+    margin: 0 !important;
+}
+.mt-1 {
+    margin-top: var(--spacing-xs) !important;
+}
+.mt-2 {
+    margin-top: var(--spacing-sm) !important;
+}
+.mt-3 {
+    margin-top: var(--spacing-md) !important;
+}
+.mt-4 {
+    margin-top: var(--spacing-lg) !important;
+}
+.mt-5 {
+    margin-top: var(--spacing-xl) !important;
+}
+
+.mb-1 {
+    margin-bottom: var(--spacing-xs) !important;
+}
+.mb-2 {
+    margin-bottom: var(--spacing-sm) !important;
+}
+.mb-3 {
+    margin-bottom: var(--spacing-md) !important;
+}
+.mb-4 {
+    margin-bottom: var(--spacing-lg) !important;
+}
+.mb-5 {
+    margin-bottom: var(--spacing-xl) !important;
+}
+
+.p-1 {
+    padding: var(--spacing-xs) !important;
+}
+.p-2 {
+    padding: var(--spacing-sm) !important;
+}
+.p-3 {
+    padding: var(--spacing-md) !important;
+}
+.p-4 {
+    padding: var(--spacing-lg) !important;
+}
+.p-5 {
+    padding: var(--spacing-xl) !important;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1200px) {
+    .admin-body {
+        max-width: 100%;
+        padding: calc(80px + var(--spacing-lg)) var(--spacing-lg)
+            var(--spacing-lg) var(--spacing-lg);
+    }
+}
+
+@media (max-width: 992px) {
+    .admin-main {
+        margin-left: 0;
+    }
+
+    .admin-main.expanded {
+        margin-left: 0;
+    }
+
+    .admin-body {
+        padding: calc(80px + var(--spacing-md)) var(--spacing-md)
+            var(--spacing-md) var(--spacing-md);
+    }
+}
+
+@media (max-width: 768px) {
+    :root {
+        --spacing-xl: 1.5rem;
+    }
+
+    .admin-body {
+        padding: calc(70px + var(--spacing-md)) var(--spacing-md)
+            var(--spacing-md) var(--spacing-md);
+    }
+
+    .card {
+        padding: var(--spacing-lg);
+    }
+
+    .table-container {
+        border-radius: var(--radius-lg);
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+}
+
+@media (max-width: 576px) {
+    :root {
+        --spacing-lg: 1rem;
+        --spacing-xl: 1.25rem;
+    }
+
+    .admin-body {
+        padding: calc(70px + var(--spacing-sm)) var(--spacing-sm)
+            var(--spacing-sm) var(--spacing-sm);
+    }
+
+    .card {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-lg);
+    }
+
+    .card-title {
+        font-size: 1rem;
+    }
+}
+
+/* ============================================
+   MODE SOMBRE (Optionnel)
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --oskar-white: #1f2937;
+        --oskar-gray-50: #111827;
+        --oskar-gray-100: #1f2937;
+        --oskar-gray-200: #374151;
+        --oskar-gray-300: #4b5563;
+        --oskar-gray-400: #6b7280;
+        --oskar-gray-500: #9ca3af;
+        --oskar-gray-600: #d1d5db;
+        --oskar-gray-700: #e5e7eb;
+        --oskar-gray-800: #f3f4f6;
+    }
+
+    body {
+        background: var(--oskar-gray-50);
+    }
+
+    .card,
+    .table-container {
+        background: var(--oskar-white);
+    }
+
+    .form-control {
+        background: var(--oskar-gray-100);
+        border-color: var(--oskar-gray-300);
+        color: var(--oskar-gray-700);
+    }
+}
