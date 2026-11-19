@@ -61,7 +61,7 @@ export default function Home() {
           animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
         }
         .loader-ring:nth-child(1) {
-          border-top-color: #22c55e;
+          border-top-color: var(--ps-primary);
           animation-delay: 0s;
         }
         .loader-ring:nth-child(2) {
@@ -69,12 +69,12 @@ export default function Home() {
           animation-delay: 0.2s;
         }
         .loader-ring:nth-child(3) {
-          border-bottom-color: #16a34a;
+          border-bottom-color: var(--ps-primary-hover);
           animation-delay: 0.4s;
         }
         .loader-text {
           margin-top: 100px;
-          color: #22c55e;
+          color: var(--ps-primary);
           font-weight: 500;
         }
         @keyframes spin {

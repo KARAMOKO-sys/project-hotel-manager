@@ -5,6 +5,17 @@ import { usePathname, useRouter } from "next/navigation";
 import { apiFetch, clearAuthSession, getAuthUser } from "@/lib/api";
 import { APP_NAME } from "@/lib/config";
 import { RESOURCES } from "@/lib/resources";
+import { EXTRA_PAGES } from "@/lib/erp-resources";
+import { entityId, useWorkspace } from "@/lib/workspace";
+
+const PAGE_TITLES: Record<string, string> = {
+  "/admin/dashboard": "Tableau de bord",
+  "/admin/apps": "Applications",
+  "/admin/my-activities": "Mes activités",
+  ...Object.fromEntries(
+    EXTRA_PAGES.map((page) => [`/admin/${page.key}`, page.title]),
+  ),
+};
 
 interface AdminHeaderProps {
   onMenuToggle: () => void;
@@ -21,6 +32,14 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [logoutError, setLogoutError] = useState<string | null>(null);
+  const {
+    organizations,
+    properties,
+    organizationId,
+    propertyId,
+    setOrganizationId,
+    setPropertyId,
+  } = useWorkspace();
 
   useEffect(() => {
     const timer = window.setTimeout(() => setUser(getAuthUser()), 0);
@@ -35,9 +54,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
   const currentResource = RESOURCES.find(
     (resource) => pathname === `/admin/${resource.key}`,
   );
-  const title =
-    currentResource?.title ??
-    (pathname === "/admin/dashboard" ? "Tableau de bord" : APP_NAME);
+  const title = currentResource?.title ?? PAGE_TITLES[pathname] ?? APP_NAME;
   const firstName = displayValue(user?.first_name);
   const lastName = displayValue(user?.last_name);
   const email = displayValue(user?.email);
@@ -108,6 +125,39 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           </button>
         </form>
 
+        <div className="header-workspace" aria-label="Espace de travail">
+          <label title="Établissement courant">
+            <i className="pi pi-sitemap" aria-hidden="true"></i>
+            <select
+              aria-label="Établissement courant"
+              value={organizationId}
+              onChange={(event) => setOrganizationId(event.target.value)}
+            >
+              {organizations.length === 0 && <option value="">Aucun établissement</option>}
+              {organizations.map((org) => (
+                <option key={entityId(org)} value={entityId(org)}>
+                  {org.name ?? org.code ?? entityId(org)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label title="Propriété courante">
+            <i className="pi pi-building" aria-hidden="true"></i>
+            <select
+              aria-label="Propriété courante"
+              value={propertyId}
+              onChange={(event) => setPropertyId(event.target.value)}
+            >
+              {properties.length === 0 && <option value="">Aucune propriété</option>}
+              {properties.map((item) => (
+                <option key={entityId(item)} value={entityId(item)}>
+                  {item.name ?? item.code ?? entityId(item)}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <div className="header-account">
           <div className="account-avatar" aria-hidden="true">
             {(name || "A").slice(0, 1).toLocaleUpperCase("fr")}
@@ -143,7 +193,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           min-height: 80px;
           padding: 0 1.5rem;
           border-bottom: 1px solid #e8eee9;
-          background: rgb(255 255 255 / 0.94);
+          background: color-mix(in srgb, var(--ps-header-bg) 94%, transparent);
           backdrop-filter: blur(16px);
           transition:
             left 0.25s ease,
@@ -161,7 +211,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
         .header-content {
           display: grid;
           min-height: 79px;
-          grid-template-columns: minmax(180px, 1fr) minmax(220px, 420px) auto;
+          grid-template-columns: minmax(160px, 1fr) minmax(180px, 360px) auto auto;
           align-items: center;
           gap: 1.25rem;
         }
@@ -182,7 +232,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           border: 1px solid #e5e7eb;
           border-radius: 12px;
           background: #fff;
-          color: #15803d;
+          color: var(--ps-primary-dark);
           font-size: 1rem;
         }
 
@@ -240,12 +290,40 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           place-items: center;
           border: 0;
           border-radius: 9px;
-          background: #16844a;
+          background: var(--ps-primary-dark);
           color: #fff;
         }
 
         .header-account {
           justify-content: flex-end;
+        }
+
+        .header-workspace {
+          display: flex;
+          min-width: 0;
+          flex-direction: column;
+          gap: 0.3rem;
+        }
+
+        .header-workspace label {
+          display: flex;
+          align-items: center;
+          gap: 0.4rem;
+          margin: 0;
+          color: var(--ps-primary-dark);
+          font-size: 0.75rem;
+        }
+
+        .header-workspace select {
+          width: 200px;
+          max-width: 100%;
+          height: 28px;
+          padding: 0 0.45rem;
+          border: 1px solid #e5eae6;
+          border-radius: 8px;
+          background: #f8faf8;
+          color: #25332a;
+          font-size: 0.76rem;
         }
 
         .account-avatar {
@@ -256,7 +334,7 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           place-items: center;
           border-radius: 13px;
           background: #e9f5ec;
-          color: #16844a;
+          color: var(--ps-primary-dark);
           font-size: 1rem;
           font-weight: 700;
         }
@@ -314,6 +392,16 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           box-shadow: 0 8px 24px rgb(15 23 42 / 0.1);
         }
 
+        @media (max-width: 1180px) {
+          .header-content {
+            grid-template-columns: minmax(160px, 1fr) auto auto;
+          }
+
+          .header-search {
+            display: none;
+          }
+        }
+
         @media (max-width: 992px) {
           .admin-header,
           .admin-main.expanded .admin-header {
@@ -332,8 +420,16 @@ export default function AdminHeader({ onMenuToggle }: AdminHeaderProps) {
           }
 
           .header-content {
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns: minmax(0, 1fr) auto auto;
             gap: 0.65rem;
+          }
+
+          .header-workspace select {
+            width: 130px;
+          }
+
+          .header-workspace i {
+            display: none;
           }
 
           .header-search {

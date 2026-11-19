@@ -1,60 +1,57 @@
 /* src/app/globals.css */
 
-/* === Couleurs personnalisées OSKAR === */
+/* === Thème paramétrable ===
+   Valeurs par défaut ; ThemeProvider (src/lib/theme.tsx) les remplace par
+   celles enregistrées dans Administration > Apparence. */
 :root {
-    --oskar-green: #22c55e; /* vert principal */
-    --oskar-green-hover: #16a34a; /* vert hover */
-    --oskar-sky-bg: #e8f5e9; /* ✅ vert ciel très pâle qui tire vers le blanc */
+    --ps-primary: #22c55e;
+    --ps-primary-hover: #16a34a;
+    --ps-primary-rgb: 34, 197, 94;
+    --ps-primary-dark: color-mix(in srgb, var(--ps-primary-hover) 80%, #000);
+    --ps-primary-darker: color-mix(in srgb, var(--ps-primary-hover) 62%, #000);
+    --ps-page-bg: #ffffff;
+    --ps-surface: #ffffff;
+    --ps-text: #1f2937;
+    --ps-sidebar-bg: #ffffff;
+    --ps-sidebar-text: #1f2937;
+    --ps-sidebar-muted: color-mix(in srgb, var(--ps-sidebar-text) 60%, transparent);
+    --ps-header-bg: #ffffff;
+    --ps-login-start: #0f5132;
+    --ps-login-end: #22a05b;
+
+    /* Anciens noms, conservés pour compatibilité. */
+    --oskar-green: var(--ps-primary);
+    --oskar-green-hover: var(--ps-primary-hover);
     --oskar-white: #ffffff;
     --oskar-dark: #1f2937;
-    --oskar-text: #374151;
+    --oskar-text: var(--ps-text);
     --oskar-text-muted: #6b7280;
+
+    color-scheme: light;
 }
 
-/* === Fond de page vert ciel très clair === */
+/* Fond de page blanc (paramétrable), quel que soit le mode du système. */
 body {
-    background-color: var(--oskar-sky-bg) !important;
+    background: var(--ps-page-bg);
+    color: var(--ps-text);
     transition: background-color 0.3s ease;
-    color: var(--oskar-text);
 }
 
-/* Alternative avec dégradé vert très clair */
-body {
-    background: linear-gradient(135deg, #f0fdf4 0%, #e8f5e9 100%);
-}
-
-/* === Bouton "Publier une Annonce" === */
 .btn-oskar {
-    background-color: var(--oskar-green);
-    border-color: var(--oskar-green);
+    background-color: var(--ps-primary);
+    border-color: var(--ps-primary);
     color: #fff;
     transition: all 0.2s ease;
 }
 
 .btn-oskar:hover {
-    background-color: var(--oskar-green-hover);
-    border-color: var(--oskar-green-hover);
+    background-color: var(--ps-primary-hover);
+    border-color: var(--ps-primary-hover);
     color: #fff;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+    box-shadow: 0 4px 12px rgba(var(--ps-primary-rgb), 0.2);
 }
 
 .btn-oskar:active {
     transform: translateY(0);
-}
-
-/* === Mode sombre === */
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #0f172a !important;
-        color: #f4f4f5;
-    }
-
-    .text-dark {
-        color: #f4f4f5 !important;
-    }
-
-    .text-muted {
-        color: #a1a1aa !important;
-    }
 }

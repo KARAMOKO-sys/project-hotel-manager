@@ -3,16 +3,21 @@
 // composant générique ResourcePage et la barre de navigation.
 // Les champs correspondent aux schémas Mongoose du backend.
 
+import type { Entity } from "./types";
+import { ERP_RESOURCES } from "./erp-resources";
+
 export type BadgeTone = "success" | "warning" | "danger" | "info" | "muted";
 
 export type ColumnFormat =
   | "text"
   | "name"
   | "date"
+  | "datetime"
   | "money"
   | "badge"
   | "boolean"
-  | "count";
+  | "count"
+  | "relation";
 
 export interface ResourceColumn {
   key: string;
@@ -22,29 +27,105 @@ export interface ResourceColumn {
   badgeMap?: Record<string, BadgeTone>;
   /** Tonalité utilisée quand aucune correspondance n'est trouvée. */
   badgeDefault?: BadgeTone;
+  /** Libellés affichés à la place des valeurs brutes (badges). */
+  labels?: Record<string, string>;
+  /** Format `relation` : liste à charger pour traduire l'identifiant. */
+  relationEndpoint?: string;
+  /** Format `relation` : champ(s) libellé (voir `optionLabel`). */
+  relationLabel?: string;
 }
+
+export type ResourceFieldType =
+  | "text"
+  | "email"
+  | "url"
+  | "password"
+  | "number"
+  | "date"
+  | "datetime"
+  | "time"
+  | "boolean"
+  | "select"
+  | "relation"
+  | "textarea"
+  /** Liste de chaînes saisie séparée par des virgules ou des retours à la ligne. */
+  | "list"
+  /** Objet / tableau JSON saisi dans une zone de texte. */
+  | "json"
+  /** Tableau de lignes (sous-formulaire défini par `lineFields`). */
+  | "lines";
 
 export interface ResourceField {
   key: string;
   label: string;
-  type:
-    | "text"
-    | "email"
-    | "url"
-    | "password"
-    | "number"
-    | "date"
-    | "boolean"
-    | "select";
+  type: ResourceFieldType;
   required?: boolean;
   createOnly?: boolean;
   min?: number;
   max?: number;
   minLength?: number;
   step?: number;
+  placeholder?: string;
+  /** Texte d'aide affiché sous le champ. */
+  help?: string;
   options?: Array<{ label: string; value: string }>;
+  /** Liste servant d'options (`select` / `relation`). */
   optionsEndpoint?: string;
+  /**
+   * Champ libellé des options. `a|b` : premier champ renseigné ;
+   * `a+b` : concaténation (ex. `code+name` → « 411 — Clients »).
+   */
   optionLabel?: string;
+  /** Champ valeur des options (par défaut `_id`). */
+  optionValue?: string;
+  /** Valeur par défaut à la création. */
+  defaultValue?: string | boolean;
+  /** Champs d'une ligne (type `lines`). */
+  lineFields?: ResourceField[];
+  /** Occupe toute la largeur du formulaire. */
+  fullWidth?: boolean;
+}
+
+export interface VisibleWhen {
+  key: string;
+  in: string[];
+}
+
+export interface ResourceRowAction {
+  label: string;
+  icon: string;
+  /** Chemin relatif : `post` → POST {endpoint}/{id}/post. */
+  endpoint: string;
+  method?: "post" | "patch";
+  /** Message de confirmation (français). */
+  confirm?: string;
+  visibleWhen?: VisibleWhen;
+  /**
+   * Corps envoyé. `prompt:<libellé>` demande une valeur texte envoyée dans
+   * `reason`.
+   */
+  body?: Record<string, unknown> | `prompt:${string}`;
+  /** Champs demandés dans une boîte de dialogue avant l'envoi. */
+  fields?: ResourceField[];
+  /** Corps calculé depuis la ligne ; une chaîne est un message d'erreur. */
+  buildBody?: (row: Entity) => Record<string, unknown> | string;
+  tone?: "danger" | "success";
+  /** Affiche la réponse du serveur (secret généré, résultat de test…). */
+  showResult?: boolean;
+  successMessage?: string;
+}
+
+export interface ResourceHeaderAction {
+  label: string;
+  icon: string;
+  /** Chemin absolu (ex. `/accounting/setup`). */
+  endpoint: string;
+  confirm?: string;
+  fields?: ResourceField[];
+  /** Ajoute `property_id` (propriété courante) au corps. */
+  includeProperty?: boolean;
+  showResult?: boolean;
+  successMessage?: string;
 }
 
 export interface ResourceConfig {
@@ -57,9 +138,30 @@ export interface ResourceConfig {
   searchPlaceholder?: string;
   fields: ResourceField[];
   deleteProtectedKey?: string;
+  /** Application ERP (clé du catalogue) requise pour afficher la ressource. */
+  app?: string;
+  /** Section du menu (par défaut « Hôtellerie »). */
+  group?: string;
+  /** Filtre les listes et préremplit `property_id` avec la propriété courante. */
+  propertyScoped?: boolean;
+  /** Filtre les listes et préremplit `organization_id` avec l'établissement courant. */
+  organizationScoped?: boolean;
+  rowActions?: ResourceRowAction[];
+  headerActions?: ResourceHeaderAction[];
+  /** Consultation seule (ni création, ni modification, ni suppression). */
+  readOnly?: boolean;
+  createEnabled?: boolean;
+  editEnabled?: boolean;
+  deleteEnabled?: boolean;
+  /** Modification autorisée seulement pour ces valeurs. */
+  editableWhen?: VisibleWhen;
+  /** Suppression autorisée seulement pour ces valeurs. */
+  deletableWhen?: VisibleWhen;
+  /** Texte d'aide affiché sous le titre. */
+  description?: string;
 }
 
-export const RESOURCES: ResourceConfig[] = [
+const HOTEL_RESOURCES: ResourceConfig[] = [
   {
     key: "organizations",
     endpoint: "/organizations",
@@ -657,6 +759,14 @@ export const RESOURCES: ResourceConfig[] = [
     ],
     deleteProtectedKey: "is_system",
   },
+];
+
+/** Section du menu des ressources hôtelières historiques. */
+export const HOTEL_GROUP = "Hôtellerie";
+
+export const RESOURCES: ResourceConfig[] = [
+  ...HOTEL_RESOURCES.map((resource) => ({ group: HOTEL_GROUP, ...resource })),
+  ...ERP_RESOURCES,
 ];
 
 export function getResource(key: string): ResourceConfig | undefined {

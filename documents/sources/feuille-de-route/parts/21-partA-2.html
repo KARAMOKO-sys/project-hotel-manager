@@ -1,0 +1,189 @@
+
+  <h2 id="ax4"><span class="n">4</span>Back-office et pilotage<small>Direction, revenue manager</small></h2>
+  <p class="intro">Le back-office <code>project-manager-hotles-backoffice</code> couvre maintenant les ressources hôtelières (<code>src/lib/resources.ts</code>) et les applications ERP (<code>src/lib/erp-resources.ts</code>) ; il reste des écrans métier à compléter et les moteurs d’IA n’y ont pas encore d’écran.</p>
+
+  <div class="item first"><span class="num">18</span><div>
+    <div class="head"><h3>Écrans ERP complets et menu selon les droits</h3><span class="tag high">Haute</span><span class="be no">Backend : non</span></div>
+    <p class="why">Déjà livré (partie E) : magasin d’applications, menu par application installée, 28 pages de ressources ERP, rapports comptables, pipeline CRM, « Mes activités », actions de workflow et éditeur de lignes. Restent : le filtrage du menu par permission (<code>GET /auth/me</code>), les champs relationnels encore saisis par identifiant (ex. « Type (ID) » des chambres) et les écrans listés ci-dessous.</p>
+    <ul><li>Sur chaque fiche : valeurs des champs personnalisés (Studio) et fil d’activité (notes, abonnés, activités planifiées).</li><li>Pages de rapports Stock (niveaux, valorisation, sous le seuil) et Achats (par fournisseur, commandes ouvertes, factures à échéance) ; planning hebdomadaire RH en grille ; pages de réglages RH, Achats et Comptabilité ; éditeur visuel des règles d’automatisation (conditions, actions, essai à blanc).</li><li>Menu filtré aussi par permission ; listes déroulantes alimentées par l’API pour toutes les relations.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span class="none">— (routes livrées par le socle, partie E)</span><span class="none">—</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/components/layouts/Sidebar.tsx</code> (permissions) <code>src/lib/erp-resources.ts</code> <code>src/components/ui/ResourcePage.tsx</code> (champs personnalisés, chatter) <code>src/lib/api.ts</code></span><span><code>src/components/records/RecordChatter.tsx</code> <code>src/components/records/RecordCustomFields.tsx</code> <code>src/app/admin/inventory-reports/page.tsx</code> <code>src/app/admin/purchase-reports/page.tsx</code> <code>src/app/admin/hr-planning/page.tsx</code> <code>src/app/admin/settings/page.tsx</code> <code>src/app/admin/automation-editor/page.tsx</code> <code>src/lib/permissions.ts</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/backoffice/</code> (ancien back-office : à supprimer)</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> propriété <code>permission</code> sur chaque ressource · composant de sélection relationnelle · appels <code>GET /activity/:model/:id/thread</code>, <code>PUT /studio/values/:model/:id</code>, <code>GET /automation/catalog</code> (routes déjà livrées).</p>
+  </div></div>
+
+  <div class="item"><span class="num">19</span><div>
+    <div class="head"><h3>Tableau de bord en temps réel</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Aucun canal temps réel (ni WebSocket, ni SSE) ; le tableau de bord du back-office (<code>src/app/admin/dashboard/page.tsx</code>) lit des compteurs à l’ouverture.</p>
+    <ul><li>Flux d’événements (SSE) filtré par établissement : arrivées, départs, chambres prêtes, demandes clients, alertes de stock, paiements reçus.</li><li>Branché sur le bus d’événements interne déjà en place (<code>DomainEventPublisher</code>).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/main.ts</code> (compression désactivée pour SSE)</span><span><code>src/realtime/</code> (realtime.controller.ts <code>GET /realtime/stream</code>, services/realtime-hub.service.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/dashboard/page.tsx</code> <code>src/components/layouts/AdminHeader.tsx</code> (pastille de notifications)</span><span><code>src/lib/useRealtime.ts</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>mise à jour des tâches du personnel</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /realtime/stream?property_id=</code> (jeton court dédié) · filtrage par permission de chaque événement.</p>
+  </div></div>
+
+  <div class="item"><span class="num">20</span><div>
+    <div class="head"><h3>IA et rapports branchés sur les données réelles</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les moteurs (<code>src/kpi/engine/kpi-calculator.ts</code>, <code>src/ia-prediction/engine/time-series-forecaster.ts</code>, <code>src/report/engine/report-builder.ts</code>) reçoivent leurs données de l’appelant ; les rapports récurrents (<code>next_run_at</code>) ne sont jamais exécutés.</p>
+    <ul><li>Agrégations MongoDB qui alimentent les moteurs : occupation, ADR, RevPAR à partir des réservations ; ventes du point de vente ; coûts de la comptabilité (GOPPAR réel).</li><li>Tâche planifiée qui génère et envoie les rapports programmés ; prévisions d’occupation recalculées chaque nuit.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/kpi/services/kpi.service.ts</code> <code>src/ia-prediction/services/ia-prediction.service.ts</code> <code>src/report/services/report.service.ts</code></span><span><code>src/analytics/</code> (services/occupancy-aggregation.service.ts, jobs/nightly-analytics.job.ts, jobs/scheduled-reports.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/dashboard/page.tsx</code> <code>src/lib/charts.ts</code></span><span><code>src/app/admin/analytics/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /kpis/live?property_id=&amp;from=&amp;to=</code> · <code>POST /ia-predictions/occupancy/refresh</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">21</span><div>
+    <div class="head"><h3>Recommandations de revenue management</h3><span class="tag low">Selon marché</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les règles dynamiques (<code>src/dynamic-pricing-rule/</code>) attendent un contexte d’occupation fourni à la main ; aucune proposition de prix n’est faite au gestionnaire.</p>
+    <ul><li>Proposition quotidienne de prix par type de chambre et par date à partir des prévisions (n° 20), du rythme des réservations (pick-up) et des événements locaux ; validation en un clic qui écrit dans <code>daily-prices</code> et pousse vers les OTA (n° 10).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/dynamic-pricing-rule/services/dynamic-pricing-rule.service.ts</code> <code>src/daily-price/services/daily-price.service.ts</code></span><span><code>src/revenue/</code> (services/pickup.service.ts, services/price-recommendation.service.ts, schemas/price-recommendation.entity.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span><code>src/app/admin/revenue/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /revenue/recommendations</code> · <code>POST /revenue/recommendations/:id/apply</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">22</span><div>
+    <div class="head"><h3>Consolidation multi-établissements et budgets</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les organisations regroupent des établissements (<code>src/organization/</code>) mais aucun rapport ne consolide les chiffres ; l’application Comptabilité (partie E) tient une comptabilité par établissement sans budget.</p>
+    <ul><li>Tableaux consolidés par organisation (chiffre d’affaires, occupation, charges, trésorerie) avec conversion de devises (n° 16).</li><li>Budgets annuels par compte et par département, suivi réalisé / budget, axes analytiques (hébergement, restauration, spa).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/accounting/</code> (ventilation analytique sur les lignes d’écriture) <code>src/organization/services/organization.service.ts</code></span><span><code>src/budget/</code> (schemas/budget.entity.ts, services/budget.service.ts) <code>src/analytics/services/consolidation.service.ts</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/organizations/page.tsx</code></span><span><code>src/app/admin/budget/page.tsx</code> <code>src/app/admin/consolidation/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /analytics/organization/:id/summary</code> · <code>POST /budgets</code> · <code>GET /budgets/:id/variance</code>.</p>
+  </div></div>
+
+  <h2 id="ax5"><span class="n">5</span>Conformité et exploitation<small>Obligatoire avant la production</small></h2>
+
+  <div class="item first"><span class="num">23</span><div>
+    <div class="head"><h3>Fiche de police et registre des voyageurs</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les hôtels doivent tenir et transmettre la fiche des voyageurs ; la fiche client (<code>src/guest/schemas/guest.entity.ts</code>) stocke la pièce d’identité sans registre, sans signature ni export.</p>
+    <ul><li>Fiche individuelle au check-in (nationalité, pièce, provenance, destination), registre journalier imprimable et export vers les autorités par l’ESB lorsqu’un service en ligne existe.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/guest/schemas/guest.entity.ts</code> <code>src/reservation/services/reservation.service.ts</code> (check-in bloqué si fiche incomplète, réglable)</span><span><code>src/police-register/</code> (schemas/traveller-card.entity.ts, services/police-register.service.ts, services/register-pdf.service.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/reservations/page.tsx</code></span><span><code>src/app/admin/police-register/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span>étape du check-in en ligne (n° 12)</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /police-register?property_id=&amp;date=</code> · <code>GET /police-register/pdf</code> · événement externe <code>hotel.reservation.checked_in</code> vers l’autorité.</p>
+  </div></div>
+
+  <div class="item"><span class="num">24</span><div>
+    <div class="head"><h3>Protection des données personnelles</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Pièces d’identité, numéros fiscaux et comptes bancaires en clair (<code>guest.identification_number</code>, <code>owner.tax_id</code>, <code>partner.bank_account</code>, <code>staff.salary</code>) ; aucune durée de conservation, aucun export ni effacement à la demande.</p>
+    <ul><li>Conformité à la loi ivoirienne n° 2013-450 (déclaration à l’ARTCI) et au RGPD pour la clientèle européenne : consentements (newsletter, marketing), registre des traitements, droit d’accès, de rectification et d’effacement (anonymisation des séjours anciens).</li><li>Purge planifiée selon des durées paramétrables ; chiffrement des champs sensibles (S6).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/guest/schemas/guest.entity.ts</code> <code>src/newsletter-subscription/</code> (consentement horodaté) <code>src/staff/schemas/staff.entity.ts</code></span><span><code>src/privacy/</code> (services/data-export.service.ts, services/anonymizer.service.ts, jobs/retention.job.ts, schemas/consent.entity.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/guests/page.tsx</code></span><span><code>src/app/admin/privacy/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/shared/components/layouts/Footer.jsx</code></span><span><code>app/privacy/page.tsx</code> <code>app/account/privacy/page.tsx</code> bandeau cookies</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>écran « Mes données »</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /me/data-export</code> · <code>POST /me/erase-request</code> · <code>POST /guests/:id/anonymize</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">25</span><div>
+    <div class="head"><h3>Observabilité, sauvegardes et reprise</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>newrelic</code> et <code>@sentry/nextjs</code> sont installés mais jamais branchés ; pas de route de santé, pas de journaux structurés, pas de stratégie de sauvegarde ; aucune transaction MongoDB.</p>
+    <ul><li>Journaux JSON avec identifiant de corrélation, route <code>/health</code> (Mongo, file ESB), métriques et alertes, Sentry côté API et interfaces.</li><li>Replica set MongoDB (requis aussi pour les transactions), sauvegardes chiffrées quotidiennes hors site avec test de restauration mensuel.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/main.ts</code> <code>src/app.module.ts</code> <code>package.json</code> (newrelic retiré ou branché) <code>docker-compose.yml</code></span><span><code>src/health/health.controller.ts</code> (@nestjs/terminus) <code>src/common/logging/</code> (nestjs-pino) <code>ops/backup/mongodump.sh</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>next.config.ts</code></span><span><code>sentry.client.config.ts</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>next.config.ts</code></span><span><code>instrumentation.ts</code> (Sentry déjà en dépendance)</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>remontée d’erreurs</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /health</code> · <code>GET /health/ready</code> · identifiant <code>X-Request-Id</code> propagé jusqu’à l’ESB.</p>
+  </div></div>
+
+  <div class="item"><span class="num">26</span><div>
+    <div class="head"><h3>Maintenance préventive et équipements</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>maintenance-request</code> ne gère que des demandes ponctuelles, sans parc d’équipements (climatiseurs, groupes électrogènes, chaudières) ni calendrier d’entretien.</p>
+    <ul><li>Fiches équipements (emplacement, fournisseur, garantie), plans d’entretien périodiques générant des demandes, historique et coûts ; pièces détachées sorties du stock (application Stock, partie E).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/maintenance-request/schemas/maintenance-request.entity.ts</code> (equipment_id, parts) <code>src/maintenance-request/services/maintenance-request.service.ts</code></span><span><code>src/equipment/</code> (schemas/equipment.entity.ts, schemas/maintenance-plan.entity.ts, jobs/preventive.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code></span><span><code>src/app/admin/equipment/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>scan QR de l’équipement (n° 15)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /equipment</code> · <code>POST /equipment/:id/plans</code> · <code>GET /equipment/:id/history</code>.</p>
+  </div></div>
+
+  <h2 id="ax6"><span class="n">6</span>Écosystème et modèle économique</h2>
+
+  <div class="item first"><span class="num">27</span><div>
+    <div class="head"><h3>Paie adaptée à la Côte d’Ivoire</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">L’application RH (partie E) gère contrats, congés, planning et pointage, mais aucun bulletin de paie ; <code>staff.salary</code> est un simple champ.</p>
+    <ul><li>Rubriques de paie paramétrables (salaire de base, sursalaire, heures supplémentaires issues du pointage, primes de transport et de logement), cotisations CNPS, ITS et contributions patronales selon les barèmes en vigueur, à tenir à jour chaque année.</li><li>Bulletins PDF, livre de paie, déclarations, écriture de paie automatique en comptabilité (compte 661 / 422).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/hr/</code> (contrats : rubriques fixes) <code>src/accounting/</code> (écoute de l’événement de paie)</span><span><code>src/payroll/</code> (schemas/payslip.entity.ts, schemas/payroll-rule.entity.ts, rules/ci-2026.ts, services/payroll.service.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span><code>src/app/admin/payroll/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>« Mes bulletins » (n° 15)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /payroll/runs</code> · <code>POST /payroll/runs/:id/validate</code> · événement <code>hr.payroll.validated</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">28</span><div>
+    <div class="head"><h3>Portail des propriétaires et des partenaires</h3><span class="tag low">Selon marché</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les partenaires ont un mot de passe mais ne peuvent pas se connecter (absents de <code>src/auth/services/user-accounts.service.ts</code>) ; les propriétaires n’ont pas de relevé de revenus.</p>
+    <ul><li>Propriétaires : occupation et revenus de leurs biens, relevés mensuels, reversements. Partenaires (agences) : réservations apportées, commissions calculées par <code>calculateCommission</code>, factures de commission.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/auth/services/user-accounts.service.ts</code> <code>src/partner/services/partner.service.ts</code> <code>src/owners/services/owners.service.ts</code></span><span><code>src/owner-portal/</code> <code>src/partner-portal/</code> (contrôleurs « me »)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/login/page.tsx</code></span><span><code>src/app/portal/</code> (espace restreint)</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /owner-portal/statements</code> · <code>GET /partner-portal/commissions</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">29</span><div>
+    <div class="head"><h3>E-réputation</h3><span class="tag low">Selon marché</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">L’analyse de sentiment existe (<code>src/sentiment-analysis/engine/lexicon-sentiment.scorer.ts</code>) mais les avis sont saisis à la main ; les témoignages du site viennent de <code>data/testimonials.ts</code>.</p>
+    <ul><li>Enquête de satisfaction envoyée au départ, import des avis Google et OTA via l’ESB, analyse automatique, alerte et réponse depuis le back-office, publication des meilleurs avis sur le site.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/sentiment-analysis/services/sentiment-analysis.service.ts</code></span><span><code>src/reviews/</code> (schemas/review.entity.ts, services/review-import.service.ts, listeners/survey.listener.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span><code>src/app/admin/reviews/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/testimonial/page.tsx</code> <code>services/content.service.ts</code></span><span><code>app/survey/[token]/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>enquête après séjour</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /reviews</code> · <code>POST /reviews/:id/reply</code> · <code>GET /public/reviews?property_id=</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">30</span><div>
+    <div class="head"><h3>Offre SaaS : abonnements et facturation de la plateforme</h3><span class="tag low">Selon marché</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Le propriétaire a un <code>subscription_plan</code> et <code>max_properties</code> (<code>src/owners/schemas/owner.entity.ts</code>) sans lien avec le magasin d’applications ni facturation récurrente.</p>
+    <ul><li>Formules (Essentiel, Pro, Groupe) définissant les applications installables et le nombre d’établissements ; essai gratuit, facturation mensuelle par mobile money ou carte (n° 9), suspension en cas d’impayé.</li><li>Inscription libre-service : création de l’organisation, de l’établissement et installation des applications de la formule.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/platform/apps/apps.service.ts</code> (contrôle de la formule à l’installation) <code>src/owners/schemas/owner.entity.ts</code></span><span><code>src/subscription/</code> (schemas/plan.entity.ts, schemas/subscription.entity.ts, jobs/billing.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span><code>src/app/admin/subscription/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span><code>app/pricing/page.tsx</code> <code>app/signup/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /public/plans</code> · <code>POST /subscriptions</code> · <code>POST /subscriptions/:id/cancel</code>.</p>
+  </div></div>

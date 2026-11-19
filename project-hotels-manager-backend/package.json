@@ -25,17 +25,21 @@
     "migration:revert": "npm run typeorm -- migration:revert",
     "migration:show": "npm run typeorm -- migration:show",
     "schema:drop": "npm run typeorm -- schema:drop",
-    "schema:sync": "npm run typeorm -- schema:sync"
+    "schema:sync": "npm run typeorm -- schema:sync",
+    "seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts",
+    "test:erp-smoke": "node test/erp-smoke.mjs"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.3.4",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/event-emitter": "^3.1.0",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/mongoose": "^11.0.4",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/schedule": "^6.1.3",
     "@nestjs/swagger": "^11.4.6",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",

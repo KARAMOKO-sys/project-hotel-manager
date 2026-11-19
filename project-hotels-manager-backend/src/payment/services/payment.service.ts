@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { randomBytes } from 'crypto';
@@ -9,6 +9,14 @@ import { CreatePaymentDto } from '../dto/create-payment.dto';
 import { UpdatePaymentDto } from '../dto/update-payment.dto';
 import { PaymentMethod } from '../../base-entities/enums/payment-method.enum';
 import { PaymentStatus } from '../../base-entities/enums/payment-status.enum';
+import {
+  DomainEventPublisher,
+  publishRecordEvent,
+} from '../../platform/events/domain-event.publisher';
+import {
+  DomainEventName,
+  DomainEvents,
+} from '../../platform/events/domain-events';
 
 /**
  * Service de gestion des paiements.
@@ -22,6 +30,7 @@ export class PaymentService extends BaseCrudService<
   constructor(
     @InjectModel(Payment.name)
     protected readonly paymentModel: Model<Payment>,
+    @Optional() private readonly events?: DomainEventPublisher,
   ) {
     super(paymentModel, Payment.name);
   }
@@ -35,13 +44,16 @@ export class PaymentService extends BaseCrudService<
     const status = createPaymentDto.status ?? PaymentStatus.COMPLETED;
     const paid_at = status === PaymentStatus.COMPLETED ? new Date() : undefined;
 
-    return super.create({
+    const payment = await super.create({
       ...createPaymentDto,
       payment_number: this.generatePaymentNumber(),
       change_due,
       status,
       paid_at,
     } as any);
+    return status === PaymentStatus.COMPLETED
+      ? this.emitted(DomainEvents.PAYMENT_COMPLETED, payment)
+      : payment;
   }
 
   /** Liste les paiements d'une réservation. */
@@ -63,18 +75,24 @@ export class PaymentService extends BaseCrudService<
 
   /** Marque un paiement comme complété. */
   async markAsCompleted(id: string): Promise<Payment> {
-    return this.update(id, {
-      status: PaymentStatus.COMPLETED,
-      paid_at: new Date(),
-    } as unknown as UpdatePaymentDto);
+    return this.emitted(
+      DomainEvents.PAYMENT_COMPLETED,
+      this.update(id, {
+        status: PaymentStatus.COMPLETED,
+        paid_at: new Date(),
+      } as unknown as UpdatePaymentDto),
+    );
   }
 
   /** Rembourse (partiellement ou totalement) un paiement. */
   async refund(id: string, amount: number, reason?: string): Promise<Payment> {
-    return this.update(id, {
-      status: PaymentStatus.REFUNDED,
-      metadata: { refund_amount: amount, refund_reason: reason },
-    } as UpdatePaymentDto);
+    return this.emitted(
+      DomainEvents.PAYMENT_REFUNDED,
+      this.update(id, {
+        status: PaymentStatus.REFUNDED,
+        metadata: { refund_amount: amount, refund_reason: reason },
+      } as UpdatePaymentDto),
+    );
   }
 
   /** Rapport de caisse journalier (total des paiements en espèces du jour). */
@@ -107,5 +125,14 @@ export class PaymentService extends BaseCrudService<
   private generatePaymentNumber(): string {
     const suffix = randomBytes(3).toString('hex').toUpperCase();
     return `PAY-${Date.now()}-${suffix}`;
+  }
+  /** Publie l'événement métier correspondant puis renvoie le document. */
+  private async emitted<R>(
+    name: DomainEventName,
+    result: R | Promise<R>,
+  ): Promise<R> {
+    const doc = await result;
+    await publishRecordEvent(this.events, name, Payment.name, doc);
+    return doc;
   }
 }

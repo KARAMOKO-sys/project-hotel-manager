@@ -1044,3 +1044,36 @@ body {
     padding: 24px 20px;
   }
 }
+
+/* Champ mot de passe avec bouton œil (connexion) */
+.bo-password {
+  position: relative;
+  display: block;
+}
+
+.bo-form .bo-password input {
+  padding-right: 42px;
+}
+
+.bo-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #6b7a71;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.bo-password-toggle:hover,
+.bo-password-toggle:focus-visible {
+  background: rgb(22 132 74 / 0.1);
+  color: var(--bo-primary, #16844a);
+  outline: none;
+}

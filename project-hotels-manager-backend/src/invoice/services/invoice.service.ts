@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { randomBytes } from 'crypto';
@@ -13,6 +13,14 @@ import {
 } from '../../invoice-item/schemas/invoice-item.entity';
 import { CreateInvoiceItemDto } from '../../invoice-item/dto/create-invoice-item.dto';
 import { InvoiceStatus } from '../../base-entities/enums/invoice-status.enum';
+import {
+  DomainEventPublisher,
+  publishRecordEvent,
+} from '../../platform/events/domain-event.publisher';
+import {
+  DomainEventName,
+  DomainEvents,
+} from '../../platform/events/domain-events';
 
 /**
  * Service de gestion des factures.
@@ -31,6 +39,7 @@ export class InvoiceService extends BaseCrudService<
     protected readonly invoiceModel: Model<Invoice>,
     @InjectModel(InvoiceItem.name)
     private readonly invoiceItemModel: Model<InvoiceItem>,
+    @Optional() private readonly events?: DomainEventPublisher,
   ) {
     super(invoiceModel, Invoice.name);
   }
@@ -43,12 +52,15 @@ export class InvoiceService extends BaseCrudService<
     const total_amount =
       createInvoiceDto.total_amount ?? subtotal + tax - discount;
 
-    return super.create({
-      ...createInvoiceDto,
-      invoice_number: this.generateInvoiceNumber(),
-      subtotal,
-      total_amount,
-    } as any);
+    return this.emitted(
+      DomainEvents.INVOICE_CREATED,
+      super.create({
+        ...createInvoiceDto,
+        invoice_number: this.generateInvoiceNumber(),
+        subtotal,
+        total_amount,
+      } as any),
+    );
   }
 
   /** Liste les factures d'une réservation. */
@@ -65,7 +77,10 @@ export class InvoiceService extends BaseCrudService<
 
   /** Marque la facture comme payée. */
   async markAsPaid(id: string): Promise<Invoice> {
-    return this.update(id, { status: InvoiceStatus.PAID } as UpdateInvoiceDto);
+    return this.emitted(
+      DomainEvents.INVOICE_PAID,
+      this.update(id, { status: InvoiceStatus.PAID } as UpdateInvoiceDto),
+    );
   }
 
   /** Marque la facture comme en retard. */
@@ -77,9 +92,12 @@ export class InvoiceService extends BaseCrudService<
 
   /** Marque la facture comme annulée. */
   async markAsCancelled(id: string): Promise<Invoice> {
-    return this.update(id, {
-      status: InvoiceStatus.CANCELLED,
-    } as UpdateInvoiceDto);
+    return this.emitted(
+      DomainEvents.INVOICE_CANCELLED,
+      this.update(id, {
+        status: InvoiceStatus.CANCELLED,
+      } as UpdateInvoiceDto),
+    );
   }
 
   /** Liste les factures impayées d'une propriété. */
@@ -140,5 +158,14 @@ export class InvoiceService extends BaseCrudService<
   private generateInvoiceNumber(): string {
     const suffix = randomBytes(3).toString('hex').toUpperCase();
     return `INV-${Date.now()}-${suffix}`;
+  }
+  /** Publie l'événement métier correspondant puis renvoie le document. */
+  private async emitted<R>(
+    name: DomainEventName,
+    result: R | Promise<R>,
+  ): Promise<R> {
+    const doc = await result;
+    await publishRecordEvent(this.events, name, Invoice.name, doc);
+    return doc;
   }
 }

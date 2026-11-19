@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Ignorer les erreurs ESLint pendant le build (optionnel)
-  eslint: {
-    ignoreDuringBuilds: false, // Met à true pour ignorer, false pour bloquer
-  },
+  // Serveur autonome (.next/standalone) pour l'image Docker.
+  output: "standalone",
   // Ignorer les erreurs TypeScript pendant le build
   typescript: {
     // !! ATTENTION !!

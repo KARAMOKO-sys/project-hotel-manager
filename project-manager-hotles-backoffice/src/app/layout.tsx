@@ -6,6 +6,7 @@ import "primeicons/primeicons.css";
 import "primereact/resources/themes/lara-light-green/theme.css";
 import "primereact/resources/primereact.min.css";
 import "./globals.css";
+import { ThemeProvider } from "@/lib/theme";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        {children}
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

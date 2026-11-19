@@ -73,3 +73,49 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     testimonials: true,
   },
 };
+
+/** Apparence du back-office (couleurs et paramètres d'affichage). */
+export interface BackofficeTheme {
+  appName: string;
+  appSubtitle: string;
+  logoUrl: string;
+  primaryColor: string;
+  primaryHoverColor: string;
+  pageBackground: string;
+  surfaceColor: string;
+  textColor: string;
+  sidebarBackground: string;
+  sidebarTextColor: string;
+  headerBackground: string;
+  loginGradientStart: string;
+  loginGradientEnd: string;
+  /** Arrondi des cartes et boutons, en pixels (0 à 24). */
+  borderRadius: number;
+  /** Taille du texte, en pourcentage (85 à 120). */
+  fontScale: number;
+  sidebarCollapsedByDefault: boolean;
+}
+
+export interface BackofficeThemeResponse {
+  theme: BackofficeTheme;
+  updated_at: string | null;
+}
+
+export const DEFAULT_BACKOFFICE_THEME: BackofficeTheme = {
+  appName: "PleasantStay",
+  appSubtitle: "Hotel Admin",
+  logoUrl: "",
+  primaryColor: "#22c55e",
+  primaryHoverColor: "#16a34a",
+  pageBackground: "#ffffff",
+  surfaceColor: "#ffffff",
+  textColor: "#1f2937",
+  sidebarBackground: "#ffffff",
+  sidebarTextColor: "#1f2937",
+  headerBackground: "#ffffff",
+  loginGradientStart: "#0f5132",
+  loginGradientEnd: "#22a05b",
+  borderRadius: 16,
+  fontScale: 100,
+  sidebarCollapsedByDefault: false,
+};

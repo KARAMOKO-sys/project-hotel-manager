@@ -243,7 +243,7 @@ export default function DashboardPage() {
             width: 100%;
             height: 100%;
             border: 3px solid transparent;
-            border-top-color: #22c55e;
+            border-top-color: var(--ps-primary);
             border-radius: 50%;
             animation: spin 1s linear infinite;
           }
@@ -508,7 +508,7 @@ export default function DashboardPage() {
         }
 
         .welcome-card {
-          background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+          background: linear-gradient(135deg, var(--ps-primary) 0%, var(--ps-primary-hover) 100%);
           border-radius: 24px;
           padding: 2rem;
           margin-bottom: 2rem;
@@ -517,7 +517,7 @@ export default function DashboardPage() {
           align-items: center;
           flex-wrap: wrap;
           gap: 1rem;
-          box-shadow: 0 10px 30px rgba(34, 197, 94, 0.2);
+          box-shadow: 0 10px 30px rgba(var(--ps-primary-rgb), 0.2);
         }
 
         .welcome-title {
@@ -561,13 +561,13 @@ export default function DashboardPage() {
 
         .stat-card:hover {
           transform: translateY(-5px);
-          box-shadow: 0 15px 30px rgba(34, 197, 94, 0.1);
+          box-shadow: 0 15px 30px rgba(var(--ps-primary-rgb), 0.1);
         }
 
         .stat-icon-wrapper {
           width: 54px;
           height: 54px;
-          background: rgba(34, 197, 94, 0.1);
+          background: rgba(var(--ps-primary-rgb), 0.1);
           border-radius: 14px;
           display: flex;
           align-items: center;
@@ -577,7 +577,7 @@ export default function DashboardPage() {
 
         .stat-icon {
           font-size: 1.6rem;
-          color: #22c55e;
+          color: var(--ps-primary);
         }
 
         .stat-info {
@@ -615,7 +615,7 @@ export default function DashboardPage() {
         }
 
         .occupancy-info i {
-          color: #22c55e;
+          color: var(--ps-primary);
         }
 
         .occupancy-track {
@@ -627,7 +627,7 @@ export default function DashboardPage() {
 
         .occupancy-fill {
           height: 100%;
-          background: linear-gradient(90deg, #22c55e, #16a34a);
+          background: linear-gradient(90deg, var(--ps-primary), var(--ps-primary-hover));
           border-radius: 50px;
           transition: width 0.6s ease;
         }
@@ -677,7 +677,7 @@ export default function DashboardPage() {
         .view-all-btn {
           background: none;
           border: none;
-          color: #22c55e;
+          color: var(--ps-primary);
           font-size: 0.8rem;
           cursor: pointer;
           text-decoration: none;
@@ -712,8 +712,8 @@ export default function DashboardPage() {
         }
 
         .bg-success-light {
-          background: rgba(34, 197, 94, 0.1);
-          color: #22c55e;
+          background: rgba(var(--ps-primary-rgb), 0.1);
+          color: var(--ps-primary);
         }
 
         .activity-content {
@@ -756,8 +756,8 @@ export default function DashboardPage() {
         .tone-checked_in,
         .tone-checked_out,
         .tone-clean {
-          background: rgba(34, 197, 94, 0.12);
-          color: #15803d;
+          background: rgba(var(--ps-primary-rgb), 0.12);
+          color: var(--ps-primary-dark);
         }
         .tone-cancelled,
         .tone-no_show,
@@ -796,7 +796,7 @@ export default function DashboardPage() {
 
         .action-btn i:first-child {
           font-size: 1.1rem;
-          color: #22c55e;
+          color: var(--ps-primary);
           width: 24px;
         }
 
@@ -811,7 +811,7 @@ export default function DashboardPage() {
         }
 
         .action-btn:hover {
-          background: rgba(34, 197, 94, 0.1);
+          background: rgba(var(--ps-primary-rgb), 0.1);
           transform: translateX(5px);
         }
 

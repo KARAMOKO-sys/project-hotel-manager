@@ -1,5 +1,7 @@
 // src/components/ui/ResourcePage.tsx
-// Page de liste générique : recherche, pagination, tri visuel et export CSV.
+// Page de liste générique : recherche, pagination, export CSV, création /
+// modification / suppression, actions métier par ligne (workflow ERP) et
+// filtrage par propriété ou établissement courant.
 // Chaque module (clients, réservations, chambres…) est une mince enveloppe
 // autour de ce composant.
 
@@ -7,14 +9,37 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { Entity } from "@/lib/types";
-import { api } from "@/lib/api";
+import { api, apiFetch, type QueryValue } from "@/lib/api";
 import {
   getResource,
   type BadgeTone,
   type ResourceColumn,
+  type ResourceConfig,
+  type ResourceField,
+  type ResourceHeaderAction,
+  type ResourceRowAction,
+  type VisibleWhen,
 } from "@/lib/resources";
-import type { ResourceField } from "@/lib/resources";
 import { useApiList } from "@/lib/useApi";
+import { useWorkspace } from "@/lib/workspace";
+import {
+  FieldValueError,
+  fromFormValue,
+  getNestedValue,
+  initialValues,
+  labelFromSpec,
+  loadOptions,
+  refValue,
+  setNestedValue,
+  type FormValues,
+} from "@/lib/forms";
+import {
+  ActionFormDialog,
+  FieldControl,
+  ResultDialog,
+  useFieldOptions,
+} from "@/components/ui/FormControls";
+import { errorMessage, useFeedback } from "@/components/ui/Feedback";
 
 const PAGE_SIZE = 10;
 
@@ -23,31 +48,7 @@ const PAGE_SIZE = 10;
 /* ------------------------------------------------------------------ */
 
 function getValue(row: Entity, key: string): unknown {
-  return row[key];
-}
-
-function getNestedValue(row: Entity, key: string): unknown {
-  return key.split(".").reduce<unknown>((value, part) => {
-    if (!value || typeof value !== "object") return undefined;
-    return (value as Record<string, unknown>)[part];
-  }, row);
-}
-
-function setNestedValue(
-  target: Record<string, unknown>,
-  key: string,
-  value: unknown,
-): void {
-  const parts = key.split(".");
-  let current = target;
-  parts.slice(0, -1).forEach((part) => {
-    const next = current[part];
-    if (!next || typeof next !== "object" || Array.isArray(next)) {
-      current[part] = {};
-    }
-    current = current[part] as Record<string, unknown>;
-  });
-  current[parts[parts.length - 1]] = value;
+  return key.includes(".") ? getNestedValue(row, key) : row[key];
 }
 
 function formatName(row: Entity, key: string): string {
@@ -92,6 +93,19 @@ function formatDate(value: unknown): string {
   });
 }
 
+function formatDateTime(value: unknown): string {
+  if (typeof value !== "string" && typeof value !== "number") return "—";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function formatMoney(value: unknown, row?: Entity): string {
   if (value && typeof value === "object") {
     const obj = value as { amount?: number; currency?: string };
@@ -106,6 +120,7 @@ function formatMoney(value: unknown, row?: Entity): string {
       return `${amount} ${currency}`;
     }
   }
+  if (value === undefined || value === null || value === "") return "—";
   const num = Number(value);
   if (Number.isFinite(num)) {
     const currency = (row?.currency as string | undefined) ?? "EUR";
@@ -201,21 +216,44 @@ function defaultTone(value: unknown): BadgeTone {
   return "muted";
 }
 
-function formatCell(row: Entity, column: ResourceColumn): string {
+type RelationLabels = Record<string, Record<string, string>>;
+
+function relationKey(column: ResourceColumn): string {
+  return `${column.relationEndpoint ?? ""}#${column.relationLabel ?? ""}`;
+}
+
+function formatCell(
+  row: Entity,
+  column: ResourceColumn,
+  relations: RelationLabels = {},
+): string {
+  const value = getValue(row, column.key);
   switch (column.format) {
     case "name":
       return formatName(row, column.key);
     case "date":
-      return formatDate(getValue(row, column.key));
+      return formatDate(value);
+    case "datetime":
+      return formatDateTime(value);
     case "money":
-      return formatMoney(getValue(row, column.key), row);
+      return formatMoney(value, row);
     case "count":
-      return formatCount(getValue(row, column.key));
+      return formatCount(value);
+    case "relation": {
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        return labelFromSpec(value as Record<string, unknown>, column.relationLabel);
+      }
+      const id = refValue(value);
+      if (!id) return "—";
+      return relations[relationKey(column)]?.[id] ?? `${id.slice(-6)}…`;
+    }
     case "badge":
-    case "boolean":
-      return String(getValue(row, column.key) ?? "—");
+    case "boolean": {
+      const raw = String(value ?? "—");
+      return column.labels?.[raw] ?? raw;
+    }
     default:
-      return formatText(getValue(row, column.key));
+      return formatText(value);
   }
 }
 
@@ -230,12 +268,42 @@ function cellTone(row: Entity, column: ResourceColumn): BadgeTone {
   return column.badgeDefault ?? defaultTone(value);
 }
 
+function matches(row: Entity, condition?: VisibleWhen): boolean {
+  if (!condition) return true;
+  const value = getValue(row, condition.key);
+  return condition.in.includes(String(value ?? ""));
+}
+
+function capitalize(text: string): string {
+  return text.charAt(0).toLocaleUpperCase("fr") + text.slice(1);
+}
+
+function rowId(row?: Entity): string {
+  return String(row?._id ?? row?.id ?? "");
+}
+
+/** Champs saisis dans le formulaire (hors champs de portée automatiques). */
+function formFields(resource: ResourceConfig, mode: "create" | "edit"): ResourceField[] {
+  return resource.fields.filter((field) => {
+    if (mode === "edit" && field.createOnly) return false;
+    if (resource.propertyScoped && field.key === "property_id") return false;
+    if (resource.organizationScoped && field.key === "organization_id") return false;
+    return true;
+  });
+}
+
+type PendingAction =
+  | { kind: "row"; action: ResourceRowAction; row: Entity }
+  | { kind: "header"; action: ResourceHeaderAction };
+
 /* ------------------------------------------------------------------ */
 /* Composant                                                           */
 /* ------------------------------------------------------------------ */
 
 export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
   const resource = getResource(resourceKey);
+  const { propertyId, organizationId, property, organization } = useWorkspace();
+  const { notify, confirm } = useFeedback();
 
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -244,16 +312,28 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
     mode: "create" | "edit";
     row?: Entity;
   } | null>(null);
-  const [formValues, setFormValues] = useState<Record<string, string | boolean>>(
-    {},
-  );
+  const [formValues, setFormValues] = useState<FormValues>({});
+  const [initialFormValues, setInitialFormValues] = useState<FormValues>({});
   const [formError, setFormError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [options, setOptions] = useState<
-    Record<string, Array<{ value: string; label: string }>>
-  >({});
-  const [optionErrors, setOptionErrors] = useState<Record<string, string>>({});
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [result, setResult] = useState<{ title: string; data: unknown } | null>(null);
+  const [relations, setRelations] = useState<RelationLabels>({});
+
+  const propertyScoped = Boolean(resource?.propertyScoped);
+  const organizationScoped = Boolean(resource?.organizationScoped);
+  const scopeMissing =
+    (propertyScoped && !propertyId) || (organizationScoped && !organizationId);
+
+  /** Filtres de portée transmis aux listes et aux options. */
+  const scope = useMemo<Record<string, QueryValue>>(() => {
+    const value: Record<string, QueryValue> = {};
+    if (propertyScoped && propertyId) value.property_id = propertyId;
+    if (organizationScoped && organizationId) value.organization_id = organizationId;
+    return value;
+  }, [propertyScoped, organizationScoped, propertyId, organizationId]);
 
   useEffect(() => {
     const initialSearch = new URLSearchParams(window.location.search).get(
@@ -271,151 +351,167 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
   }, [search]);
 
   const { data, meta, loading, error, usingFallback, refresh } = useApiList<Entity>(
-    resource?.endpoint ?? "",
+    resource && !scopeMissing ? resource.endpoint : "",
     resourceKey,
-    { page, limit: PAGE_SIZE, search: debouncedSearch },
+    { page, limit: PAGE_SIZE, search: debouncedSearch, ...scope },
   );
 
   const totalPages = useMemo(() => meta?.totalPages ?? 1, [meta]);
 
-  useEffect(() => {
-    if (!dialog || !resource) return;
-    let cancelled = false;
-    const endpoints = [
-      ...new Set(
-        resource.fields
-          .filter(
-            (field) =>
-              field.type === "select" &&
-              field.optionsEndpoint &&
-              (dialog.mode === "create" || !field.createOnly),
-          )
-          .map((field) => field.optionsEndpoint as string),
-      ),
-    ];
+  const activeFields = useMemo(
+    () => (resource && dialog ? formFields(resource, dialog.mode) : []),
+    [resource, dialog],
+  );
+  const optionsState = useFieldOptions(activeFields, Boolean(dialog), scope);
 
-    setOptions({});
-    setOptionErrors({});
+  // Libellés des colonnes « relation » (identifiant -> libellé).
+  const relationColumns = useMemo(
+    () =>
+      (resource?.columns ?? []).filter(
+        (column) => column.format === "relation" && column.relationEndpoint,
+      ),
+    [resource],
+  );
+  const relationSignature = JSON.stringify([
+    relationColumns.map(relationKey),
+    scope,
+    data.length > 0,
+  ]);
+  useEffect(() => {
+    if (relationColumns.length === 0 || data.length === 0) return;
+    let cancelled = false;
+    const seen = new Set<string>();
     void Promise.all(
-      endpoints.map(async (endpoint) => {
+      relationColumns.map(async (column) => {
+        const key = relationKey(column);
+        if (seen.has(key)) return;
+        seen.add(key);
         try {
-          const result = await api.list<Entity>(endpoint, { page: 1, limit: 100 });
-          const items = result.data
-            .map((item) => {
-              const id = String(item._id ?? item.id ?? "");
-              const labelField = resource.fields.find(
-                (field) => field.optionsEndpoint === endpoint,
-              )?.optionLabel;
-              const label = labelField ? item[labelField] : undefined;
-              return {
-                value: id,
-                label: String(
-                  label ??
-                    item.name ??
-                    item.number ??
-                    item.code ??
-                    item.email ??
-                    id,
-                ),
-              };
-            })
-            .filter((item) => item.value);
-          if (!cancelled) {
-            setOptions((current) => ({ ...current, [endpoint]: items }));
-          }
-        } catch (loadError) {
-          if (!cancelled) {
-            setOptionErrors((current) => ({
-              ...current,
-              [endpoint]:
-                loadError instanceof Error
-                  ? loadError.message
-                  : "Impossible de charger les options",
-            }));
-          }
+          const items = await loadOptions(
+            column.relationEndpoint as string,
+            column.relationLabel,
+            undefined,
+            scope,
+          );
+          if (cancelled) return;
+          setRelations((current) => ({
+            ...current,
+            [key]: Object.fromEntries(items.map((item) => [item.value, item.label])),
+          }));
+        } catch {
+          // Libellés indisponibles : l'identifiant abrégé reste affiché.
         }
       }),
     );
-
     return () => {
       cancelled = true;
     };
-  }, [dialog, resource]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [relationSignature]);
+
+  const canCreate =
+    Boolean(resource) && !resource?.readOnly && resource?.createEnabled !== false;
+  const canEdit = (row: Entity) =>
+    Boolean(resource) &&
+    !resource?.readOnly &&
+    resource?.editEnabled !== false &&
+    (resource?.fields.length ?? 0) > 0 &&
+    matches(row, resource?.editableWhen);
+  const canDelete = (row: Entity) =>
+    Boolean(resource) &&
+    !resource?.readOnly &&
+    resource?.deleteEnabled !== false &&
+    matches(row, resource?.deletableWhen) &&
+    row[resource?.deleteProtectedKey ?? ""] !== true;
 
   const openCreateDialog = () => {
+    if (!resource) return;
     setActionError(null);
     setFormError(null);
-    setFormValues(
-      Object.fromEntries(
-        (resource?.fields ?? [])
-          .filter((field) => !field.createOnly)
-          .map((field) => [field.key, field.type === "boolean" ? false : ""]),
-      ),
-    );
+    const values = initialValues(formFields(resource, "create"));
+    setFormValues(values);
+    setInitialFormValues(values);
     setDialog({ mode: "create" });
   };
 
   const openEditDialog = (row: Entity) => {
+    if (!resource) return;
     setActionError(null);
     setFormError(null);
-    setFormValues(
-      Object.fromEntries(
-        (resource?.fields ?? [])
-          .filter((field) => !field.createOnly)
-          .map((field) => {
-            const value = getNestedValue(row, field.key);
-            return [
-              field.key,
-              field.type === "boolean"
-                ? Boolean(value)
-                : value === null || value === undefined
-                  ? ""
-                  : field.type === "date"
-                    ? String(value).slice(0, 10)
-                    : String(value),
-            ];
-          }),
-      ),
-    );
+    const values = initialValues(formFields(resource, "edit"), row);
+    setFormValues(values);
+    setInitialFormValues(values);
     setDialog({ mode: "edit", row });
   };
 
   const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!resource || !dialog) return;
-    setSaving(true);
     setFormError(null);
 
     const payload: Record<string, unknown> = {};
-    resource.fields.forEach((field: ResourceField) => {
-      if (field.createOnly && dialog.mode === "edit") return;
-      const value = formValues[field.key];
-      if (value === "" && !field.required) return;
-      const converted =
-        field.type === "number" && value !== ""
-          ? Number(value)
-          : field.type === "boolean"
-            ? Boolean(value)
-            : value;
-      setNestedValue(payload, field.key, converted);
-    });
+    try {
+      formFields(resource, dialog.mode).forEach((field) => {
+        const value = formValues[field.key];
+        // En modification, seuls les champs changés sont envoyés (PATCH).
+        if (
+          dialog.mode === "edit" &&
+          JSON.stringify(value) === JSON.stringify(initialFormValues[field.key])
+        ) {
+          return;
+        }
+        const converted = fromFormValue(field, value);
+        if (converted === undefined) {
+          if (dialog.mode === "edit" && field.type === "lines") {
+            setNestedValue(payload, field.key, []);
+          }
+          return;
+        }
+        setNestedValue(payload, field.key, converted);
+      });
+    } catch (conversionError) {
+      setFormError(
+        conversionError instanceof FieldValueError
+          ? conversionError.message
+          : "Saisie invalide",
+      );
+      return;
+    }
 
+    if (dialog.mode === "create") {
+      if (propertyScoped) {
+        if (!propertyId) {
+          setFormError("Sélectionnez une propriété dans l’en-tête avant d’enregistrer.");
+          return;
+        }
+        payload.property_id = propertyId;
+      }
+      if (organizationScoped) {
+        if (!organizationId) {
+          setFormError("Sélectionnez un établissement dans l’en-tête avant d’enregistrer.");
+          return;
+        }
+        payload.organization_id = organizationId;
+      }
+    }
+
+    setSaving(true);
     try {
       if (dialog.mode === "create") {
         await api.create(resource.endpoint, payload);
+        notify("success", `${capitalize(resource.singular)} créé(e)`);
       } else {
-        const id = dialog.row?._id ?? dialog.row?.id;
+        const id = rowId(dialog.row);
         if (!id) throw new Error("Identifiant manquant pour cette ressource");
-        await api.update(`${resource.endpoint}/${id}`, payload);
+        if (Object.keys(payload).length > 0) {
+          await api.update(`${resource.endpoint}/${id}${scopeSuffix()}`, payload);
+        }
+        notify("success", "Modifications enregistrées");
       }
       setDialog(null);
       refresh();
     } catch (saveError) {
-      setFormError(
-        saveError instanceof Error
-          ? saveError.message
-          : "L’enregistrement a échoué",
-      );
+      setFormError(errorMessage(saveError, "L’enregistrement a échoué"));
     } finally {
       setSaving(false);
     }
@@ -423,26 +519,165 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
 
   const handleDelete = async (row: Entity) => {
     if (!resource) return;
-    const id = row._id ?? row.id;
+    const id = rowId(row);
     if (!id) {
       setActionError("Identifiant manquant : suppression impossible.");
       return;
     }
-    if (!window.confirm(`Supprimer cet élément de « ${resource.title} » ?`)) {
-      return;
-    }
+    const accepted = await confirm(
+      `Supprimer cet élément de « ${resource.title} » ?`,
+      "Suppression",
+      true,
+    );
+    if (!accepted) return;
 
     setActionError(null);
     try {
-      await api.remove(`${resource.endpoint}/${id}`);
+      await api.remove(`${resource.endpoint}/${id}${scopeSuffix()}`);
+      notify("success", "Élément supprimé");
       refresh();
     } catch (deleteError) {
-      setActionError(
-        deleteError instanceof Error
-          ? deleteError.message
-          : "La suppression a échoué",
+      const message = errorMessage(deleteError, "La suppression a échoué");
+      setActionError(message);
+      notify("error", "Suppression impossible", message);
+    }
+  };
+
+  /** `?organization_id=` pour les ressources rattachées à l'établissement. */
+  function scopeSuffix(): string {
+    return organizationScoped && organizationId
+      ? `?organization_id=${encodeURIComponent(organizationId)}`
+      : "";
+  }
+
+  /* ---------------------------- Actions --------------------------- */
+
+  const sendAction = async (
+    label: string,
+    path: string,
+    method: "POST" | "PATCH",
+    body: Record<string, unknown>,
+    options: { showResult?: boolean; successMessage?: string },
+  ): Promise<boolean> => {
+    setBusyAction(label);
+    try {
+      const response = await apiFetch<unknown>(path, {
+        method,
+        body: JSON.stringify(body),
+      });
+      notify("success", options.successMessage ?? `${label} : effectué`);
+      if (options.showResult) setResult({ title: label, data: response });
+      refresh();
+      return true;
+    } catch (actionFailure) {
+      notify("error", `${label} : échec`, errorMessage(actionFailure));
+      return false;
+    } finally {
+      setBusyAction(null);
+    }
+  };
+
+  const rowActionPath = (action: ResourceRowAction, row: Entity) =>
+    `${resource?.endpoint ?? ""}/${rowId(row)}/${action.endpoint}${scopeSuffix()}`;
+
+  const actionFields = (action: ResourceRowAction): ResourceField[] => {
+    if (action.fields?.length) return action.fields;
+    if (typeof action.body === "string" && action.body.startsWith("prompt:")) {
+      return [
+        {
+          key: "reason",
+          label: action.body.slice("prompt:".length) || "Motif",
+          type: "text",
+          required: true,
+        },
+      ];
+    }
+    return [];
+  };
+
+  const runRowAction = async (action: ResourceRowAction, row: Entity) => {
+    let body: Record<string, unknown> =
+      action.body && typeof action.body === "object" ? { ...action.body } : {};
+    if (action.buildBody) {
+      const built = action.buildBody(row);
+      if (typeof built === "string") {
+        notify("warn", action.label, built);
+        return;
+      }
+      body = { ...body, ...built };
+    }
+    if (actionFields(action).length > 0) {
+      setPendingAction({ kind: "row", action, row });
+      return;
+    }
+    if (action.confirm) {
+      const accepted = await confirm(action.confirm, action.label, action.tone === "danger");
+      if (!accepted) return;
+    }
+    await sendAction(
+      action.label,
+      rowActionPath(action, row),
+      action.method === "patch" ? "PATCH" : "POST",
+      body,
+      action,
+    );
+  };
+
+  const runHeaderAction = async (action: ResourceHeaderAction) => {
+    if (action.includeProperty && !propertyId) {
+      notify("warn", action.label, "Sélectionnez d’abord une propriété dans l’en-tête.");
+      return;
+    }
+    if (action.fields?.length) {
+      setPendingAction({ kind: "header", action });
+      return;
+    }
+    if (action.confirm) {
+      const accepted = await confirm(action.confirm, action.label);
+      if (!accepted) return;
+    }
+    await sendAction(
+      action.label,
+      headerActionPath(action),
+      "POST",
+      action.includeProperty ? { property_id: propertyId } : {},
+      action,
+    );
+  };
+
+  function headerActionPath(action: ResourceHeaderAction): string {
+    return organizationScoped && organizationId
+      ? `${action.endpoint}?organization_id=${encodeURIComponent(organizationId)}`
+      : action.endpoint;
+  }
+
+  const submitPendingAction = async (payload: Record<string, unknown>) => {
+    if (!pendingAction) return false;
+    let done: boolean;
+    if (pendingAction.kind === "row") {
+      const { action, row } = pendingAction;
+      const base =
+        action.body && typeof action.body === "object" ? action.body : {};
+      const built = action.buildBody ? action.buildBody(row) : {};
+      done = await sendAction(
+        action.label,
+        rowActionPath(action, row),
+        action.method === "patch" ? "PATCH" : "POST",
+        { ...base, ...(typeof built === "object" ? built : {}), ...payload },
+        action,
+      );
+    } else {
+      const { action } = pendingAction;
+      done = await sendAction(
+        action.label,
+        headerActionPath(action),
+        "POST",
+        { ...(action.includeProperty ? { property_id: propertyId } : {}), ...payload },
+        action,
       );
     }
+    if (done) setPendingAction(null);
+    return done;
   };
 
   if (!resource) {
@@ -458,10 +693,10 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
     const headers = resource.columns.map((c) => c.label).join(";");
     const rows = data.map((row) =>
       resource.columns
-        .map((c) => formatCell(row, c).replace(/;/g, ","))
+        .map((c) => formatCell(row, c, relations).replace(/;/g, ","))
         .join(";"),
     );
-    const csv = `\uFEFF${[headers, ...rows].join("\n")}`;
+    const csv = `﻿${[headers, ...rows].join("\n")}`;
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -470,6 +705,12 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  const scopeLabel = propertyScoped
+    ? property?.name
+    : organizationScoped
+      ? organization?.name
+      : undefined;
 
   return (
     <div className="resource-page">
@@ -483,16 +724,39 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           <p className="resource-subtitle">
             {meta.total.toLocaleString("fr-FR")} {resource.singular}
             {meta.total > 1 ? "s" : ""} au total
+            {scopeLabel ? ` · ${scopeLabel}` : ""}
           </p>
+          {resource.description && (
+            <p className="rp-description">{resource.description}</p>
+          )}
         </div>
         <div className="resource-actions">
-          <button
-            className="btn-action btn-primary-action"
-            onClick={openCreateDialog}
-          >
-            <i className="pi pi-plus"></i>
-            <span>Ajouter</span>
-          </button>
+          {resource.headerActions?.map((action) => (
+            <button
+              key={action.label}
+              className="btn-action"
+              onClick={() => void runHeaderAction(action)}
+              disabled={busyAction !== null || scopeMissing}
+              title={action.label}
+            >
+              <i
+                className={
+                  busyAction === action.label ? "pi pi-spin pi-spinner" : action.icon
+                }
+              ></i>
+              <span>{action.label}</span>
+            </button>
+          ))}
+          {canCreate && (
+            <button
+              className="btn-action btn-primary-action"
+              onClick={openCreateDialog}
+              disabled={scopeMissing}
+            >
+              <i className="pi pi-plus"></i>
+              <span>Ajouter</span>
+            </button>
+          )}
           <button className="btn-action" onClick={refresh} title="Actualiser">
             <i className="pi pi-refresh"></i>
             <span>Actualiser</span>
@@ -507,6 +771,17 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           </button>
         </div>
       </div>
+
+      {scopeMissing && (
+        <div className="demo-banner">
+          <i className="pi pi-info-circle"></i>
+          <span>
+            {propertyScoped
+              ? "Sélectionnez une propriété dans l’en-tête pour afficher ces données."
+              : "Sélectionnez un établissement dans l’en-tête pour afficher ces données."}
+          </span>
+        </div>
+      )}
 
       {/* Bandeau mode démo */}
       {usingFallback && (
@@ -585,46 +860,78 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
                 </td>
               </tr>
             ) : (
-              data.map((row, index) => (
-                <tr key={String(row._id ?? row.id ?? index)}>
-                  {resource.columns.map((column) => (
-                    <td key={column.key}>
-                      {column.format === "badge" ||
-                      column.format === "boolean" ? (
-                        <span className={`badge tone-${cellTone(row, column)}`}>
-                          {column.format === "boolean"
-                            ? getValue(row, column.key)
-                              ? "Oui"
-                              : "Non"
-                            : formatCell(row, column)}
-                        </span>
+              data.map((row, index) => {
+                const visibleActions = (resource.rowActions ?? []).filter((action) =>
+                  matches(row, action.visibleWhen),
+                );
+                const editable = canEdit(row);
+                return (
+                  <tr key={String(row._id ?? row.id ?? index)}>
+                    {resource.columns.map((column) => (
+                      <td key={column.key}>
+                        {column.format === "badge" ||
+                        column.format === "boolean" ? (
+                          <span className={`badge tone-${cellTone(row, column)}`}>
+                            {column.format === "boolean"
+                              ? getValue(row, column.key)
+                                ? "Oui"
+                                : "Non"
+                              : formatCell(row, column, relations)}
+                          </span>
+                        ) : (
+                          formatCell(row, column, relations)
+                        )}
+                      </td>
+                    ))}
+                    <td className="actions-cell">
+                      {visibleActions.map((action) => (
+                        <button
+                          key={action.label}
+                          type="button"
+                          className={`rp-row-btn ${action.tone ? `rp-row-btn-${action.tone}` : ""}`}
+                          onClick={() => void runRowAction(action, row)}
+                          disabled={busyAction !== null}
+                          title={action.label}
+                        >
+                          <i className={action.icon}></i>
+                          <span>{action.label}</span>
+                        </button>
+                      ))}
+                      {editable ? (
+                        <button
+                          className="row-action"
+                          onClick={() => openEditDialog(row)}
+                          aria-label={`Modifier ${resource.singular}`}
+                          title="Modifier"
+                        >
+                          <i className="pi pi-pencil"></i>
+                        </button>
                       ) : (
-                        formatCell(row, column)
+                        <button
+                          className="row-action"
+                          onClick={() =>
+                            setResult({ title: `Détail : ${resource.singular}`, data: row })
+                          }
+                          aria-label={`Voir ${resource.singular}`}
+                          title="Voir le détail"
+                        >
+                          <i className="pi pi-eye"></i>
+                        </button>
+                      )}
+                      {canDelete(row) && (
+                        <button
+                          className="row-action row-action-danger"
+                          onClick={() => void handleDelete(row)}
+                          aria-label={`Supprimer ${resource.singular}`}
+                          title="Supprimer"
+                        >
+                          <i className="pi pi-trash"></i>
+                        </button>
                       )}
                     </td>
-                  ))}
-                  <td className="actions-cell">
-                    <button
-                      className="row-action"
-                      onClick={() => openEditDialog(row)}
-                      aria-label={`Modifier ${resource.singular}`}
-                      title="Modifier"
-                    >
-                      <i className="pi pi-pencil"></i>
-                    </button>
-                    {row[resource.deleteProtectedKey ?? ""] !== true && (
-                      <button
-                        className="row-action row-action-danger"
-                        onClick={() => void handleDelete(row)}
-                        aria-label={`Supprimer ${resource.singular}`}
-                        title="Supprimer"
-                      >
-                        <i className="pi pi-trash"></i>
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -663,7 +970,7 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           }}
         >
           <section
-            className="resource-dialog"
+            className={`resource-dialog ${activeFields.some((field) => field.type === "lines" || field.type === "json") ? "rp-dialog-wide" : ""}`}
             role="dialog"
             aria-modal="true"
             aria-labelledby="resource-dialog-title"
@@ -688,103 +995,25 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
             </div>
 
             <form onSubmit={handleSave}>
-              <div className="dialog-fields">
-                {resource.fields
-                  .filter(
-                    (field) =>
-                      dialog.mode === "create" || !field.createOnly,
-                  )
-                  .map((field) => {
-                    const fieldId = `${resource.key}-${field.key}`;
-                    const value = formValues[field.key] ?? "";
-                    const fieldOptions = field.options
-                      ? field.options.map((option) => ({
-                          value: option.value,
-                          label: option.label,
-                        }))
-                      : field.optionsEndpoint
-                        ? options[field.optionsEndpoint] ?? []
-                        : [];
-
-                    return (
-                      <label
-                        className={`dialog-field ${field.type === "boolean" ? "dialog-checkbox" : ""}`}
-                        key={field.key}
-                        htmlFor={fieldId}
-                      >
-                        {field.type === "boolean" ? (
-                          <>
-                            <input
-                              id={fieldId}
-                              type="checkbox"
-                              checked={Boolean(value)}
-                              onChange={(event) =>
-                                setFormValues((current) => ({
-                                  ...current,
-                                  [field.key]: event.target.checked,
-                                }))
-                              }
-                            />
-                            <span>{field.label}</span>
-                          </>
-                        ) : field.type === "select" ? (
-                          <>
-                            <span>
-                              {field.label}
-                              {field.required && <b aria-hidden="true"> *</b>}
-                            </span>
-                            <select
-                              id={fieldId}
-                              required={field.required}
-                              value={String(value)}
-                              onChange={(event) =>
-                                setFormValues((current) => ({
-                                  ...current,
-                                  [field.key]: event.target.value,
-                                }))
-                              }
-                            >
-                              <option value="">Sélectionner…</option>
-                              {fieldOptions.map((option) => (
-                                <option key={option.value} value={option.value}>
-                                  {option.label}
-                                </option>
-                              ))}
-                            </select>
-                            {field.optionsEndpoint &&
-                              optionErrors[field.optionsEndpoint] && (
-                                <small className="field-error">
-                                  {optionErrors[field.optionsEndpoint]}
-                                </small>
-                              )}
-                          </>
-                        ) : (
-                          <>
-                            <span>
-                              {field.label}
-                              {field.required && <b aria-hidden="true"> *</b>}
-                            </span>
-                            <input
-                              id={fieldId}
-                              type={field.type}
-                              required={field.required}
-                              min={field.min}
-                              max={field.max}
-                              minLength={field.minLength}
-                              step={field.step}
-                              value={String(value)}
-                              onChange={(event) =>
-                                setFormValues((current) => ({
-                                  ...current,
-                                  [field.key]: event.target.value,
-                                }))
-                              }
-                            />
-                          </>
-                        )}
-                      </label>
-                    );
-                  })}
+              {dialog.mode === "create" && scopeLabel && (
+                <p className="rp-modal-message">
+                  <i className="pi pi-building"></i>{" "}
+                  {propertyScoped ? "Propriété" : "Établissement"} : <strong>{scopeLabel}</strong>
+                </p>
+              )}
+              <div className="rp-fields">
+                {activeFields.map((field) => (
+                  <FieldControl
+                    key={field.key}
+                    field={field}
+                    value={formValues[field.key]}
+                    onChange={(value) =>
+                      setFormValues((current) => ({ ...current, [field.key]: value }))
+                    }
+                    optionsState={optionsState}
+                    idPrefix={resource.key}
+                  />
+                ))}
               </div>
               {formError && (
                 <div className="resource-error dialog-error" role="alert">
@@ -815,6 +1044,30 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
         </div>
       )}
 
+      {pendingAction && (
+        <ActionFormDialog
+          title={pendingAction.action.label}
+          eyebrow={resource.title}
+          message={pendingAction.action.confirm}
+          fields={
+            pendingAction.kind === "row"
+              ? actionFields(pendingAction.action)
+              : pendingAction.action.fields ?? []
+          }
+          scope={propertyId ? { ...scope, property_id: propertyId } : scope}
+          onCancel={() => setPendingAction(null)}
+          onSubmit={submitPendingAction}
+        />
+      )}
+
+      {result && (
+        <ResultDialog
+          title={result.title}
+          data={result.data}
+          onClose={() => setResult(null)}
+        />
+      )}
+
       <style jsx>{`
         .resource-page {
           animation: fadeIn 0.4s ease;
@@ -836,7 +1089,7 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           align-items: center;
         }
         .resource-title i {
-          color: #22c55e;
+          color: var(--ps-primary);
         }
         .resource-subtitle {
           margin: 0.25rem 0 0;
@@ -862,16 +1115,16 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           transition: all 0.2s ease;
         }
         .btn-action:hover {
-          border-color: #22c55e;
-          color: #22c55e;
+          border-color: var(--ps-primary);
+          color: var(--ps-primary);
         }
         .btn-primary-action {
-          background: #22c55e;
-          border-color: #22c55e;
+          background: var(--ps-primary);
+          border-color: var(--ps-primary);
           color: #fff;
         }
         .btn-primary-action:hover {
-          background: #16a34a;
+          background: var(--ps-primary-hover);
           color: #fff;
         }
         .demo-banner {
@@ -910,8 +1163,8 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
         }
         .search-input-wrap input:focus {
           outline: none;
-          border-color: #22c55e;
-          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.12);
+          border-color: var(--ps-primary);
+          box-shadow: 0 0 0 3px rgba(var(--ps-primary-rgb), 0.12);
         }
         .search-clear {
           position: absolute;
@@ -976,8 +1229,8 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           font-weight: 600;
         }
         .tone-success {
-          background: rgba(34, 197, 94, 0.12);
-          color: #15803d;
+          background: rgba(var(--ps-primary-rgb), 0.12);
+          color: var(--ps-primary-dark);
         }
         .tone-warning {
           background: rgba(245, 158, 11, 0.14);
@@ -1016,7 +1269,7 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           width: 18px;
           height: 18px;
           border: 2px solid #e5e7eb;
-          border-top-color: #22c55e;
+          border-top-color: var(--ps-primary);
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
         }
@@ -1041,8 +1294,8 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           transition: all 0.2s ease;
         }
         .page-btn:hover:not(:disabled) {
-          border-color: #22c55e;
-          color: #22c55e;
+          border-color: var(--ps-primary);
+          color: var(--ps-primary);
         }
         .page-btn:disabled {
           opacity: 0.45;
@@ -1071,8 +1324,8 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
           margin-left: 0.35rem;
         }
         .row-action:hover:not(:disabled) {
-          border-color: #16a34a;
-          color: #15803d;
+          border-color: var(--ps-primary-hover);
+          color: var(--ps-primary-dark);
         }
         .row-action-danger:hover:not(:disabled) {
           border-color: #ef4444;
@@ -1131,7 +1384,7 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
         }
         .dialog-eyebrow {
           margin: 0 0 0.2rem;
-          color: #15803d;
+          color: var(--ps-primary-dark);
           font-size: 0.75rem;
           font-weight: 700;
           text-transform: uppercase;
@@ -1174,7 +1427,7 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
         .dialog-field input:focus,
         .dialog-field select:focus {
           outline: 2px solid rgb(34 197 94 / 0.25);
-          border-color: #16a34a;
+          border-color: var(--ps-primary-hover);
         }
         .dialog-checkbox {
           flex-direction: row;
@@ -1185,7 +1438,7 @@ export default function ResourcePage({ resourceKey }: { resourceKey: string }) {
         .dialog-checkbox input {
           width: 18px;
           height: 18px;
-          accent-color: #16a34a;
+          accent-color: var(--ps-primary-hover);
         }
         .field-error {
           color: #b91c1c;

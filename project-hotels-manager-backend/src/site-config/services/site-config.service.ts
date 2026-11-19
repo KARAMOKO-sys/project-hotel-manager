@@ -6,6 +6,9 @@ import {
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import {
+  BackofficeTheme,
+  BackofficeThemeResponse,
+  DEFAULT_BACKOFFICE_THEME,
   DEFAULT_SITE_CONFIG,
   SiteConfig,
   SiteConfigResponse,
@@ -122,6 +125,84 @@ function normalizeConfig(value: unknown): SiteConfig {
   };
 }
 
+const THEME_KEY = "backoffice_theme";
+const THEME_COLORS = [
+  "primaryColor",
+  "primaryHoverColor",
+  "pageBackground",
+  "surfaceColor",
+  "textColor",
+  "sidebarBackground",
+  "sidebarTextColor",
+  "headerBackground",
+  "loginGradientStart",
+  "loginGradientEnd",
+] as const;
+
+function requireNumber(
+  value: unknown,
+  field: string,
+  min: number,
+  max: number,
+): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new BadRequestException(`${field} doit être un nombre`);
+  }
+  if (value < min || value > max) {
+    throw new BadRequestException(`${field} doit être entre ${min} et ${max}`);
+  }
+  return Math.round(value);
+}
+
+/**
+ * Valide un thème partiel et le complète avec les valeurs actuelles : seuls
+ * les champs envoyés sont modifiés.
+ */
+function normalizeTheme(
+  value: unknown,
+  current: BackofficeTheme,
+): BackofficeTheme {
+  if (!isRecord(value)) {
+    throw new BadRequestException("theme doit être un objet");
+  }
+  const theme: BackofficeTheme = { ...current };
+  for (const field of THEME_COLORS) {
+    if (value[field] !== undefined) {
+      theme[field] = requireColor(value[field], field);
+    }
+  }
+  if (value.appName !== undefined) {
+    theme.appName = requireText(value.appName, "appName").slice(0, 60);
+    if (!theme.appName) {
+      throw new BadRequestException("appName ne peut pas être vide");
+    }
+  }
+  if (value.appSubtitle !== undefined) {
+    theme.appSubtitle = requireText(value.appSubtitle, "appSubtitle").slice(
+      0,
+      60,
+    );
+  }
+  if (value.logoUrl !== undefined) {
+    theme.logoUrl = requireImageUrl(value.logoUrl, "logoUrl");
+  }
+  if (value.borderRadius !== undefined) {
+    theme.borderRadius = requireNumber(value.borderRadius, "borderRadius", 0, 24);
+  }
+  if (value.fontScale !== undefined) {
+    theme.fontScale = requireNumber(value.fontScale, "fontScale", 85, 120);
+  }
+  if (value.sidebarCollapsedByDefault !== undefined) {
+    if (typeof value.sidebarCollapsedByDefault !== "boolean") {
+      throw new BadRequestException(
+        "sidebarCollapsedByDefault doit être un booléen",
+      );
+    }
+    theme.sidebarCollapsedByDefault = value.sidebarCollapsedByDefault;
+  }
+  return theme;
+}
+
 @Injectable()
 export class SiteConfigService {
   constructor(
@@ -165,6 +246,44 @@ export class SiteConfigService {
     return {
       config: record.config,
       updated_at: record.updated_at?.toISOString() ?? null,
+    };
+  }
+
+  /** Thème du back-office (valeurs par défaut pour les champs absents). */
+  async findTheme(): Promise<BackofficeThemeResponse> {
+    const record = (await this.siteConfigModel
+      .findOne({ key: THEME_KEY })
+      .lean()
+      .exec()) as { config?: unknown; updated_at?: Date } | null;
+    return {
+      theme: {
+        ...DEFAULT_BACKOFFICE_THEME,
+        ...((record?.config as Partial<BackofficeTheme>) ?? {}),
+      },
+      updated_at: record?.updated_at?.toISOString() ?? null,
+    };
+  }
+
+  /** Met à jour le thème ; `reset` restaure les valeurs par défaut. */
+  async updateTheme(
+    value: unknown,
+    reset = false,
+  ): Promise<BackofficeThemeResponse> {
+    const current = reset
+      ? DEFAULT_BACKOFFICE_THEME
+      : (await this.findTheme()).theme;
+    const theme = normalizeTheme(value ?? {}, current);
+    const record = (await this.siteConfigModel
+      .findOneAndUpdate(
+        { key: THEME_KEY },
+        { $set: { config: theme } },
+        { new: true, upsert: true },
+      )
+      .lean()
+      .exec()) as { config?: unknown; updated_at?: Date } | null;
+    return {
+      theme: (record?.config as BackofficeTheme) ?? theme,
+      updated_at: record?.updated_at?.toISOString() ?? null,
     };
   }
 }

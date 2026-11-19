@@ -1,0 +1,409 @@
+
+  <div class="chap flow" id="p-b"><div class="k">Partie B</div><h2>Ordre recommandé de mise en œuvre</h2><p>Les numéros renvoient aux fiches de la partie A ; les codes S au volet sécurité (partie C). Le socle ERP (partie E) est déjà réalisé : chaque phase s’appuie sur ses événements, sa numérotation et son magasin d’applications.</p></div>
+  <div class="phases">
+    <div class="phase"><div class="phase-side"><b>Phase 1</b><span>Durcir</span></div><div class="phase-body"><h4>Rendre la plateforme sûre et exploitable</h4><p>Révocation de la clé exposée et mesures S1 à S14, cloisonnement par établissement en tête (S4) ; observabilité et sauvegardes (25) ; protection des données (24) ; écrans ERP et menu par droits dans le back-office (18).</p></div></div>
+    <div class="phase"><div class="phase-side"><b>Phase 2</b><span>Cœur hôtelier</span></div><div class="phase-body"><h4>Un PMS cohérent de bout en bout</h4><p>Disponibilité (1), prix calculé (2), folio et facture automatique (3), facture légale et avoirs (4), gouvernance reliée aux chambres (6), fiche de police (23). La comptabilité automatique (partie E) devient fiable à partir de cette phase.</p></div></div>
+    <div class="phase"><div class="phase-side"><b>Phase 3</b><span>Vendre</span></div><div class="phase-body"><h4>Encaisser en ligne et sur tous les canaux</h4><p>Réservation sur le site (8), paiement mobile money et carte (9), channel manager (10), envoi réel des messages (13), espace client (11), langues et devises (16). Premiers connecteurs de l’ESB en production.</p></div></div>
+    <div class="phase"><div class="phase-side"><b>Phase 4</b><span>Équiper</span></div><div class="phase-body"><h4>Mobile, pilotage et opérations</h4><p>Applications client et personnel (14, 15), check-in en ligne et clé (12), planning des chambres (5), groupes et allotements (7), tableau de bord temps réel (19), IA sur données réelles (20), consolidation et budgets (22), maintenance préventive (26), paie (27), référencement (17).</p></div></div>
+    <div class="phase"><div class="phase-side"><b>Phase 5</b><span>Se différencier</span></div><div class="phase-body"><h4>Prendre une avance durable</h4><p>Recommandations de prix (21), portails propriétaires et partenaires (28), e-réputation (29), offre SaaS en libre-service (30) ; courtier RabbitMQ lorsque les destinataires de l’ESB se multiplient.</p></div></div>
+  </div>
+
+  <div class="chap" id="p-c"><div class="k">Partie C</div><h2>Volet sécurité</h2><p>PleasantStay manipule des pièces d’identité, des paiements et les données de plusieurs organisations dans une même base. Ce volet part de l’existant, vérifié dans le code, pour ne proposer aucun doublon. Chaque mesure précise si le backend est modifié.</p></div>
+
+  <h3 class="sub">Ce qui existe déjà (à conserver)</h3>
+  <table class="dense">
+    <thead><tr><th style="width:68mm">Mécanisme</th><th>Où</th></tr></thead>
+    <tbody>
+      <tr><td>Garde JWT globale puis garde des rôles, permissions déduites de chaque route et relues en base</td><td><code>src/app.module.ts</code> (APP_GUARD), <code>src/auth/guards/jwt-auth.guard.ts</code>, <code>src/auth/guards/roles.guard.ts</code>, <code>src/auth/permissions/permission.util.ts</code></td></tr>
+      <tr><td>Jetons de rafraîchissement opaques hachés, rotation atomique, détection de réutilisation</td><td><code>src/session/services/session.service.ts</code>, <code>src/auth/utils/crypto.util.ts</code> (<code>safeCompare</code>)</td></tr>
+      <tr><td>Verrouillage du compte après échecs, comparaison factice si l’e-mail est inconnu</td><td><code>src/auth/services/auth.service.ts</code>, <code>src/auth/auth.config.ts</code></td></tr>
+      <tr><td>Double authentification TOTP, jetons de réinitialisation à usage unique (SHA-256, TTL)</td><td><code>src/auth/services/totp.service.ts</code>, <code>src/auth/schemas/auth-token.entity.ts</code></td></tr>
+      <tr><td>Journal d’audit non modifiable (hooks qui refusent les mises à jour)</td><td><code>src/audit-log/schemas/audit-log.entity.ts</code></td></tr>
+      <tr><td>Validation globale des DTO (<code>whitelist</code>), export CSV protégé contre l’injection de formules</td><td><code>src/main.ts</code>, <code>src/report/engine/report-builder.ts</code></td></tr>
+      <tr><td>Socle ERP : webhooks sortants signés, entrée signée (corps brut activé), garde SSRF, secrets d’intégration chiffrés AES-256-GCM (partie E)</td><td><code>src/integration-bus/</code>, <code>src/main.ts</code> (<code>rawBody: true</code>)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">Constats relevés dans le code</h3>
+  <table class="dense">
+    <thead><tr><th style="width:6mm">#</th><th>Constat</th><th style="width:60mm">Fichier</th><th style="width:12mm">Mesure</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Clé d’API en clair dans un fichier suivi par Git.</td><td><code>project-hotels-manager/Document.txt</code></td><td>S13</td></tr>
+      <tr><td>2</td><td>Aucune séparation entre organisations dans les services : <code>GET /reservations</code> renvoie toutes les réservations ; les lectures par identifiant ne vérifient pas l’établissement ; <code>property_id</code> utilisé pour choisir les rôles vient du client.</td><td><code>src/auth/guards/roles.guard.ts</code> l. 75-79, <code>src/common/services/base-crud.service.ts</code></td><td>S4</td></tr>
+      <tr><td>3</td><td>CORS : sans <code>CORS_ORIGIN</code>, toute origine est renvoyée avec <code>credentials: true</code> ; ni helmet, ni limite de taille, ni <code>trust proxy</code> ; Swagger public en production.</td><td><code>src/main.ts</code> l. 22-35</td><td>S1</td></tr>
+      <tr><td>4</td><td>Aucune limitation de débit (connexion, inscription, mot de passe oublié, lien magique, 2FA, contact, newsletter).</td><td><code>src/app.module.ts</code>, <code>src/auth/controllers/auth.controller.ts</code></td><td>S2</td></tr>
+      <tr><td>5</td><td>Jetons de réinitialisation et de vérification renvoyés dans la réponse si <code>NODE_ENV</code> n’est pas « production » — or aucun fichier Docker ne le définit ; configuration non validée au démarrage.</td><td><code>src/auth/services/auth.service.ts</code> (<code>withDevToken</code>, l. 186, 384, 490), <code>docker-compose.yml</code></td><td>S3</td></tr>
+      <tr><td>6</td><td>Un jeton d’accès reste valable jusqu’à 15 min après déconnexion ou révocation : la session <code>sid</code> n’est pas contrôlée.</td><td><code>src/auth/guards/jwt-auth.guard.ts</code></td><td>S3</td></tr>
+      <tr><td>7</td><td>Champs serveur acceptés du client : statut du paiement, montant total de la réservation, palier de fidélité ; corps de requête non typés ignorés par la validation (12 contrôleurs) ; identifiants non validés (erreurs 500).</td><td><code>src/payment/dto/create-payment.dto.ts</code> l. 44, <code>src/reservation/dto/create-reservation.dto.ts</code>, <code>src/guest/dto/create-guest.dto.ts</code></td><td>S5</td></tr>
+      <tr><td>8</td><td>Suppression d’une ligne de facture sans vérifier qu’elle appartient à la facture.</td><td><code>src/invoice/services/invoice.service.ts</code> l. 135-138</td><td>S5</td></tr>
+      <tr><td>9</td><td>Secret 2FA, identifiants OTA, pièces d’identité, comptes bancaires et salaires en clair en base.</td><td><code>src/base-entities/user.abstract.ts</code> l. 169, <code>src/ota-connection/schemas/ota-connection.entity.ts</code> l. 96</td><td>S6</td></tr>
+      <tr><td>10</td><td>Le journal d’audit n’est alimenté par aucun module (seule une route POST du client l’écrit) et n’est pas chaîné.</td><td><code>src/audit-log/services/audit-log.service.ts</code></td><td>S7</td></tr>
+      <tr><td>11</td><td>Recherche client avec expression régulière non échappée (ReDoS) ; tri libre sur n’importe quel champ, y compris masqué.</td><td><code>src/guest/services/guest.service.ts</code> l. 57-60, <code>src/common/repositories/base.repository.ts</code> l. 25-26</td><td>S8</td></tr>
+      <tr><td>12</td><td>Données personnelles dans les journaux (<code>console.log</code> à l’enregistrement) ; erreurs Mongo non gérées en 500.</td><td><code>src/admins/schemas/admin.entity.ts</code> l. 218, <code>src/receptionist/schemas/receptionist.entity.ts</code> l. 427, <code>src/role/schemas/role.schema.ts</code> l. 141</td><td>S9</td></tr>
+      <tr><td>13</td><td>Front-office : jetons dans des cookies lisibles par JavaScript (30 jours) ; <code>middleware.ts</code> ne vérifie que leur présence. Back-office : jetons en <code>sessionStorage</code>.</td><td><code>project-hotels-manager/services/api/client.ts</code> l. 44-45, <code>middleware.ts</code> l. 20 ; back-office <code>src/lib/api.ts</code></td><td>S10</td></tr>
+      <tr><td>14</td><td>Aucun en-tête de sécurité (CSP, HSTS, X-Frame-Options) sur les deux applications Next.js.</td><td><code>project-hotels-manager/next.config.ts</code>, back-office <code>next.config.ts</code></td><td>S11</td></tr>
+      <tr><td>15</td><td>Webhooks entrants non signés : <code>signature_verified</code> est posé à la main par une route.</td><td><code>src/webhook-log/controllers/webhook-log.controller.ts</code> l. 78</td><td>S12</td></tr>
+      <tr><td>16</td><td>MongoDB exposé sans authentification, image Docker lancée en root avec <code>npm install</code> ; dépendances mortes (<code>bcrypt</code>, <code>@types/mongoose</code>, <code>newrelic</code>, scripts TypeORM) ; le back-office embarque <code>typeorm</code>, <code>mysql2</code>, <code>@nestjs/*</code>.</td><td><code>docker-compose.yml</code>, <code>Dockerfile</code>, <code>package.json</code> ; back-office <code>package.json</code></td><td>S14</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S1</span><h3>En-têtes HTTP, CORS strict et Swagger réservé</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">L’API ne sert que du JSON : politique la plus stricte, liste blanche d’origines obligatoire, corps limité, vraie adresse IP derrière le proxy (utile aux sessions, au verrouillage et à l’audit).</p>
+    <div class="meta"><b>Fichier à modifier</b><span><code>src/main.ts</code></span><b>Fichier à créer</b><span>—</span><b>Dépendance</b><span><code>npm i helmet</code></span></div>
+  </div>
+  <div class="codehead">src/main.ts</div>
+<pre class="code"><span class="k">import</span> helmet <span class="k">from</span> <span class="s">'helmet'</span>;
+<span class="k">import</span> { json, urlencoded } <span class="k">from</span> <span class="s">'express'</span>;
+<span class="k">import</span> <span class="k">type</span> { NestExpressApplication } <span class="k">from</span> <span class="s">'@nestjs/platform-express'</span>;
+
+<span class="k">const</span> app = <span class="k">await</span> NestFactory.create&lt;NestExpressApplication&gt;(AppModule, { rawBody: <span class="k">true</span> }); <span class="c">// rawBody : S12</span>
+app.set(<span class="s">'trust proxy'</span>, 1);
+app.disable(<span class="s">'x-powered-by'</span>);
+app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: [<span class="s">"'none'"</span>], frameAncestors: [<span class="s">"'none'"</span>] } } }));
+app.use(json({ limit: <span class="s">'1mb'</span> }), urlencoded({ extended: <span class="k">true</span>, limit: <span class="s">'1mb'</span> }));
+
+<span class="k">const</span> origins = (process.env.CORS_ORIGIN ?? <span class="s">''</span>).split(<span class="s">','</span>).map((o) =&gt; o.trim()).filter(Boolean);
+<span class="k">if</span> (!origins.length) <span class="k">throw new</span> Error(<span class="s">'CORS_ORIGIN est obligatoire'</span>);
+app.enableCors({ origin: origins, credentials: <span class="k">true</span>, maxAge: 600 });
+
+<span class="k">if</span> (process.env.SWAGGER_ENABLED === <span class="s">'true'</span>) {     <span class="c">// jamais par défaut en production</span>
+  SwaggerModule.setup(<span class="s">'api/docs'</span>, app, SwaggerModule.createDocument(app, config));
+}</pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S2</span><h3>Limitation de débit</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Une limite globale raisonnable, plus des limites serrées sur les routes publiques sensibles ; compteur par IP et par e-mail pour la connexion (le verrouillage par compte seul permet de bloquer volontairement le compte d’autrui). Stockage Redis dès qu’il y a plusieurs instances.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/app.module.ts</code>, <code>src/auth/controllers/auth.controller.ts</code>, <code>src/contact-message/</code>, <code>src/newsletter-subscription/</code></span><b>Dépendances</b><span><code>npm i @nestjs/throttler</code> (+ <code>@nest-lab/throttler-storage-redis</code> en multi-instance)</span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/app.module.ts</div>
+<pre class="code">ThrottlerModule.forRoot({
+  throttlers: [{ name: <span class="s">'default'</span>, ttl: 60_000, limit: 120 }],
+}),
+<span class="c">// providers :</span>
+{ provide: APP_GUARD, useClass: ThrottlerGuard },</pre>
+  </div><div>
+  <div class="codehead">src/auth/controllers/auth.controller.ts</div>
+<pre class="code"><span class="k">@Throttle</span>({ default: { ttl: 15 * 60_000, limit: 10 } })
+<span class="k">@Public</span>()
+<span class="k">@Post</span>(<span class="s">'login'</span>)
+login(<span class="k">@Body</span>() dto: LoginDto, <span class="k">@Client</span>() client: ClientInfo) {
+  <span class="k">return this</span>.authService.login(dto, client);
+}</pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S3</span><h3>Configuration validée et jetons révocables</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Le démarrage échoue si une variable est absente ou dangereuse ; <code>NODE_ENV</code> devient obligatoire (fin de la fuite des jetons par <code>withDevToken</code>) ; la garde JWT refuse un jeton dont la session est révoquée (cache court en mémoire).</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/app.module.ts</code>, <code>src/auth/guards/jwt-auth.guard.ts</code>, <code>src/auth/services/auth.service.ts</code>, <code>docker-compose.yml</code>, <code>.env.example</code></span><b>Fichier à créer</b><span><code>src/config/env.validation.ts</code></span><b>Dépendance</b><span><code>npm i joi</code></span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/config/env.validation.ts</div>
+<pre class="code"><span class="k">export const</span> envSchema = Joi.object({
+  NODE_ENV: Joi.string().valid(<span class="s">'development'</span>, <span class="s">'test'</span>, <span class="s">'production'</span>).required(),
+  MONGODB_URI: Joi.string().uri({ scheme: [<span class="s">'mongodb'</span>, <span class="s">'mongodb+srv'</span>] }).required(),
+  JWT_SECRET: Joi.string().min(48)
+    .invalid(<span class="s">'change-me-with-a-long-random-secret'</span>).required(),
+  CORS_ORIGIN: Joi.string().required(),
+  INTEGRATION_ENCRYPTION_KEY: Joi.string().when(<span class="s">'NODE_ENV'</span>,
+    { is: <span class="s">'production'</span>, then: Joi.required() }),
+});
+<span class="c">// app.module.ts</span>
+ConfigModule.forRoot({ isGlobal: <span class="k">true</span>, validationSchema: envSchema }),</pre>
+  </div><div>
+  <div class="codehead">src/auth/guards/jwt-auth.guard.ts (extrait)</div>
+<pre class="code"><span class="k">const</span> payload = <span class="k">await this</span>.jwt.verifyAsync&lt;JwtPayload&gt;(token, opts);
+<span class="k">if</span> (payload.type !== <span class="s">'access'</span>) <span class="k">throw new</span> UnauthorizedException();
+<span class="c">// nouvelle vérification : session encore active ?</span>
+<span class="k">if</span> (payload.sid &amp;&amp; !(<span class="k">await this</span>.sessions.isActive(payload.sid))) {
+  <span class="k">throw new</span> UnauthorizedException(<span class="s">'Session révoquée'</span>);
+}
+<span class="c">// SessionService.isActive : findOne({ _id: sid, revoked_at: null })
+// avec un cache mémoire de 30 s pour éviter une requête par appel</span></pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S4</span><h3>Cloisonnement par organisation et par établissement</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Faille la plus grave : un utilisateur d’un hôtel peut lire ou modifier les données d’un autre. Principe : l’établissement n’est jamais cru sur parole ; on calcule une fois par requête la liste des établissements autorisés (affectations <code>user-role</code>, <code>organization.members</code>, <code>owner.property_ids</code>, <code>staff</code>) et chaque requête Mongo est filtrée. Le <code>TenantScopeService</code> du socle (partie E) fournit déjà la résolution établissement → organisation.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/auth/guards/roles.guard.ts</code> (portée vérifiée), <code>src/common/services/base-crud.service.ts</code> (filtre et contrôle par identifiant), <code>src/user-role/services/user-role.service.ts</code>, tous les contrôleurs prenant <code>:propertyId</code> ou <code>:organizationId</code></span><b>Fichiers à créer</b><span><code>src/common/tenancy/tenant-context.ts</code> (AsyncLocalStorage), <code>src/common/tenancy/tenant.guard.ts</code>, <code>src/common/tenancy/tenant-filter.ts</code></span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/common/tenancy/tenant.guard.ts</div>
+<pre class="code"><span class="k">@Injectable</span>()
+<span class="k">export class</span> TenantGuard <span class="k">implements</span> CanActivate {
+  <span class="k">constructor</span>(<span class="k">private readonly</span> access: UserRoleService) {}
+  <span class="k">async</span> canActivate(ctx: ExecutionContext) {
+    <span class="k">const</span> req = ctx.switchToHttp().getRequest();
+    <span class="k">if</span> (!req.user) <span class="k">return true</span>;              <span class="c">// route publique</span>
+    <span class="k">const</span> scope = <span class="k">await this</span>.access.getAllowedProperties(req.user);
+    <span class="c">// null = super administrateur (toutes les propriétés)</span>
+    <span class="k">const</span> asked = req.params.propertyId ?? req.query.property_id
+      ?? req.body?.property_id;
+    <span class="k">if</span> (asked &amp;&amp; scope &amp;&amp; !scope.includes(String(asked))) {
+      <span class="k">throw new</span> ForbiddenException(<span class="s">'Établissement non autorisé'</span>);
+    }
+    tenantContext.enterWith({ allowedPropertyIds: scope });
+    <span class="k">return true</span>;
+  }
+}</pre>
+  </div><div>
+  <div class="codehead">src/common/services/base-crud.service.ts (extrait)</div>
+<pre class="code"><span class="k">protected</span> scoped&lt;F <span class="k">extends</span> object&gt;(filter: F): F {
+  <span class="k">const</span> ids = tenantContext.getStore()?.allowedPropertyIds;
+  <span class="k">if</span> (!ids) <span class="k">return</span> filter;               <span class="c">// super administrateur</span>
+  <span class="k">return</span> { ...filter, property_id: { $in: ids.map(toObjectId) } };
+}
+
+<span class="k">async</span> findOne(id: string): Promise&lt;T&gt; {
+  <span class="k">const</span> doc = <span class="k">await this</span>.model
+    .findOne(<span class="k">this</span>.scoped({ _id: id, is_deleted: { $ne: <span class="k">true</span> } }))
+    .exec();
+  <span class="k">if</span> (!doc) <span class="k">throw new</span> NotFoundException(<span class="s">'Introuvable'</span>);
+  <span class="k">return</span> doc;                   <span class="c">// même règle pour update et remove</span>
+}</pre>
+  </div></div>
+  <p class="why">Tests attendus : pour chaque contrôleur, un utilisateur de l’établissement A reçoit 403 ou 404 sur une ressource de B (test de bout en bout paramétré sur toutes les routes listées par <code>PermissionCatalogService</code>).</p>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S5</span><h3>Validation stricte des entrées et champs calculés par le serveur</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Refuser les champs inconnus, typer tous les corps (aujourd’hui <code>{ points }</code>, <code>{ amount, reason }</code>, <code>Record&lt;string, any&gt;</code> passent sans contrôle), valider les identifiants avant <code>new Types.ObjectId()</code>, et retirer des DTO les champs que seul le serveur calcule.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/main.ts</code> (<code>forbidNonWhitelisted: true</code>), <code>src/payment/dto/create-payment.dto.ts</code>, <code>src/reservation/dto/create-reservation.dto.ts</code>, <code>src/guest/dto/create-guest.dto.ts</code> (mot de passe de 8 caractères comme l’auth), <code>src/invoice/services/invoice.service.ts</code> (<code>removeItem</code>), contrôleurs à corps non typés</span><b>Fichier à créer</b><span><code>src/common/pipes/parse-object-id.pipe.ts</code></span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/common/pipes/parse-object-id.pipe.ts</div>
+<pre class="code"><span class="k">@Injectable</span>()
+<span class="k">export class</span> ParseObjectIdPipe <span class="k">implements</span> PipeTransform&lt;string&gt; {
+  transform(value: string) {
+    <span class="k">if</span> (!Types.ObjectId.isValid(value)) {
+      <span class="k">throw new</span> BadRequestException(<span class="s">'Identifiant invalide'</span>);
+    }
+    <span class="k">return</span> value;
+  }
+}
+<span class="c">// usage : @Param('propertyId', ParseObjectIdPipe) propertyId: string</span></pre>
+  </div><div>
+  <div class="codehead">src/invoice/services/invoice.service.ts</div>
+<pre class="code"><span class="k">async</span> removeItem(invoiceId: string, itemId: string) {
+  <span class="k">const</span> res = <span class="k">await this</span>.invoiceItemModel.deleteOne({
+    _id: itemId,
+    invoice_id: <span class="k">new</span> Types.ObjectId(invoiceId), <span class="c">// appartenance</span>
+  });
+  <span class="k">if</span> (!res.deletedCount) <span class="k">throw new</span> NotFoundException(<span class="s">'Ligne introuvable'</span>);
+  <span class="k">return this</span>.recalculateTotals(invoiceId);
+}</pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S6</span><h3>Chiffrement des champs sensibles (AES-256-GCM)</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span><span class="state done">Partiellement réalisé</span></div>
+    <p class="why">Une fuite de la base ne doit révéler ni les secrets 2FA, ni les identifiants OTA, ni les pièces d’identité. Chiffrement applicatif avec clé versionnée (rotation possible) ; recherche exacte par empreinte HMAC séparée si nécessaire. <b>Déjà fait :</b> les secrets d’intégration de l’ESB sont chiffrés (<code>src/integration-bus/services/secret-cipher.service.ts</code>). <b>Reste à faire :</b> secret 2FA, identifiants OTA, données personnelles.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/base-entities/user.abstract.ts</code> (<code>two_factor_secret</code>), <code>src/auth/services/auth.service.ts</code>, <code>src/ota-connection/schemas/ota-connection.entity.ts</code>, <code>src/guest/schemas/guest.entity.ts</code>, <code>src/partner/schemas/partner.entity.ts</code>, <code>src/staff/schemas/staff.entity.ts</code></span><b>Fichier à créer</b><span><code>src/common/crypto/field-cipher.ts</code> + script de migration des données existantes</span></div>
+  </div>
+  <div class="codehead">src/common/crypto/field-cipher.ts</div>
+<pre class="code keep"><span class="k">const</span> keys = parseKeyring(process.env.FIELD_ENCRYPTION_KEYS); <span class="c">// "v2:base64,v1:base64" — la première chiffre</span>
+
+<span class="k">export function</span> encryptField(plain: string): string {
+  <span class="k">const</span> [version, key] = keys[0];
+  <span class="k">const</span> iv = randomBytes(12);
+  <span class="k">const</span> cipher = createCipheriv(<span class="s">'aes-256-gcm'</span>, key, iv);
+  <span class="k">const</span> data = Buffer.concat([cipher.update(plain, <span class="s">'utf8'</span>), cipher.final()]);
+  <span class="k">return</span> [version, iv, cipher.getAuthTag(), data].map((p) =&gt; Buffer.from(p).toString(<span class="s">'base64url'</span>)).join(<span class="s">'.'</span>);
+}
+
+<span class="k">export function</span> decryptField(stored: string): string {
+  <span class="k">const</span> [v, iv, tag, data] = stored.split(<span class="s">'.'</span>);
+  <span class="k">const</span> key = keyFor(Buffer.from(v, <span class="s">'base64url'</span>).toString());   <span class="c">// lève si version inconnue</span>
+  <span class="k">const</span> decipher = createDecipheriv(<span class="s">'aes-256-gcm'</span>, key, Buffer.from(iv, <span class="s">'base64url'</span>));
+  decipher.setAuthTag(Buffer.from(tag, <span class="s">'base64url'</span>));           <span class="c">// toute altération est détectée</span>
+  <span class="k">return</span> Buffer.concat([decipher.update(Buffer.from(data, <span class="s">'base64url'</span>)), decipher.final()]).toString(<span class="s">'utf8'</span>);
+}
+<span class="c">// Schéma Mongoose : @Prop({ type: String, select: false, set: encryptField, get: decryptField })</span></pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S7</span><h3>Journal d’audit automatique et chaîné</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Tracer automatiquement toutes les écritures (POST, PATCH, PUT, DELETE), connexions, changements de rôles et exports, et rendre toute suppression détectable : chaque entrée contient l’empreinte de la précédente. La route <code>POST /audit-logs</code> ouverte au client est fermée.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/audit-log/schemas/audit-log.entity.ts</code> (<code>prev_hash</code>, <code>hash</code>, <code>seq</code>), <code>src/audit-log/services/audit-log.service.ts</code>, <code>src/audit-log/controllers/audit-log.controller.ts</code>, <code>src/auth/services/auth.service.ts</code>, <code>src/app.module.ts</code></span><b>Fichier à créer</b><span><code>src/audit-log/audit.interceptor.ts</code>, <code>src/audit-log/audit-chain.ts</code></span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/audit-log/audit.interceptor.ts</div>
+<pre class="code"><span class="k">intercept</span>(ctx: ExecutionContext, next: CallHandler) {
+  <span class="k">const</span> req = ctx.switchToHttp().getRequest();
+  <span class="k">if</span> (!WRITE_METHODS.has(req.method)) <span class="k">return</span> next.handle();
+  <span class="k">return</span> next.handle().pipe(tap((result) =&gt; <span class="k">void this</span>.audit.record({
+    actor_id: req.user?.sub, actor_type: req.user?.user_type,
+    action: actionFor(req.method), entity_type: resourceOf(req),
+    entity_id: req.params.id ?? result?._id,
+    property_id: req.body?.property_id, ip_address: req.ip,
+    user_agent: req.headers[<span class="s">'user-agent'</span>],
+  })));        <span class="c">// sans le corps : pas de données personnelles</span>
+}</pre>
+  </div><div>
+  <div class="codehead">src/audit-log/audit-chain.ts</div>
+<pre class="code"><span class="k">export function</span> chainHash(prev: string, entry: AuditEntry) {
+  <span class="k">return</span> createHash(<span class="s">'sha256'</span>)
+    .update(prev)
+    .update(canonicalJson(entry))   <span class="c">// clés triées</span>
+    .digest(<span class="s">'hex'</span>);
+}
+<span class="c">// record() : lit la dernière entrée (seq, hash) puis insère
+// { seq: last.seq + 1, prev_hash: last.hash, hash } avec un
+// index unique sur seq ; en cas de conflit, on relit et on recommence.
+// GET /audit-logs/verify recalcule la chaîne et signale la 1re rupture.</span></pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S8</span><h3>Recherche et tri sûrs</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Échapper toute saisie utilisée dans <code>$regex</code> (déjà fait dans plusieurs services, pas dans la recherche client) et n’accepter que des champs de tri déclarés par chaque service.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/guest/services/guest.service.ts</code>, <code>src/common/dto/pagination-query.dto.ts</code>, <code>src/common/services/base-crud.service.ts</code></span><b>Fichier à créer</b><span><code>src/common/utils/query-safety.ts</code></span></div>
+  </div>
+  <div class="codehead">src/common/utils/query-safety.ts</div>
+<pre class="code keep"><span class="k">export const</span> escapeRegex = (s: string) =&gt; s.slice(0, 100).replace(<span class="s">/[.*+?^${}()|[\]\\]/g</span>, <span class="s">'\\$&amp;'</span>);
+
+<span class="k">export function</span> safeSort(sort: string | undefined, allowed: readonly string[], fallback = <span class="s">'-created_at'</span>) {
+  <span class="k">if</span> (!sort) <span class="k">return</span> fallback;
+  <span class="k">const</span> field = sort.replace(<span class="s">/^-/</span>, <span class="s">''</span>);
+  <span class="k">return</span> allowed.includes(field) ? sort : fallback;     <span class="c">// champs masqués jamais triables</span>
+}
+<span class="c">// BaseCrudService : protected sortableFields: readonly string[] = ['created_at'];</span></pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S9</span><h3>Erreurs maîtrisées et journaux sans données personnelles</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Traduire les erreurs Mongo (doublon 11000, identifiant invalide, validation) en 409 / 400 au lieu de 500, ne jamais renvoyer de détail interne, supprimer les <code>console.log</code> des schémas et masquer e-mails, téléphones et jetons dans les journaux.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/main.ts</code>, <code>src/admins/schemas/admin.entity.ts</code>, <code>src/receptionist/schemas/receptionist.entity.ts</code>, <code>src/role/schemas/role.schema.ts</code>, <code>src/housekeeping-staff/schemas/housekeeping-staff.entity.ts</code>, <code>src/auth/services/auth-notifier.service.ts</code></span><b>Fichier à créer</b><span><code>src/common/filters/mongo-exception.filter.ts</code></span></div>
+  </div>
+  <div class="codehead">src/common/filters/mongo-exception.filter.ts</div>
+<pre class="code keep"><span class="k">@Catch</span>(mongo.MongoServerError, mongoose.Error.CastError, mongoose.Error.ValidationError)
+<span class="k">export class</span> MongoExceptionFilter <span class="k">implements</span> ExceptionFilter {
+  catch(error: Error, host: ArgumentsHost) {
+    <span class="k">const</span> res = host.switchToHttp().getResponse&lt;Response&gt;();
+    <span class="k">if</span> ((error <span class="k">as</span> mongo.MongoServerError).code === 11000) {
+      <span class="k">return</span> res.status(409).json({ statusCode: 409, message: <span class="s">'Cette valeur existe déjà'</span> });
+    }
+    <span class="k">const</span> message = error <span class="k">instanceof</span> mongoose.Error.CastError ? <span class="s">'Identifiant invalide'</span> : <span class="s">'Données invalides'</span>;
+    <span class="k">return</span> res.status(400).json({ statusCode: 400, message });
+  }
+}
+<span class="c">// main.ts : app.useGlobalFilters(new MongoExceptionFilter());</span></pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S10</span><h3>Sessions web en cookies httpOnly (BFF)</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier (léger)</span></div>
+    <p class="why">Les jetons ne doivent plus être lisibles par JavaScript. Les deux applications Next.js passent par leurs propres routes serveur (« backend for frontend ») qui posent des cookies <code>httpOnly; Secure; SameSite=Lax</code> et relaient les appels ; le middleware vérifie la signature et l’expiration. Côté API : liste blanche des origines et refus des jetons dans l’URL.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span>front-office <code>services/api/client.ts</code>, <code>services/api/session.ts</code>, <code>middleware.ts</code> ; back-office <code>src/lib/api.ts</code>, <code>src/app/login/page.tsx</code></span><b>Fichiers à créer</b><span><code>app/api/auth/login/route.ts</code>, <code>app/api/auth/refresh/route.ts</code>, <code>app/api/auth/logout/route.ts</code>, <code>app/api/proxy/[...path]/route.ts</code> (dans chaque application)</span><b>Dépendance</b><span><code>npm i jose</code> (vérification du JWT dans le middleware)</span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">app/api/auth/login/route.ts</div>
+<pre class="code"><span class="k">export async function</span> POST(req: Request) {
+  <span class="k">const</span> r = <span class="k">await</span> fetch(<span class="s">`${API}/auth/login`</span>, {
+    method: <span class="s">'POST'</span>, body: <span class="k">await</span> req.text(),
+    headers: { <span class="s">'content-type'</span>: <span class="s">'application/json'</span> },
+  });
+  <span class="k">const</span> body = <span class="k">await</span> r.json();
+  <span class="k">if</span> (!r.ok || body.requires_two_factor) <span class="k">return</span> Response.json(body, { status: r.status });
+  <span class="k">const</span> jar = <span class="k">await</span> cookies();
+  <span class="k">const</span> base = { httpOnly: <span class="k">true</span>, secure: <span class="k">true</span>, sameSite: <span class="s">'lax'</span> <span class="k">as const</span>, path: <span class="s">'/'</span> };
+  jar.set(<span class="s">'ps_at'</span>, body.access_token, { ...base, maxAge: 15 * 60 });
+  jar.set(<span class="s">'ps_rt'</span>, body.refresh_token, { ...base, path: <span class="s">'/api/auth'</span>, maxAge: 30 * 86400 });
+  <span class="k">return</span> Response.json({ user: body.user });
+}</pre>
+  </div><div>
+  <div class="codehead">middleware.ts</div>
+<pre class="code"><span class="k">const</span> secret = <span class="k">new</span> TextEncoder().encode(process.env.JWT_SECRET);
+<span class="k">export async function</span> middleware(req: NextRequest) {
+  <span class="k">const</span> token = req.cookies.get(<span class="s">'ps_at'</span>)?.value;
+  <span class="k">try</span> {
+    <span class="k">const</span> { payload } = <span class="k">await</span> jwtVerify(token ?? <span class="s">''</span>, secret);
+    <span class="k">if</span> (payload.type !== <span class="s">'access'</span>) <span class="k">throw new</span> Error();
+    <span class="k">return</span> NextResponse.next();
+  } <span class="k">catch</span> {
+    <span class="c">// jeton expiré : tentative de /api/auth/refresh côté client</span>
+    <span class="k">return</span> NextResponse.redirect(<span class="k">new</span> URL(<span class="s">'/login'</span>, req.url));
+  }
+}</pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S11</span><h3>En-têtes de sécurité des applications Next.js</h3><span class="tag mid">Moyenne</span><span class="be no">Backend : non</span></div>
+    <p class="why">CSP limitant scripts et connexions à l’API, interdiction d’intégration dans un cadre, HSTS ; domaines d’images explicites (nécessaire aussi pour les images externes de la configuration du site).</p>
+    <div class="meta"><b>Fichiers à modifier</b><span>front-office <code>next.config.ts</code> ; back-office <code>next.config.ts</code></span><b>Dépendance</b><span>—</span></div>
+  </div>
+  <div class="codehead">next.config.ts</div>
+<pre class="code keep"><span class="k">const</span> csp = [
+  <span class="s">"default-src 'self'"</span>, <span class="s">"script-src 'self'"</span>, <span class="s">"style-src 'self' 'unsafe-inline'"</span>,
+  <span class="s">`connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL}`</span>, <span class="s">"img-src 'self' data: https:"</span>,
+  <span class="s">"frame-ancestors 'none'"</span>, <span class="s">"base-uri 'self'"</span>, <span class="s">"form-action 'self'"</span>,
+].join(<span class="s">'; '</span>);
+
+<span class="k">const</span> nextConfig: NextConfig = {
+  <span class="k">async</span> headers() {
+    <span class="k">return</span> [{ source: <span class="s">'/(.*)'</span>, headers: [
+      { key: <span class="s">'Content-Security-Policy'</span>, value: csp },
+      { key: <span class="s">'Strict-Transport-Security'</span>, value: <span class="s">'max-age=31536000; includeSubDomains'</span> },
+      { key: <span class="s">'X-Content-Type-Options'</span>, value: <span class="s">'nosniff'</span> },
+      { key: <span class="s">'Referrer-Policy'</span>, value: <span class="s">'strict-origin-when-cross-origin'</span> },
+      { key: <span class="s">'Permissions-Policy'</span>, value: <span class="s">'camera=(), microphone=(), geolocation=()'</span> },
+    ] }];
+  },
+  images: { remotePatterns: [{ protocol: <span class="s">'https'</span>, hostname: <span class="s">'**.pleasantstay.ci'</span> }] },
+};</pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S12</span><h3>Webhooks entrants signés</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier (léger)</span><span class="state done">Partiellement réalisé</span></div>
+    <p class="why"><b>Déjà fait</b> dans l’application ESB (partie E) : route publique <code>POST /api/integration/inbound/:endpointKey</code>, corps brut activé (<code>NestFactory.create(AppModule, { rawBody: true })</code> dans <code>src/main.ts</code>), signature HMAC-SHA256 comparée en temps constant, fenêtre anti-rejeu de 5 minutes, dédoublonnage, écriture dans <code>webhook-log</code> avec <code>signature_verified</code>. <b>Reste à faire :</b> retirer la route manuelle <code>PATCH /webhook-logs/:id/signature</code> et faire passer chaque fournisseur (n° 9, 10) par cette entrée.</p>
+    <div class="meta"><b>Fichier à modifier</b><span><code>src/webhook-log/controllers/webhook-log.controller.ts</code></span><b>Fichiers existants</b><span><code>src/integration-bus/</code>, <code>src/main.ts</code></span></div>
+  </div>
+<pre class="code keep"><span class="k">const</span> expected = createHmac(<span class="s">'sha256'</span>, secret).update(<span class="s">`${timestamp}.`</span>).update(req.rawBody).digest();
+<span class="k">const</span> received = Buffer.from(signature.replace(<span class="s">/^v1=/</span>, <span class="s">''</span>), <span class="s">'hex'</span>);
+<span class="k">if</span> (Math.abs(Date.now() / 1000 - timestamp) &gt; 300
+  || received.length !== expected.length || !timingSafeEqual(received, expected)) {
+  <span class="k">throw new</span> UnauthorizedException(<span class="s">'Signature invalide'</span>);
+}</pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S13</span><h3>Gestion des secrets</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Révoquer la clé de <code>Document.txt</code>, purger l’historique, puis ne plus jamais committer de secret : fichiers <code>.env</code> ignorés, secrets injectés par l’hébergeur (Docker secrets, Vault, gestionnaire du cloud), rotation planifiée de <code>JWT_SECRET</code> (support de deux clés pendant la transition), de <code>FIELD_ENCRYPTION_KEYS</code> et de <code>INTEGRATION_ENCRYPTION_KEY</code>.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>project-hotels-manager/Document.txt</code> (supprimer), <code>.gitignore</code> de chaque dépôt, <code>docker-compose.yml</code> (valeurs par défaut retirées), <code>src/auth/auth.config.ts</code> (clé précédente acceptée en vérification)</span><b>Fichier à créer</b><span><code>.gitleaks.toml</code> + étape CI <code>gitleaks detect</code> ; crochet <code>pre-commit</code></span></div>
+  </div>
+<pre class="code keep"><span class="c"># 1. révoquer la clé chez le fournisseur, puis :</span>
+git rm --cached project-hotels-manager/Document.txt
+git filter-repo --path project-hotels-manager/Document.txt --invert-paths
+git push --force-with-lease --all   <span class="c"># prévenir l’équipe : chacun reclone</span>
+<span class="c"># 2. CI : refuser tout nouveau secret</span>
+gitleaks detect --source . --redact --exit-code 1</pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S14</span><h3>Conteneurs, base de données et dépendances</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Image construite en deux étapes avec <code>npm ci</code>, sans dépendances de développement, exécutée par un utilisateur non root, <code>NODE_ENV=production</code> ; MongoDB avec authentification, non exposé hors du réseau Docker ; dépendances mortes retirées et audit automatique en CI.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>Dockerfile</code>, <code>docker-compose.yml</code> (backend et racine), <code>package.json</code> (retirer <code>bcrypt</code>, <code>@types/bcrypt</code>, <code>@types/mongoose</code>, <code>newrelic</code> ou le brancher, scripts <code>typeorm</code> / <code>migration:*</code>, <code>dotenv</code>) ; back-office <code>package.json</code> (retirer <code>typeorm</code>, <code>mysql2</code>, <code>@nestjs/config</code>, <code>@nestjs/typeorm</code>)</span><b>Fichier à créer</b><span><code>.github/workflows/ci.yml</code> (<code>npm audit --omit=dev --audit-level=high</code>, tests, gitleaks)</span></div>
+  </div>
+  <div class="codehead">Dockerfile</div>
+<pre class="code keep"><span class="k">FROM</span> node:22-alpine <span class="k">AS</span> build
+<span class="k">WORKDIR</span> /app
+<span class="k">COPY</span> package*.json ./
+<span class="k">RUN</span> npm ci --no-audit --no-fund
+<span class="k">COPY</span> . .
+<span class="k">RUN</span> npm run build &amp;&amp; npm prune --omit=dev
+
+<span class="k">FROM</span> node:22-alpine
+<span class="k">ENV</span> NODE_ENV=production
+<span class="k">WORKDIR</span> /app
+<span class="k">COPY</span> --from=build --chown=node:node /app/node_modules ./node_modules
+<span class="k">COPY</span> --from=build --chown=node:node /app/dist ./dist
+<span class="k">USER</span> node
+<span class="k">EXPOSE</span> 3000
+<span class="k">CMD</span> [<span class="s">"node"</span>, <span class="s">"dist/main.js"</span>]
+<span class="c"># docker-compose : mongo avec MONGO_INITDB_ROOT_USERNAME / _PASSWORD (secrets), sans "ports:" publiés</span></pre>
+  <p class="why"><b>Exploitation :</b> la limite de fichiers ouverts de MongoDB est déjà portée à 64 000 (<code>ulimits: nofile</code>) dans les deux <code>docker-compose.yml</code> : avec la valeur par défaut de 1 024, <code>mongod</code> s’arrêtait (erreur WiredTiger EMFILE) dès qu’environ 90 collections existaient, ce qui est le cas avec le socle ERP. À reproduire sur tout serveur de production.</p>
+  </div>

@@ -1,34 +1,7 @@
-services:
-  api:
-    build:
-      context: .
-    container_name: pleasantstay-api
-    environment:
-      PORT: 3000
-      MONGODB_URI: mongodb://mongo:27017
-      MONGODB_DB_NAME: bd_pleasantstay
-      CORS_ORIGIN: http://localhost:4200,http://localhost:3000,http://localhost:3001
-      JWT_SECRET: change-me-with-a-long-random-secret
-      JWT_EXPIRES_IN: 15m
-      JWT_REFRESH_EXPIRES_IN: 30d
-      JWT_2FA_EXPIRES_IN: 5m
-      FRONTEND_URL: http://localhost:4200
-    ports:
-      - "3002:3000"
-    depends_on:
-      - mongo
-    restart: unless-stopped
-
-  mongo:
-    image: mongo:7
-    container_name: pleasantstay-mongo
-    environment:
-      MONGO_INITDB_DATABASE: bd_pleasantstay
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
-    restart: unless-stopped
-
-volumes:
-  mongo_data:
+# La pile Docker complète est décrite dans ../docker-compose.yml (MongoDB,
+# API, back-office, front-office, mobile). Ce fichier l'inclut pour pouvoir
+# lancer `docker compose up` depuis ce dossier ; les secrets sont lus dans
+# ../.env.
+include:
+  - path: ../docker-compose.yml
+    env_file: ../.env

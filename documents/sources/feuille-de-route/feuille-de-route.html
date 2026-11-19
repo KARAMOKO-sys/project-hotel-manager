@@ -1,0 +1,1429 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>PleasantStay — Fonctionnalités à ajouter, fichiers à modifier, sécurité et ESB</title>
+<style>
+  @page { size: A4; margin: 15mm 0 17mm; @bottom-left { content: "PleasantStay · Feuille de route ERP"; padding-left: 15mm; font: 7pt 'Noto Sans', sans-serif; color: #8a97a8; } @bottom-right { content: "Page " counter(page) " / " counter(pages); padding-right: 15mm; font: 7pt 'Noto Sans', sans-serif; color: #8a97a8; } }
+  @page :first { margin: 0 0 17mm; }
+  :root { --teal: #178d80; --teal-dark: #11776d; --teal-50: #e9f7f4; --teal-100: #cfeee7; --navy: #0f2a44; --navy-2: #173a5c; --ink: #1d2f45; --muted: #66768b; --line: #dbe3ea; --soft: #f5f8fb; --high: #c2410c; --high-bg: #fff1e8; --mid: #0f6fb0; --mid-bg: #e8f2fb; --low: #5b6b7f; --low-bg: #eef2f6; --mono: 'DejaVu Sans Mono', 'Noto Sans Mono', monospace; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Noto Sans', 'DejaVu Sans', sans-serif; color: var(--ink); font-size: 8.3pt; line-height: 1.4; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Couverture */
+  .hero { padding: 14mm 15mm 11mm; color: #fff; background: radial-gradient(120% 140% at 100% 0%, #1f9e8f 0%, rgba(31,158,143,0) 55%), linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); }
+  .hero-top { display: flex; justify-content: space-between; align-items: center; }
+  .logo { display: flex; align-items: center; gap: 3mm; font-weight: 800; font-size: 16pt; letter-spacing: -.3pt; }
+  .logo svg { width: 10mm; height: 10mm; }
+  .logo .light { font-weight: 600; color: #9fd9cf; }
+  .logo .sub { margin-left: 1mm; font-size: .6em; font-weight: 600; color: #9fd9cf; }
+  .hero-ref { text-align: right; font-size: 7.5pt; color: #b8c9da; line-height: 1.6; }
+  .hero-ref b { color: #fff; }
+  .eyebrow { margin-top: 10mm; font-size: 7.5pt; font-weight: 700; letter-spacing: 1.4pt; text-transform: uppercase; color: #9fd9cf; }
+  h1 { margin-top: 2.5mm; font-size: 24pt; line-height: 1.12; font-weight: 800; letter-spacing: -.4pt; }
+  h1 em { font-style: normal; color: #7fd6c8; }
+  .lead { margin-top: 4mm; max-width: 170mm; font-size: 9.6pt; color: #d7e3ee; line-height: 1.55; }
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 3mm; margin-top: 7mm; }
+  .kpi { padding: 3mm 3.2mm; border-radius: 3mm; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12); }
+  .kpi b { display: block; font-size: 16pt; line-height: 1.1; color: #fff; }
+  .kpi span { font-size: 7pt; color: #b8c9da; line-height: 1.3; display: block; }
+
+  .wrap { padding: 0 15mm; }
+  .first-page-body { padding: 7mm 15mm 0; }
+  h2 { display: flex; align-items: center; gap: 3mm; margin: 6mm 0 3mm; font-size: 12.5pt; color: var(--navy); break-after: avoid; }
+  h2 .n { display: inline-grid; place-items: center; min-width: 8mm; height: 8mm; padding: 0 1.5mm; border-radius: 2.2mm; background: var(--teal); color: #fff; font-size: 9.5pt; }
+  h2 small { margin-left: auto; font-size: 7.5pt; font-weight: 600; color: var(--muted); }
+  h3.sub { font-size: 10pt; color: var(--navy); margin: 4.5mm 0 1.8mm; break-after: avoid; }
+  .intro { color: var(--muted); margin: -1mm 0 3mm; }
+  p + p { margin-top: 1.6mm; }
+
+  .chap { break-before: page; margin: 0 0 4mm; padding: 5mm 6mm; border-radius: 3mm; color: #fff; background: radial-gradient(120% 160% at 100% 0%, #1f9e8f 0%, rgba(31,158,143,0) 55%), linear-gradient(135deg, var(--navy) 0%, var(--navy-2) 100%); break-after: avoid; }
+  .chap .k { font-size: 7pt; font-weight: 700; letter-spacing: 1.3pt; text-transform: uppercase; color: #9fd9cf; }
+  .chap h2 { margin: 1mm 0 0; color: #fff; font-size: 15pt; }
+  .chap p { margin-top: 1.6mm; color: #d7e3ee; font-size: 8.4pt; max-width: 170mm; }
+
+  .strengths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3mm; }
+  .strength { padding: 3mm 3.5mm; border-radius: 2.5mm; background: var(--teal-50); border: 1px solid var(--teal-100); }
+  .strength b { display: block; color: var(--teal-dark); font-size: 8.5pt; margin-bottom: .8mm; }
+  .strength span { font-size: 7.8pt; color: var(--ink); }
+
+  .toc { margin-top: 1mm; border: 1px solid var(--line); border-radius: 3mm; overflow: hidden; }
+  .toc a { display: grid; grid-template-columns: 13mm 1fr 14mm; align-items: baseline; gap: 2mm; padding: 2.3mm 4mm; border-top: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+  .toc a:first-child { border-top: 0; }
+  .toc a.lvl2 { padding: 1.2mm 4mm; font-size: 7.9pt; color: var(--muted); border-top: 0; }
+  .toc a.lvl2 b { font-weight: 600; }
+  .toc .tk { font-weight: 800; color: var(--teal-dark); }
+  .toc .tt b { color: var(--navy); }
+  .toc .tt small { display: block; color: var(--muted); font-size: 7.4pt; }
+  .toc .tp { text-align: right; font-weight: 700; color: var(--navy); }
+  .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; margin-top: 3mm; }
+  .card { padding: 3mm 3.5mm; border: 1px solid var(--line); border-radius: 2.5mm; background: var(--soft); break-inside: avoid; }
+  .card b.t { display: block; color: var(--navy); margin-bottom: 1mm; }
+  .card p, .card li { font-size: 7.8pt; }
+
+  .item { break-inside: avoid; display: grid; grid-template-columns: 9mm 1fr; gap: 3mm; padding: 2.4mm 0; border-top: 1px solid var(--line); }
+  .item.first { border-top: 0; }
+  .num { display: grid; place-items: center; width: 8mm; height: 8mm; border-radius: 50%; background: var(--soft); border: 1px solid var(--line); color: var(--navy); font-weight: 700; font-size: 8.5pt; }
+  .head { display: flex; align-items: baseline; gap: 2.2mm; flex-wrap: wrap; }
+  .head h3 { font-size: 9.6pt; color: var(--navy); }
+  .tag { font-size: 6.4pt; font-weight: 700; letter-spacing: .5pt; text-transform: uppercase; padding: .5mm 2mm; border-radius: 10mm; }
+  .tag.high { color: var(--high); background: var(--high-bg); }
+  .tag.mid { color: var(--mid); background: var(--mid-bg); }
+  .tag.low { color: var(--low); background: var(--low-bg); }
+  .be { font-size: 6.4pt; font-weight: 700; padding: .4mm 2mm; border-radius: 10mm; border: 1px solid; }
+  .be.yes { color: var(--navy); border-color: #9fb2c8; background: #fff; }
+  .be.no { color: var(--teal-dark); border-color: var(--teal-100); background: var(--teal-50); }
+  .why { margin-top: .6mm; color: var(--muted); }
+  ul { margin: 1mm 0 0 4.2mm; }
+  li { margin: .3mm 0; }
+  li::marker { color: var(--teal); }
+  .have { margin-top: 1mm; font-size: 7.6pt; color: var(--teal-dark); }
+  .have::before { content: "Déjà en place : "; font-weight: 700; }
+
+  .fx { margin-top: 1.4mm; border: 1px solid var(--line); border-radius: 2mm; overflow: hidden; font-size: 6.3pt; line-height: 1.32; }
+  .fr { display: grid; grid-template-columns: 15mm 1fr 1fr; }
+  .fr > * { padding: .6mm 1.5mm; border-top: 1px solid var(--line); }
+  .fr > * + * { border-left: 1px solid var(--line); }
+  .fr.fh > * { border-top: 0; background: var(--soft); font-weight: 700; color: var(--muted); font-size: 6.2pt; text-transform: uppercase; letter-spacing: .4pt; font-style: normal; }
+  .fr > b { color: var(--navy); font-size: 6.6pt; }
+  .fx code, .feat code, td code, .card code, p code, li code { font-family: var(--mono); font-size: 6.1pt; color: #12385e; overflow-wrap: anywhere; }
+  .fx code::after { content: " "; }
+  .fx .none { color: #9aa7b6; }
+  .feat { margin-top: 1.2mm; font-size: 7.4pt; color: var(--ink); }
+  .feat b { color: var(--teal-dark); }
+
+  .phases { display: grid; gap: 2mm; }
+  .phase { break-inside: avoid; display: grid; grid-template-columns: 30mm 1fr; border: 1px solid var(--line); border-radius: 3mm; overflow: hidden; }
+  .phase-side { padding: 2.4mm 3mm; background: var(--navy); color: #fff; }
+  .phase-side b { display: block; font-size: 15pt; line-height: 1; color: #7fd6c8; }
+  .phase-side span { font-size: 7.5pt; color: #c6d4e2; }
+  .phase-body { padding: 2.2mm 3.5mm; }
+  .phase-body h4 { font-size: 9.5pt; color: var(--navy); }
+  .phase-body p { color: var(--muted); font-size: 8pt; margin-top: .6mm; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 2mm; font-size: 7.8pt; }
+  th { text-align: left; background: var(--navy); color: #fff; padding: 1.8mm 2.2mm; font-size: 6.9pt; letter-spacing: .4pt; text-transform: uppercase; }
+  td { padding: 1.1mm 2.2mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr { break-inside: avoid; }
+  tr:nth-child(even) td { background: var(--soft); }
+  table.dense td { padding: 1.2mm 2mm; font-size: 7.3pt; }
+  .yes-c { color: var(--high); font-weight: 700; }
+  .no-c { color: var(--teal-dark); font-weight: 700; }
+  .note { margin-top: 4mm; padding: 3.2mm 4mm; border-left: 3px solid var(--teal); background: var(--teal-50); border-radius: 0 2.5mm 2.5mm 0; font-size: 8pt; break-inside: avoid; }
+  .note b.t { display: block; margin-bottom: .8mm; color: var(--navy); }
+  .pb { break-before: page; }
+  .chap.flow { break-before: auto; margin-top: 4mm; padding: 3.5mm 5mm; }
+
+  .sm { padding: 3mm 0 1mm; border-top: 1px solid var(--line); }
+  .sm-top { break-inside: avoid; break-after: avoid; }
+  .sm-h { display: flex; align-items: baseline; gap: 2.5mm; flex-wrap: wrap; }
+  .sm-h .id { display: inline-grid; place-items: center; min-width: 8mm; height: 6.5mm; padding: 0 1.2mm; border-radius: 1.6mm; background: var(--navy); color: #7fd6c8; font-weight: 800; font-size: 7.6pt; }
+  .sm-h h3 { font-size: 9.8pt; color: var(--navy); }
+  .meta { display: grid; grid-template-columns: 30mm 1fr; margin-top: 1.5mm; border: 1px solid var(--line); border-radius: 2mm; overflow: hidden; font-size: 7.3pt; }
+  .meta > * { padding: .9mm 2mm; border-top: 1px solid var(--line); }
+  .meta > *:nth-child(-n+2) { border-top: 0; }
+  .meta > b { background: var(--soft); color: var(--navy); font-size: 6.9pt; }
+  .meta code { font-family: var(--mono); font-size: 6.3pt; color: #12385e; overflow-wrap: anywhere; }
+  .codehead { margin-top: 1.8mm; display: inline-block; padding: .6mm 2.2mm; border-radius: 1.6mm 1.6mm 0 0; background: #1c3350; color: #9fd9cf; font: 6.4pt var(--mono); break-after: avoid; }
+  pre.code { background: #0e1b2b; color: #dbe6f1; font-family: var(--mono); font-size: 6.5pt; line-height: 1.34; padding: 2mm 2.6mm; border-radius: 0 2mm 2mm 2mm; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; orphans: 4; widows: 4; }
+  pre.code.keep { break-inside: avoid; }
+  pre.code .c { color: #7f9bb5; }
+  pre.code .s { color: #9fe0c9; }
+  pre.code .k { color: #f6be8e; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+  .two > div { min-width: 0; }
+
+  .diagram { margin-top: 2mm; border: 1px solid var(--line); border-radius: 3mm; padding: 2mm; background: #fbfdfe; break-inside: avoid; }
+  .diagram svg { width: 100%; height: auto; display: block; }
+  .uses { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm; }
+  .use { padding: 3mm 3.5mm; border-radius: 2.5mm; break-inside: avoid; }
+  .use.ok { background: var(--teal-50); border: 1px solid var(--teal-100); }
+  .use.ko { background: var(--high-bg); border: 1px solid #f5d0bb; }
+  .use b.t { display: block; margin-bottom: 1mm; font-size: 8.8pt; }
+  .use.ok b.t { color: var(--teal-dark); }
+  .use.ko b.t { color: var(--high); }
+  .use li { font-size: 7.7pt; }
+
+  .erp { display: grid; grid-template-columns: repeat(2, 1fr); gap: 3mm; }
+  .erp .card { background: #fff; }
+  .state { display: inline-block; margin-left: 1.5mm; font-size: 6.2pt; font-weight: 700; text-transform: uppercase; letter-spacing: .4pt; color: var(--mid); background: var(--mid-bg); padding: .3mm 1.8mm; border-radius: 10mm; }
+  .toc a { padding: 1.7mm 4mm; }
+  .toc a.lvl2 { padding: .9mm 4mm; }
+  table.recap td { padding: .5mm 2mm; line-height: 1.3; }
+  .alert { margin-top: 4mm; padding: 3.2mm 4mm; border-left: 3px solid var(--high); background: var(--high-bg); border-radius: 0 2.5mm 2.5mm 0; font-size: 8pt; break-inside: avoid; }
+  .alert b.t { display: block; margin-bottom: .8mm; color: var(--high); }
+  .fr.r4 { grid-template-columns: 17mm 1fr 1fr; }
+  .state.done { color: var(--teal-dark); background: var(--teal-50); }
+  .evt td:first-child code { white-space: nowrap; }
+</style>
+</head>
+<body>
+
+
+<section class="hero">
+  <div class="hero-top">
+    <div class="logo">
+      <svg viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1b9a8a"/><path d="M136 392V168l120-64 120 64v224" fill="none" stroke="#fff" stroke-width="34" stroke-linejoin="round"/><rect x="214" y="290" width="84" height="102" rx="10" fill="#fff"/><rect x="188" y="196" width="40" height="40" rx="6" fill="#fff"/><rect x="284" y="196" width="40" height="40" rx="6" fill="#fff"/></svg>
+      <span>Pleasant<span class="light">Stay</span><span class="sub">ERP hôtelier</span></span>
+    </div>
+    <div class="hero-ref">Document de cadrage technique<br><b>Novembre 2026</b> · version 1</div>
+  </div>
+  <div class="eyebrow">Feuille de route ERP</div>
+  <h1>Fonctionnalités à ajouter<br>pour un <em>ERP hôtelier complet et modulable</em></h1>
+  <p class="lead">Analyse du système actuel (API NestJS, back-office Next.js, site public Next.js, application mobile) : ce qui est déjà solide, les 30 fonctionnalités qui manquent avec, pour chacune, <b>les fichiers à modifier et à créer</b> (backend, back-office, front-office, mobile), un <b>volet sécurité</b> avec extraits de code, l’usage d’un <b>bus de services d’entreprise (ESB)</b> pour les échanges avec les systèmes externes, et le socle ERP modulable réalisé, inspiré d’Odoo.</p>
+  <div class="kpis">
+    <div class="kpi"><b>30</b><span>fonctionnalités identifiées</span></div>
+    <div class="kpi"><b>13</b><span>priorités hautes</span></div>
+    <div class="kpi"><b>28</b><span>demandent une modification du backend</span></div>
+    <div class="kpi"><b>14</b><span>mesures de sécurité détaillées</span></div>
+    <div class="kpi"><b>38</b><span>événements métier publiables sur l’ESB</span></div>
+    <div class="kpi"><b>10</b><span>applications ERP ajoutées au socle</span></div>
+  </div>
+</section>
+
+<div class="first-page-body">
+  <h2><span class="n">✓</span>Ce qui est déjà solide</h2>
+  <div class="strengths">
+    <div class="strength"><b>Couverture hôtelière large</b><span>55 modules NestJS : établissements, chambres, réservations, liste d’attente prioritaire, plans tarifaires, prix journaliers, tarification dynamique bornée, taxes, factures, paiements, point de vente avec stock, gouvernance, maintenance, campagnes.</span></div>
+    <div class="strength"><b>Sécurité d’accès sérieuse</b><span>Permissions déduites de chaque route et relues en base, rotation des jetons de rafraîchissement avec détection de réutilisation, double authentification TOTP, verrouillage après échecs, jetons à usage unique hachés.</span></div>
+    <div class="strength"><b>Intelligence intégrée</b><span>Moteurs de prévision, chatbot bilingue, analyse de sentiment, recommandations et calcul des KPI hôteliers (TO, ADR, RevPAR, GOPPAR) ; 141 suites et 1682 tests unitaires au vert, plus un test de bout en bout des applications ERP (14 contrôles sur 14).</span></div>
+  </div>
+
+  <div class="alert"><b class="t">Avertissement urgent : une clé d’API est publiée dans le dépôt</b>Le fichier <code>project-hotels-manager/Document.txt</code>, suivi par Git, contient une clé d’API en clair. Elle doit être <b>révoquée immédiatement</b> chez le fournisseur, remplacée par une variable d’environnement, puis le fichier retiré de l’historique (<code>git filter-repo --path project-hotels-manager/Document.txt --invert-paths</code>) avant toute publication du dépôt. Voir la mesure S13.</div>
+
+</div>
+
+<div class="wrap pb">
+  <h2 style="margin-top:0"><span class="n">i</span>Objet de ce document</h2>
+  <p>Ce document répond à quatre questions pratiques :</p>
+  <ul>
+    <li><b>Où intervenir dans le code ?</b> Chaque fiche indique les fichiers existants à modifier et les fichiers ou modules à créer, séparés Backend / Back-office / Front-office / Mobile, ainsi que les écrans, routes d’API et entités à ajouter. Une pastille dit explicitement si <b>le backend doit être modifié</b>.</li>
+    <li><b>Que faut-il durcir avant la mise en production ?</b> Le volet sécurité part de ce qui existe réellement dans le code et propose, mesure par mesure, le fichier, les dépendances et un extrait de code.</li>
+    <li><b>Dans quel cadre utiliser un ESB, et comment ?</b> Le chapitre D décrit les échanges qui passent par le bus (OTA, paiement mobile, comptabilité externe, serrures, police…) et ceux qui n’y passent pas.</li>
+    <li><b>Qu’est-ce qui fait déjà de PleasantStay un ERP ?</b> La partie E décrit le socle modulable ajouté en novembre 2026 : magasin d’applications, comptabilité, stock, achats, RH, CRM, fidélité, fil d’activité, Studio, automatisations et ESB.</li>
+  </ul>
+  <p class="note"><b class="t">Méthode</b>Les chemins « à modifier » ont été vérifiés dans les dépôts en novembre 2026 (<code>project-hotels-manager-backend/src</code>, <code>project-manager-hotles-backoffice/src</code>, <code>project-hotels-manager/app</code> et <code>services</code>, <code>hotel-manager-mobile-react/src</code>). Les chemins « à créer » sont des propositions qui suivent les conventions du projet (un dossier par module, <code>schemas/*.entity.ts</code>, <code>services/*.service.ts</code>, <code>controllers/*.controller.ts</code>, <code>dto/</code>).</p>
+
+  <h2><span class="n">≡</span>Sommaire</h2>
+  <div class="toc">
+    <a href="#p-a"><span class="tk">A</span><span class="tt"><b>Les 30 fonctionnalités à ajouter</b><small>Fiches avec priorités, fichiers à modifier et à créer, routes et entités</small></span><span class="tp" id="tp-a">3</span></a>
+    <a class="lvl2" href="#ax1"><span></span><span>1 · <b>Cœur hôtelier (PMS)</b> (1 à 7)</span><span class="tp" id="tp-ax1">3</span></a>
+    <a class="lvl2" href="#ax2"><span></span><span>2 · <b>Canaux de vente et paiements</b> (8 à 13)</span><span class="tp" id="tp-ax2">6</span></a>
+    <a class="lvl2" href="#ax3"><span></span><span>3 · <b>Mobile et expérience client</b> (14 à 17)</span><span class="tp" id="tp-ax3">8</span></a>
+    <a class="lvl2" href="#ax4"><span></span><span>4 · <b>Back-office et pilotage</b> (18 à 22)</span><span class="tp" id="tp-ax4">9</span></a>
+    <a class="lvl2" href="#ax5"><span></span><span>5 · <b>Conformité et exploitation</b> (23 à 26)</span><span class="tp" id="tp-ax5">11</span></a>
+    <a class="lvl2" href="#ax6"><span></span><span>6 · <b>Écosystème et modèle économique</b> (27 à 30)</span><span class="tp" id="tp-ax6">13</span></a>
+    <a href="#p-b"><span class="tk">B</span><span class="tt"><b>Ordre recommandé de mise en œuvre</b><small>Cinq phases, du durcissement à la différenciation</small></span><span class="tp" id="tp-b">14</span></a>
+    <a href="#p-c"><span class="tk">C</span><span class="tt"><b>Volet sécurité</b><small>Constats relevés dans le code, 14 mesures avec fichiers, dépendances et extraits de code</small></span><span class="tp" id="tp-c">15</span></a>
+    <a href="#p-d"><span class="tk">D</span><span class="tt"><b>ESB — bus de services d’entreprise</b><small>Cadre d’usage, architecture, comparatif, événements, signature, déploiement</small></span><span class="tp" id="tp-d">22</span></a>
+    <a href="#p-e"><span class="tk">E</span><span class="tt"><b>Socle ERP modulable</b><small>Réalisé (novembre 2026) : magasin d’applications et 10 applications ERP</small></span><span class="tp" id="tp-e">26</span></a>
+    <a href="#p-f"><span class="tk">F</span><span class="tt"><b>Récapitulatif</b><small>Tableau des 30 fonctionnalités avec la colonne « Backend à modifier »</small></span><span class="tp" id="tp-f">28</span></a>
+  </div>
+</div>
+<div class="wrap pb">
+  <div class="legend">
+    <div class="card"><b class="t">Lire une fiche</b>
+      <ul>
+        <li><span class="tag high">Haute</span> <span class="tag mid">Moyenne</span> <span class="tag low">Selon marché</span> : priorité.</li>
+        <li><span class="be yes">Backend : à modifier</span> ou <span class="be no">Backend : non</span> : faut-il toucher à l’API NestJS ?</li>
+        <li>Grille « À modifier / À créer » : une ligne par application ; « — » signifie rien à faire.</li>
+        <li><b style="color:var(--teal-dark)">À ajouter</b> : écrans, routes d’API (préfixe <code>/api</code> implicite) et entités.</li>
+      </ul>
+    </div>
+    <div class="card"><b class="t">Conventions de chemins</b>
+      <ul>
+        <li><b>Backend</b> <code>project-hotels-manager-backend/</code> : <code>src/…</code>, <code>test/…</code>.</li>
+        <li><b>Back-office</b> <code>project-manager-hotles-backoffice/</code> : <code>src/app/admin/…</code>, <code>src/lib/resources.ts</code>, <code>src/components/…</code>. C’est l’application cible ; l’ancien back-office intégré au site (<code>project-hotels-manager/app/backoffice/</code>) est à retirer.</li>
+        <li><b>Front-office</b> <code>project-hotels-manager/</code> : <code>app/…</code>, <code>services/…</code>, <code>middleware.ts</code>.</li>
+        <li><b>Mobile</b> <code>hotel-manager-mobile-react/</code> : <code>src/…</code>.</li>
+        <li>Tout nouveau module backend s’enregistre dans <code>src/app.module.ts</code> et, s’il est activable, dans <code>src/platform/apps/app-catalog.ts</code> ; toute nouvelle page du back-office dans <code>src/lib/resources.ts</code> et <code>src/app/admin/&lt;clé&gt;/page.tsx</code>.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note"><b class="t">Faut-il modifier le backend ?</b>Oui pour 28 fonctionnalités sur 30 : seuls le référencement du site public (n° 17) et les écrans ERP du back-office (n° 18, qui s’appuient sur des routes déjà livrées) se traitent uniquement côté interfaces. Le volet sécurité modifie surtout <code>src/main.ts</code>, <code>src/app.module.ts</code>, <code>src/auth/</code> et <code>src/common/</code> ; l’ESB est déjà livré et branché (<code>src/integration-bus/</code>, corps brut activé dans <code>src/main.ts</code>) ; il ne reste à écrire que les connecteurs par fournisseur.</p>
+</div>
+
+
+<div class="wrap">
+  <div class="chap flow" id="p-a"><div class="k">Partie A</div><h2>Les 30 fonctionnalités à ajouter</h2><p>Six axes, du cœur hôtelier à l’écosystème. Pour chaque fiche : le constat relevé dans le code, le contenu attendu, puis les fichiers concernés. Les applications déjà livrées par le socle ERP (partie E) ne sont pas répétées ici ; plusieurs fiches s’appuient sur elles.</p></div>
+
+  <h2 id="ax1"><span class="n">1</span>Cœur hôtelier (PMS)<small>Priorité haute</small></h2>
+  <p class="intro">Les modules existent mais travaillent isolément : une réservation ne vérifie ni la disponibilité, ni le prix, ni les dates bloquées, et ne produit pas de facture.</p>
+
+  <div class="item first"><span class="num">1</span><div>
+    <div class="head"><h3>Moteur de disponibilité et contrôle des chevauchements</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>getAvailableRooms</code> ne regarde que le statut de ménage (<code>src/room/services/room.service.ts</code>, l. 64-73) ; <code>ReservationService.create</code> accepte n’importe quelles dates, sans contrôle de surréservation ni des dates bloquées (<code>BlockedDateService.isBlocked</code> n’est jamais appelé).</p>
+    <ul><li>Calcul de disponibilité par type de chambre et par nuit : stock − réservations confirmées − blocages − allotements (n° 7), avec seuil de surréservation paramétrable.</li><li>Verrou optimiste à la création (compteur d’inventaire par nuit, mise à jour conditionnelle) pour empêcher deux réservations simultanées de la dernière chambre.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/services/reservation.service.ts</code> (create, cancel) <code>src/room/services/room.service.ts</code> <code>src/blocked-date/services/blocked-date.service.ts</code> <code>src/reservation/reservation.module.ts</code></span><span><code>src/availability/</code> (availability.module.ts, services/availability.service.ts, schemas/room-inventory.entity.ts, controllers/availability.controller.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code> (réservations) <code>src/components/ui/ResourcePage.tsx</code></span><span><code>src/app/admin/availability/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/shared/components/Search.tsx</code> (dates, voyageurs)</span><span>voir n° 8</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /availability?property_id=&amp;from=&amp;to=&amp;guests=</code> · <code>GET /availability/calendar</code> · entité <code>room_inventory</code> (property, room_type, date, total, sold, blocked, version) · erreur 409 « Plus de disponibilité » à la création.</p>
+  </div></div>
+
+  <div class="item"><span class="num">2</span><div>
+    <div class="head"><h3>Prix calculé à la réservation</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>total_amount</code> est envoyé par le client (<code>src/reservation/dto/create-reservation.dto.ts</code>) alors que le calcul existe déjà en morceaux : <code>DailyPriceService.calculateStayPrice</code>, <code>DynamicPricingRuleService.calculateAdjustedPrice</code>, <code>RatePlanService.findApplicable</code> et <code>TaxRateService.calculateTaxes</code>.</p>
+    <ul><li>Service de devis unique : prix de base par nuit × plan tarifaire × règles dynamiques (occupation calculée par le n° 1) + taxes (TVA, taxe de séjour par personne et par nuit).</li><li>Le total devient un champ serveur, figé à la confirmation avec le détail par nuit ; frais d’annulation calculés par <code>calculateCancellationFee</code>.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/dto/create-reservation.dto.ts</code> (retirer total_amount) <code>src/reservation/schemas/reservation.entity.ts</code> (price_breakdown) <code>src/daily-price/services/daily-price.service.ts</code> <code>src/dynamic-pricing-rule/services/dynamic-pricing-rule.service.ts</code> <code>src/tax-rate/services/tax-rate.service.ts</code></span><span><code>src/pricing/</code> (pricing.module.ts, services/quote.service.ts, dto/quote.dto.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code></span><span><code>src/components/ui/QuotePanel.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/property/components/PropertyDetail.tsx</code> (prix réel par séjour)</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /pricing/quote</code> (public, limité en débit) · champs <code>price_breakdown[]</code>, <code>taxes[]</code>, <code>rate_plan_id</code> sur la réservation.</p>
+  </div></div>
+
+  <div class="item"><span class="num">3</span><div>
+    <div class="head"><h3>Folio de séjour et facture automatique</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Aucun lien automatique séjour → facture ; <code>PosTransactionService.settle</code> ne fait que référencer une facture sans créer de ligne ; les taxes de facture sont saisies à la main.</p>
+    <ul><li>Un folio ouvert au check-in regroupe nuitées, charges point de vente (bar, restaurant, spa), extras et acomptes ; facture générée au check-out, avec répartition possible entre plusieurs payeurs (société / client).</li><li>Abonnement aux événements <code>hotel.reservation.checked_in</code>, <code>pos.transaction.completed</code> et <code>hotel.reservation.checked_out</code> déjà publiés par le socle.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/invoice/services/invoice.service.ts</code> <code>src/invoice-item/schemas/invoice-item.entity.ts</code> (source_model, source_id) <code>src/pos-transaction/services/pos-transaction.service.ts</code> (settle)</span><span><code>src/folio/</code> (schemas/folio.entity.ts, services/folio.service.ts, listeners/folio.listener.ts, controllers/folio.controller.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/reservations/page.tsx</code> <code>src/app/admin/invoices/page.tsx</code></span><span><code>src/app/admin/folios/[id]/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /folios/reservation/:id</code> · <code>POST /folios/:id/charges</code> · <code>POST /folios/:id/split</code> · <code>POST /folios/:id/invoice</code> · entité <code>folio</code> (lignes, acomptes, solde).</p>
+  </div></div>
+
+  <div class="item"><span class="num">4</span><div>
+    <div class="head"><h3>Facture légale : numérotation, avoirs et PDF</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les numéros sont aléatoires (<code>INV-&lt;horodatage&gt;-&lt;hex&gt;</code>, <code>src/invoice/services/invoice.service.ts</code> l. 159-160) ; pas d’avoir, pas de PDF ; une facture émise reste modifiable.</p>
+    <ul><li>Numérotation continue par établissement et par année avec <code>SequenceService</code> (déjà livré, <code>src/platform/sequences/</code>) ; facture verrouillée après émission ; correction uniquement par avoir.</li><li>PDF conforme (mentions légales, NCC, régime fiscal, taxes détaillées), envoyé par e-mail (n° 13) ; prêt pour la facture normalisée électronique (FNE) lorsque l’administration fiscale l’impose.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/invoice/services/invoice.service.ts</code> (generateInvoiceNumber, update) <code>src/invoice/schemas/invoice.entity.ts</code> (credit_note_of, locked_at) <code>src/property/schemas/property.entity.ts</code> (mentions légales)</span><span><code>src/invoice/services/invoice-pdf.service.ts</code> <code>src/invoice/templates/invoice.hbs</code> <code>src/invoice/services/credit-note.service.ts</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/invoices/page.tsx</code> <code>src/lib/resources.ts</code></span><span>bouton « Télécharger le PDF », « Créer un avoir »</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span>voir n° 11 (factures du client)</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /invoices/:id/pdf</code> · <code>POST /invoices/:id/credit-note</code> · <code>POST /invoices/:id/send</code> · dépendance <code>pdfmake</code> ou Chrome sans interface.</p>
+  </div></div>
+
+  <div class="item"><span class="num">5</span><div>
+    <div class="head"><h3>Planning graphique des chambres</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Le back-office n’affiche que des tableaux ; l’affectation d’une chambre passe par <code>reservation-rooms</code> sans vue d’ensemble ni contrôle de conflit.</p>
+    <ul><li>Vue « tape chart » chambres × jours : glisser-déposer pour affecter, déplacer ou prolonger un séjour ; couleurs par statut (confirmé, arrivé, hors service, ménage).</li><li>Affectation automatique selon préférences client (étage, vue) et statut de ménage.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation-room/services/reservation-room.service.ts</code> (contrôle de chevauchement par chambre) <code>src/room/controllers/room.controller.ts</code></span><span><code>src/availability/services/room-planning.service.ts</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/components/layouts/Sidebar.tsx</code></span><span><code>src/app/admin/planning/page.tsx</code> <code>src/components/planning/TapeChart.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /availability/planning?property_id=&amp;from=&amp;to=</code> · <code>POST /reservation-rooms/:id/move</code> · <code>POST /reservation-rooms/auto-assign</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">6</span><div>
+    <div class="head"><h3>Gouvernance reliée au statut des chambres</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Terminer une tâche de ménage ne change pas <code>room.status</code> (<code>src/housekeeping/services/housekeeping.service.ts</code>) ; un départ ne crée pas de tâche ; les compteurs du personnel se remettent à zéro à la main (<code>reset-daily</code>).</p>
+    <ul><li>Départ → chambre « sale » + tâche créée et affectée selon la charge ; tâche terminée → « à inspecter » puis « propre » ; signalement → demande de maintenance.</li><li>Tâches planifiées (<code>@nestjs/schedule</code>, déjà installé) pour les remises à zéro et le ménage en recouche.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/housekeeping/services/housekeeping.service.ts</code> <code>src/room/services/room.service.ts</code> <code>src/housekeeping-staff/services/housekeeping-staff.service.ts</code></span><span><code>src/housekeeping/listeners/checkout.listener.ts</code> <code>src/housekeeping/services/housekeeping-scheduler.service.ts</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/housekeeping/page.tsx</code> <code>src/app/admin/rooms/page.tsx</code></span><span><code>src/app/admin/housekeeping/board/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>voir n° 15 (application du personnel)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> événement <code>hotel.housekeeping.completed</code> publié (déjà au catalogue) · <code>POST /housekeeping/:id/inspect</code> · règle d’affectation par étage.</p>
+  </div></div>
+
+  <div class="item"><span class="num">7</span><div>
+    <div class="head"><h3>Groupes, allotements et séminaires</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Une réservation porte un seul type de chambre ; pas de bloc de chambres réservé à une agence, une entreprise ou un événement. L’application CRM (partie E) gère déjà les opportunités « groupe / séminaire / mariage ».</p>
+    <ul><li>Bloc de chambres par type et par nuit avec date de relâche (release), liste de noms (rooming list), facturation maître.</li><li>Opportunité CRM gagnée → création du bloc ; salles de réunion et prestations (pause-café, déjeuner) facturées au folio maître.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/schemas/reservation.entity.ts</code> (group_id) <code>src/crm/</code> (écoute de <code>crm.lead.won</code>)</span><span><code>src/group-booking/</code> (schemas/room-block.entity.ts, schemas/group.entity.ts, services/group-booking.service.ts, controllers/group-booking.controller.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code></span><span><code>src/app/admin/groups/page.tsx</code> <code>src/components/groups/RoomingListImport.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/contact/components/Contact.tsx</code> (demande de devis groupe → piste CRM)</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /groups</code> · <code>POST /groups/:id/blocks</code> · <code>POST /groups/:id/rooming-list</code> (CSV) · tâche planifiée de relâche des chambres non nommées.</p>
+  </div></div>
+
+  <h2 id="ax2"><span class="n">2</span>Canaux de vente et paiements<small>Chiffre d’affaires</small></h2>
+  <p class="intro">Le site public présente les établissements mais ne vend rien ; les paiements et les canaux OTA sont modélisés sans intégration réelle.</p>
+
+  <div class="item first"><span class="num">8</span><div>
+    <div class="head"><h3>Réservation en ligne sur le site public</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">La fiche établissement (<code>app/property/components/PropertyDetail.tsx</code>) n’a pas de bouton de réservation ; <code>services/api/reservation.service.ts</code> existe mais n’est utilisé par aucune page ; la recherche n’a pas de dates.</p>
+    <ul><li>Tunnel en 4 étapes : dates et voyageurs → choix chambre et tarif (n° 1 et 2) → coordonnées → paiement (n° 9) ; confirmation par e-mail (n° 13).</li><li>Réservation « invité » sans compte, rattachée ensuite au compte client par e-mail vérifié ; protection anti-robots.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/controllers/reservation.controller.ts</code> <code>src/guest/services/guest.service.ts</code> (rattachement)</span><span><code>src/booking-engine/</code> (controllers/public-booking.controller.ts, services/public-booking.service.ts, dto/public-booking.dto.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code> (source « site web »)</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/property/components/PropertyDetail.tsx</code> <code>app/shared/components/Search.tsx</code> <code>hooks/useProperties.ts</code></span><span><code>app/booking/[propertyId]/page.tsx</code> <code>app/booking/components/</code> (StayPicker, RoomOffers, GuestForm, Summary) <code>app/booking/confirmation/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>voir n° 14</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /public/properties/:id/offers?from=&amp;to=&amp;guests=</code> · <code>POST /public/bookings</code> (clé d’idempotence) · <code>GET /public/bookings/:code</code> (code + e-mail).</p>
+  </div></div>
+
+  <div class="item"><span class="num">9</span><div>
+    <div class="head"><h3>Paiement mobile money et carte</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Aucune passerelle : <code>PaymentStatus</code> est fixé par le client (<code>src/payment/dto/create-payment.dto.ts</code> l. 44) et les fournisseurs n’apparaissent que dans l’énumération de <code>src/webhook-log/schemas/webhook-log.entity.ts</code>.</p>
+    <ul><li>Connecteurs <b>CinetPay</b> (agrégateur Orange Money, MTN MoMo, Moov, Wave, cartes), <b>Wave</b> direct, <b>Stripe</b> pour la clientèle internationale ; acompte à la réservation, solde au départ, lien de paiement par SMS.</li><li>Confirmation uniquement par webhook signé reçu sur l’ESB (route entrante déjà livrée, partie D) et vérification serveur à serveur ; rapprochement automatique paiement → facture.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/payment/services/payment.service.ts</code> <code>src/payment/dto/create-payment.dto.ts</code> (status retiré) <code>src/payment/schemas/payment.entity.ts</code> (provider, provider_ref)</span><span><code>src/payment-gateway/</code> (gateway.interface.ts, providers/cinetpay.provider.ts, providers/wave.provider.ts, providers/stripe.provider.ts, services/checkout.service.ts, listeners/inbound-payment.listener.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/payments/page.tsx</code></span><span><code>src/app/admin/payment-providers/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span><code>app/booking/payment/page.tsx</code> <code>app/booking/payment/return/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>écran de paiement (n° 14)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /payments/checkout</code> · <code>GET /payments/:id/status</code> · source entrante ESB par fournisseur · entité <code>payment_attempt</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">10</span><div>
+    <div class="head"><h3>Channel manager réel</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>OtaConnectionService.testConnection</code> ne fait aucun appel réseau, <code>findDueForSync</code> n’est appelé par aucune tâche, et les identifiants OTA sont stockés en clair (<code>src/ota-connection/schemas/ota-connection.entity.ts</code> l. 96).</p>
+    <ul><li>Envoi des disponibilités, tarifs et restrictions (ARI) vers Booking.com, Expedia, Airbnb, Agoda — en direct ou via un agrégateur (SiteMinder, Channex) ; récupération des réservations et annulations.</li><li>Flux sortants et entrants par l’ESB (partie D) ; correspondance des types de chambre déjà modélisée.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/ota-connection/services/ota-connection.service.ts</code> <code>src/ota-connection/schemas/ota-connection.entity.ts</code> (chiffrement, S6)</span><span><code>src/channel-manager/</code> (adapters/channex.adapter.ts, services/ari-push.service.ts, services/reservation-pull.service.ts, jobs/ota-sync.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code></span><span><code>src/app/admin/channels/page.tsx</code> (correspondances, journal de synchronisation)</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /channels/:id/push-ari</code> · <code>POST /channels/:id/pull</code> · tâche toutes les 5 minutes · source <code>ota</code> sur les réservations importées.</p>
+  </div></div>
+
+  <div class="item"><span class="num">11</span><div>
+    <div class="head"><h3>Espace client</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>middleware.ts</code> protège <code>/account</code> et <code>/dashboard</code>, mais ces pages n’existent pas ; <code>signUp</code> et <code>signInWithMagicLink</code> (<code>services/api/session.ts</code>) ne sont utilisés nulle part.</p>
+    <ul><li>Inscription, connexion par lien magique, mes réservations (modifier, annuler selon la politique), mes factures (PDF), mes points de fidélité (application Fidélité, partie E), préférences.</li><li>Routes « me » côté API : un client ne voit que ses données, sans passer d’identifiant.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/controllers/reservation.controller.ts</code> <code>src/invoice/controllers/invoice.controller.ts</code> <code>src/guest/controllers/guest.controller.ts</code></span><span><code>src/guest-portal/</code> (controllers/me.controller.ts : réservations, factures, fidélité, préférences)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span><code>middleware.ts</code> <code>app/shared/components/Navbar.jsx</code> <code>services/api/session.ts</code></span><span><code>app/account/page.tsx</code> <code>app/account/reservations/page.tsx</code> <code>app/account/invoices/page.tsx</code> <code>app/account/loyalty/page.tsx</code> <code>app/login/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>mêmes écrans (n° 14)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /me/reservations</code> · <code>POST /me/reservations/:id/cancel</code> · <code>GET /me/invoices</code> · <code>GET /me/loyalty</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">12</span><div>
+    <div class="head"><h3>Check-in en ligne et clé mobile</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Le check-in autonome existe côté API (<code>selfCheckIn</code>, <code>src/reservation/services/reservation.service.ts</code>) mais aucune interface ne l’utilise ; pas de collecte de pièce d’identité ni de clé.</p>
+    <ul><li>Pré-enregistrement 48 h avant l’arrivée : pièce d’identité, signature, heure d’arrivée, paiement du solde ; QR code présenté à la réception ou au kiosque.</li><li>Clé mobile via l’ESB vers les serrures (Salto, ASSA ABLOY Vostio) quand l’établissement en est équipé.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/controllers/reservation.controller.ts</code> <code>src/guest/schemas/guest.entity.ts</code> (pièce chiffrée, S6)</span><span><code>src/online-checkin/</code> (services/precheckin.service.ts, services/qr-token.service.ts) <code>src/storage/</code> (stockage objet des pièces)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/reservations/page.tsx</code> (statut du pré-enregistrement)</span><span><code>src/app/admin/checkin-scan/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span><code>app/checkin/[code]/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>écran « Mon séjour » avec QR et clé</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /reservations/:id/precheckin</code> · <code>GET /reservations/:id/qr</code> · <code>POST /reservations/checkin-by-qr</code> · événement <code>hotel.reservation.checked_in</code> vers les serrures.</p>
+  </div></div>
+
+  <div class="item"><span class="num">13</span><div>
+    <div class="head"><h3>Envoi réel des e-mails, SMS et WhatsApp</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>LoggingAuthNotifier</code> (<code>src/auth/services/auth-notifier.service.ts</code>) écrit les liens dans les journaux ; <code>notification-log</code> gère une file mais n’envoie rien ; <code>@nestjs-modules/mailer</code>, <code>nodemailer</code> et <code>handlebars</code> sont installés sans être utilisés ; <code>CampaignService.send</code> est une simulation.</p>
+    <ul><li>Fournisseurs : SMTP / Brevo pour l’e-mail, Orange SMS API ou agrégateur local pour le SMS, WhatsApp Cloud API ; modèles bilingues ; tâche planifiée qui vide la file avec reprises.</li><li>Notifications métier : confirmation, rappel J-2, facture, lien de paiement, codes de connexion, campagnes avec désabonnement.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/auth/services/auth-notifier.service.ts</code> <code>src/notification-log/services/notification-log.service.ts</code> <code>src/campaign/services/campaign.service.ts</code></span><span><code>src/messaging/</code> (channels/email.channel.ts, channels/sms.channel.ts, channels/whatsapp.channel.ts, templates/*.hbs, jobs/notification-dispatch.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/campaigns/page.tsx</code></span><span><code>src/app/admin/templates/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>services/newsletter.service.ts</code> (double opt-in)</span><span><code>app/unsubscribe/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>notifications push (n° 14)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> variables <code>SMTP_URL</code>, <code>SMS_PROVIDER_*</code>, <code>WHATSAPP_TOKEN</code> · entité <code>message_template</code> · <code>POST /notification-logs/dispatch</code>.</p>
+  </div></div>
+
+  <h2 id="ax3"><span class="n">3</span>Mobile et expérience client</h2>
+  <p class="intro">L’application <code>hotel-manager-mobile-react</code> est encore le modèle de démarrage Vite (compteur « Count is N ») : tout est à construire.</p>
+
+  <div class="item first"><span class="num">14</span><div>
+    <div class="head"><h3>Application mobile client (PWA)</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>src/App.jsx</code> est la page de démonstration de Vite ; aucune route, aucun appel d’API, pas de manifeste ni de service worker. Le README racine annonce à tort « Mobile react native ».</p>
+    <ul><li>Application web installable (PWA) en React + TypeScript : recherche et réservation, « Mon séjour » (QR, clé, Wi-Fi, room service vers le point de vente), chat avec le chatbot existant, fidélité, factures.</li><li>Notifications push (Web Push) ; jetons dans un stockage sécurisé, pas de <code>localStorage</code>.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/chatbot-conversation/controllers/chatbot-conversation.controller.ts</code> (routes client) <code>src/pos-transaction/controllers/pos-transaction.controller.ts</code> (commande en chambre)</span><span><code>src/push/</code> (schemas/push-subscription.entity.ts, services/web-push.service.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span><code>src/App.jsx</code> <code>src/main.jsx</code> <code>index.html</code> <code>vite.config.js</code> <code>package.json</code></span><span><code>src/routes/</code> <code>src/features/{booking,stay,loyalty,chat}/</code> <code>src/lib/api.ts</code> <code>public/manifest.webmanifest</code> <code>src/sw.ts</code> (vite-plugin-pwa)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /push/subscriptions</code> · <code>POST /me/room-service</code> · réutilisation des routes « me » (n° 11).</p>
+  </div></div>
+
+  <div class="item"><span class="num">15</span><div>
+    <div class="head"><h3>Application mobile du personnel, hors ligne</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Femmes de chambre et techniciens n’ont aucun outil mobile ; les tâches se consultent dans le back-office sur ordinateur.</p>
+    <ul><li>Mode « personnel » de la même PWA : mes tâches de ménage du jour, statut de chambre en un geste, photo d’un problème → demande de maintenance, pointage (application RH), consignes.</li><li>Fonctionnement hors ligne (IndexedDB + file d’envoi avec clés d’idempotence) pour les étages sans réseau.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/housekeeping/controllers/housekeeping.controller.ts</code> (« mes tâches ») <code>src/maintenance-request/controllers/maintenance-request.controller.ts</code> (photo)</span><span><code>src/common/interceptors/idempotency.interceptor.ts</code> <code>src/storage/</code></span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span><code>src/App.jsx</code></span><span><code>src/features/staff/{tasks,maintenance,attendance}/</code> <code>src/lib/offline-queue.ts</code></span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /housekeeping/me/today</code> · <code>POST /maintenance-requests/:id/photos</code> · en-tête <code>Idempotency-Key</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">16</span><div>
+    <div class="head"><h3>Langues et devises</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Interfaces en français en dur (<code>&lt;html lang="fr"&gt;</code>, quelques restes anglais du modèle dans <code>app/shared/components/Navbar.jsx</code>) ; l’énumération <code>Currency</code> existe mais aucun taux de change n’est géré.</p>
+    <ul><li>Français / anglais au minimum sur le site, le back-office, les e-mails et les PDF ; langue préférée du client.</li><li>Taux de change quotidiens (XOF pivot), affichage dans la devise du visiteur, encaissement et comptabilisation en XOF avec écart de change.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/base-entities/enums/currency.enum.ts</code> <code>src/guest/schemas/guest.entity.ts</code> (locale)</span><span><code>src/currency/</code> (schemas/exchange-rate.entity.ts, jobs/rates.job.ts, services/fx.service.ts) <code>src/common/i18n/</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/layout.tsx</code> <code>src/components/layouts/AdminHeader.tsx</code></span><span><code>src/i18n/{fr,en}.json</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/layout.tsx</code> <code>lib/format.ts</code> <code>app/shared/components/Navbar.jsx</code></span><span><code>app/[locale]/</code> (next-intl) <code>messages/{fr,en}.json</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span><code>src/i18n/</code></span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /currency/rates</code> · réglage de devise d’affichage · sélecteur de langue.</p>
+  </div></div>
+
+  <div class="item"><span class="num">17</span><div>
+    <div class="head"><h3>Référencement et performance du site public</h3><span class="tag mid">Moyenne</span><span class="be no">Backend : non</span></div>
+    <p class="why">Pages surtout rendues côté client (<code>"use client"</code>, <code>useAsync</code>) ; titres statiques encore marqués « Makaan » (<code>app/properties/page.tsx</code>, <code>app/property/[id]/page.tsx</code>) ; pas de sitemap, de robots, d’OpenGraph ; liens vers <code>/appointment</code> et <code>/services</code> inexistants.</p>
+    <ul><li><code>generateMetadata</code> par établissement, données structurées <code>Hotel</code> / <code>Offer</code> (schema.org), sitemap et robots générés, images optimisées.</li><li>Nettoyage des restes du modèle (liens htmlcodex, libellés anglais).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/property/[id]/page.tsx</code> <code>app/properties/page.tsx</code> <code>app/layout.tsx</code> <code>app/home/components/CallToAction.tsx</code> <code>app/shared/components/layouts/Footer.jsx</code> <code>next.config.ts</code> (images.remotePatterns)</span><span><code>app/sitemap.ts</code> <code>app/robots.ts</code> <code>app/property/[id]/opengraph-image.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> rendu serveur des listes d’établissements · balises canoniques · balisage JSON-LD.</p>
+  </div></div>
+
+
+  <h2 id="ax4"><span class="n">4</span>Back-office et pilotage<small>Direction, revenue manager</small></h2>
+  <p class="intro">Le back-office <code>project-manager-hotles-backoffice</code> couvre maintenant les ressources hôtelières (<code>src/lib/resources.ts</code>) et les applications ERP (<code>src/lib/erp-resources.ts</code>) ; il reste des écrans métier à compléter et les moteurs d’IA n’y ont pas encore d’écran.</p>
+
+  <div class="item first"><span class="num">18</span><div>
+    <div class="head"><h3>Écrans ERP complets et menu selon les droits</h3><span class="tag high">Haute</span><span class="be no">Backend : non</span></div>
+    <p class="why">Déjà livré (partie E) : magasin d’applications, menu par application installée, 28 pages de ressources ERP, rapports comptables, pipeline CRM, « Mes activités », actions de workflow et éditeur de lignes. Restent : le filtrage du menu par permission (<code>GET /auth/me</code>), les champs relationnels encore saisis par identifiant (ex. « Type (ID) » des chambres) et les écrans listés ci-dessous.</p>
+    <ul><li>Sur chaque fiche : valeurs des champs personnalisés (Studio) et fil d’activité (notes, abonnés, activités planifiées).</li><li>Pages de rapports Stock (niveaux, valorisation, sous le seuil) et Achats (par fournisseur, commandes ouvertes, factures à échéance) ; planning hebdomadaire RH en grille ; pages de réglages RH, Achats et Comptabilité ; éditeur visuel des règles d’automatisation (conditions, actions, essai à blanc).</li><li>Menu filtré aussi par permission ; listes déroulantes alimentées par l’API pour toutes les relations.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span class="none">— (routes livrées par le socle, partie E)</span><span class="none">—</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/components/layouts/Sidebar.tsx</code> (permissions) <code>src/lib/erp-resources.ts</code> <code>src/components/ui/ResourcePage.tsx</code> (champs personnalisés, chatter) <code>src/lib/api.ts</code></span><span><code>src/components/records/RecordChatter.tsx</code> <code>src/components/records/RecordCustomFields.tsx</code> <code>src/app/admin/inventory-reports/page.tsx</code> <code>src/app/admin/purchase-reports/page.tsx</code> <code>src/app/admin/hr-planning/page.tsx</code> <code>src/app/admin/settings/page.tsx</code> <code>src/app/admin/automation-editor/page.tsx</code> <code>src/lib/permissions.ts</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/backoffice/</code> (ancien back-office : à supprimer)</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> propriété <code>permission</code> sur chaque ressource · composant de sélection relationnelle · appels <code>GET /activity/:model/:id/thread</code>, <code>PUT /studio/values/:model/:id</code>, <code>GET /automation/catalog</code> (routes déjà livrées).</p>
+  </div></div>
+
+  <div class="item"><span class="num">19</span><div>
+    <div class="head"><h3>Tableau de bord en temps réel</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Aucun canal temps réel (ni WebSocket, ni SSE) ; le tableau de bord du back-office (<code>src/app/admin/dashboard/page.tsx</code>) lit des compteurs à l’ouverture.</p>
+    <ul><li>Flux d’événements (SSE) filtré par établissement : arrivées, départs, chambres prêtes, demandes clients, alertes de stock, paiements reçus.</li><li>Branché sur le bus d’événements interne déjà en place (<code>DomainEventPublisher</code>).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/main.ts</code> (compression désactivée pour SSE)</span><span><code>src/realtime/</code> (realtime.controller.ts <code>GET /realtime/stream</code>, services/realtime-hub.service.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/dashboard/page.tsx</code> <code>src/components/layouts/AdminHeader.tsx</code> (pastille de notifications)</span><span><code>src/lib/useRealtime.ts</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>mise à jour des tâches du personnel</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /realtime/stream?property_id=</code> (jeton court dédié) · filtrage par permission de chaque événement.</p>
+  </div></div>
+
+  <div class="item"><span class="num">20</span><div>
+    <div class="head"><h3>IA et rapports branchés sur les données réelles</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les moteurs (<code>src/kpi/engine/kpi-calculator.ts</code>, <code>src/ia-prediction/engine/time-series-forecaster.ts</code>, <code>src/report/engine/report-builder.ts</code>) reçoivent leurs données de l’appelant ; les rapports récurrents (<code>next_run_at</code>) ne sont jamais exécutés.</p>
+    <ul><li>Agrégations MongoDB qui alimentent les moteurs : occupation, ADR, RevPAR à partir des réservations ; ventes du point de vente ; coûts de la comptabilité (GOPPAR réel).</li><li>Tâche planifiée qui génère et envoie les rapports programmés ; prévisions d’occupation recalculées chaque nuit.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/kpi/services/kpi.service.ts</code> <code>src/ia-prediction/services/ia-prediction.service.ts</code> <code>src/report/services/report.service.ts</code></span><span><code>src/analytics/</code> (services/occupancy-aggregation.service.ts, jobs/nightly-analytics.job.ts, jobs/scheduled-reports.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/dashboard/page.tsx</code> <code>src/lib/charts.ts</code></span><span><code>src/app/admin/analytics/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /kpis/live?property_id=&amp;from=&amp;to=</code> · <code>POST /ia-predictions/occupancy/refresh</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">21</span><div>
+    <div class="head"><h3>Recommandations de revenue management</h3><span class="tag low">Selon marché</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les règles dynamiques (<code>src/dynamic-pricing-rule/</code>) attendent un contexte d’occupation fourni à la main ; aucune proposition de prix n’est faite au gestionnaire.</p>
+    <ul><li>Proposition quotidienne de prix par type de chambre et par date à partir des prévisions (n° 20), du rythme des réservations (pick-up) et des événements locaux ; validation en un clic qui écrit dans <code>daily-prices</code> et pousse vers les OTA (n° 10).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/dynamic-pricing-rule/services/dynamic-pricing-rule.service.ts</code> <code>src/daily-price/services/daily-price.service.ts</code></span><span><code>src/revenue/</code> (services/pickup.service.ts, services/price-recommendation.service.ts, schemas/price-recommendation.entity.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span><code>src/app/admin/revenue/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /revenue/recommendations</code> · <code>POST /revenue/recommendations/:id/apply</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">22</span><div>
+    <div class="head"><h3>Consolidation multi-établissements et budgets</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les organisations regroupent des établissements (<code>src/organization/</code>) mais aucun rapport ne consolide les chiffres ; l’application Comptabilité (partie E) tient une comptabilité par établissement sans budget.</p>
+    <ul><li>Tableaux consolidés par organisation (chiffre d’affaires, occupation, charges, trésorerie) avec conversion de devises (n° 16).</li><li>Budgets annuels par compte et par département, suivi réalisé / budget, axes analytiques (hébergement, restauration, spa).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/accounting/</code> (ventilation analytique sur les lignes d’écriture) <code>src/organization/services/organization.service.ts</code></span><span><code>src/budget/</code> (schemas/budget.entity.ts, services/budget.service.ts) <code>src/analytics/services/consolidation.service.ts</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/organizations/page.tsx</code></span><span><code>src/app/admin/budget/page.tsx</code> <code>src/app/admin/consolidation/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /analytics/organization/:id/summary</code> · <code>POST /budgets</code> · <code>GET /budgets/:id/variance</code>.</p>
+  </div></div>
+
+  <h2 id="ax5"><span class="n">5</span>Conformité et exploitation<small>Obligatoire avant la production</small></h2>
+
+  <div class="item first"><span class="num">23</span><div>
+    <div class="head"><h3>Fiche de police et registre des voyageurs</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les hôtels doivent tenir et transmettre la fiche des voyageurs ; la fiche client (<code>src/guest/schemas/guest.entity.ts</code>) stocke la pièce d’identité sans registre, sans signature ni export.</p>
+    <ul><li>Fiche individuelle au check-in (nationalité, pièce, provenance, destination), registre journalier imprimable et export vers les autorités par l’ESB lorsqu’un service en ligne existe.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/guest/schemas/guest.entity.ts</code> <code>src/reservation/services/reservation.service.ts</code> (check-in bloqué si fiche incomplète, réglable)</span><span><code>src/police-register/</code> (schemas/traveller-card.entity.ts, services/police-register.service.ts, services/register-pdf.service.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/reservations/page.tsx</code></span><span><code>src/app/admin/police-register/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span>étape du check-in en ligne (n° 12)</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /police-register?property_id=&amp;date=</code> · <code>GET /police-register/pdf</code> · événement externe <code>hotel.reservation.checked_in</code> vers l’autorité.</p>
+  </div></div>
+
+  <div class="item"><span class="num">24</span><div>
+    <div class="head"><h3>Protection des données personnelles</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Pièces d’identité, numéros fiscaux et comptes bancaires en clair (<code>guest.identification_number</code>, <code>owner.tax_id</code>, <code>partner.bank_account</code>, <code>staff.salary</code>) ; aucune durée de conservation, aucun export ni effacement à la demande.</p>
+    <ul><li>Conformité à la loi ivoirienne n° 2013-450 (déclaration à l’ARTCI) et au RGPD pour la clientèle européenne : consentements (newsletter, marketing), registre des traitements, droit d’accès, de rectification et d’effacement (anonymisation des séjours anciens).</li><li>Purge planifiée selon des durées paramétrables ; chiffrement des champs sensibles (S6).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/guest/schemas/guest.entity.ts</code> <code>src/newsletter-subscription/</code> (consentement horodaté) <code>src/staff/schemas/staff.entity.ts</code></span><span><code>src/privacy/</code> (services/data-export.service.ts, services/anonymizer.service.ts, jobs/retention.job.ts, schemas/consent.entity.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/guests/page.tsx</code></span><span><code>src/app/admin/privacy/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/shared/components/layouts/Footer.jsx</code></span><span><code>app/privacy/page.tsx</code> <code>app/account/privacy/page.tsx</code> bandeau cookies</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>écran « Mes données »</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /me/data-export</code> · <code>POST /me/erase-request</code> · <code>POST /guests/:id/anonymize</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">25</span><div>
+    <div class="head"><h3>Observabilité, sauvegardes et reprise</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>newrelic</code> et <code>@sentry/nextjs</code> sont installés mais jamais branchés ; pas de route de santé, pas de journaux structurés, pas de stratégie de sauvegarde ; aucune transaction MongoDB.</p>
+    <ul><li>Journaux JSON avec identifiant de corrélation, route <code>/health</code> (Mongo, file ESB), métriques et alertes, Sentry côté API et interfaces.</li><li>Replica set MongoDB (requis aussi pour les transactions), sauvegardes chiffrées quotidiennes hors site avec test de restauration mensuel.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/main.ts</code> <code>src/app.module.ts</code> <code>package.json</code> (newrelic retiré ou branché) <code>docker-compose.yml</code></span><span><code>src/health/health.controller.ts</code> (@nestjs/terminus) <code>src/common/logging/</code> (nestjs-pino) <code>ops/backup/mongodump.sh</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>next.config.ts</code></span><span><code>sentry.client.config.ts</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>next.config.ts</code></span><span><code>instrumentation.ts</code> (Sentry déjà en dépendance)</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>remontée d’erreurs</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /health</code> · <code>GET /health/ready</code> · identifiant <code>X-Request-Id</code> propagé jusqu’à l’ESB.</p>
+  </div></div>
+
+  <div class="item"><span class="num">26</span><div>
+    <div class="head"><h3>Maintenance préventive et équipements</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>maintenance-request</code> ne gère que des demandes ponctuelles, sans parc d’équipements (climatiseurs, groupes électrogènes, chaudières) ni calendrier d’entretien.</p>
+    <ul><li>Fiches équipements (emplacement, fournisseur, garantie), plans d’entretien périodiques générant des demandes, historique et coûts ; pièces détachées sorties du stock (application Stock, partie E).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/maintenance-request/schemas/maintenance-request.entity.ts</code> (equipment_id, parts) <code>src/maintenance-request/services/maintenance-request.service.ts</code></span><span><code>src/equipment/</code> (schemas/equipment.entity.ts, schemas/maintenance-plan.entity.ts, jobs/preventive.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code></span><span><code>src/app/admin/equipment/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>scan QR de l’équipement (n° 15)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /equipment</code> · <code>POST /equipment/:id/plans</code> · <code>GET /equipment/:id/history</code>.</p>
+  </div></div>
+
+  <h2 id="ax6"><span class="n">6</span>Écosystème et modèle économique</h2>
+
+  <div class="item first"><span class="num">27</span><div>
+    <div class="head"><h3>Paie adaptée à la Côte d’Ivoire</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">L’application RH (partie E) gère contrats, congés, planning et pointage, mais aucun bulletin de paie ; <code>staff.salary</code> est un simple champ.</p>
+    <ul><li>Rubriques de paie paramétrables (salaire de base, sursalaire, heures supplémentaires issues du pointage, primes de transport et de logement), cotisations CNPS, ITS et contributions patronales selon les barèmes en vigueur, à tenir à jour chaque année.</li><li>Bulletins PDF, livre de paie, déclarations, écriture de paie automatique en comptabilité (compte 661 / 422).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/hr/</code> (contrats : rubriques fixes) <code>src/accounting/</code> (écoute de l’événement de paie)</span><span><code>src/payroll/</code> (schemas/payslip.entity.ts, schemas/payroll-rule.entity.ts, rules/ci-2026.ts, services/payroll.service.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span><code>src/app/admin/payroll/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>« Mes bulletins » (n° 15)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /payroll/runs</code> · <code>POST /payroll/runs/:id/validate</code> · événement <code>hr.payroll.validated</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">28</span><div>
+    <div class="head"><h3>Portail des propriétaires et des partenaires</h3><span class="tag low">Selon marché</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les partenaires ont un mot de passe mais ne peuvent pas se connecter (absents de <code>src/auth/services/user-accounts.service.ts</code>) ; les propriétaires n’ont pas de relevé de revenus.</p>
+    <ul><li>Propriétaires : occupation et revenus de leurs biens, relevés mensuels, reversements. Partenaires (agences) : réservations apportées, commissions calculées par <code>calculateCommission</code>, factures de commission.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/auth/services/user-accounts.service.ts</code> <code>src/partner/services/partner.service.ts</code> <code>src/owners/services/owners.service.ts</code></span><span><code>src/owner-portal/</code> <code>src/partner-portal/</code> (contrôleurs « me »)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/login/page.tsx</code></span><span><code>src/app/portal/</code> (espace restreint)</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /owner-portal/statements</code> · <code>GET /partner-portal/commissions</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">29</span><div>
+    <div class="head"><h3>E-réputation</h3><span class="tag low">Selon marché</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">L’analyse de sentiment existe (<code>src/sentiment-analysis/engine/lexicon-sentiment.scorer.ts</code>) mais les avis sont saisis à la main ; les témoignages du site viennent de <code>data/testimonials.ts</code>.</p>
+    <ul><li>Enquête de satisfaction envoyée au départ, import des avis Google et OTA via l’ESB, analyse automatique, alerte et réponse depuis le back-office, publication des meilleurs avis sur le site.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/sentiment-analysis/services/sentiment-analysis.service.ts</code></span><span><code>src/reviews/</code> (schemas/review.entity.ts, services/review-import.service.ts, listeners/survey.listener.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span><code>src/app/admin/reviews/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/testimonial/page.tsx</code> <code>services/content.service.ts</code></span><span><code>app/survey/[token]/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>enquête après séjour</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /reviews</code> · <code>POST /reviews/:id/reply</code> · <code>GET /public/reviews?property_id=</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">30</span><div>
+    <div class="head"><h3>Offre SaaS : abonnements et facturation de la plateforme</h3><span class="tag low">Selon marché</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Le propriétaire a un <code>subscription_plan</code> et <code>max_properties</code> (<code>src/owners/schemas/owner.entity.ts</code>) sans lien avec le magasin d’applications ni facturation récurrente.</p>
+    <ul><li>Formules (Essentiel, Pro, Groupe) définissant les applications installables et le nombre d’établissements ; essai gratuit, facturation mensuelle par mobile money ou carte (n° 9), suspension en cas d’impayé.</li><li>Inscription libre-service : création de l’organisation, de l’établissement et installation des applications de la formule.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/platform/apps/apps.service.ts</code> (contrôle de la formule à l’installation) <code>src/owners/schemas/owner.entity.ts</code></span><span><code>src/subscription/</code> (schemas/plan.entity.ts, schemas/subscription.entity.ts, jobs/billing.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span><code>src/app/admin/subscription/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span><code>app/pricing/page.tsx</code> <code>app/signup/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /public/plans</code> · <code>POST /subscriptions</code> · <code>POST /subscriptions/:id/cancel</code>.</p>
+  </div></div>
+
+
+  <div class="chap flow" id="p-b"><div class="k">Partie B</div><h2>Ordre recommandé de mise en œuvre</h2><p>Les numéros renvoient aux fiches de la partie A ; les codes S au volet sécurité (partie C). Le socle ERP (partie E) est déjà réalisé : chaque phase s’appuie sur ses événements, sa numérotation et son magasin d’applications.</p></div>
+  <div class="phases">
+    <div class="phase"><div class="phase-side"><b>Phase 1</b><span>Durcir</span></div><div class="phase-body"><h4>Rendre la plateforme sûre et exploitable</h4><p>Révocation de la clé exposée et mesures S1 à S14, cloisonnement par établissement en tête (S4) ; observabilité et sauvegardes (25) ; protection des données (24) ; écrans ERP et menu par droits dans le back-office (18).</p></div></div>
+    <div class="phase"><div class="phase-side"><b>Phase 2</b><span>Cœur hôtelier</span></div><div class="phase-body"><h4>Un PMS cohérent de bout en bout</h4><p>Disponibilité (1), prix calculé (2), folio et facture automatique (3), facture légale et avoirs (4), gouvernance reliée aux chambres (6), fiche de police (23). La comptabilité automatique (partie E) devient fiable à partir de cette phase.</p></div></div>
+    <div class="phase"><div class="phase-side"><b>Phase 3</b><span>Vendre</span></div><div class="phase-body"><h4>Encaisser en ligne et sur tous les canaux</h4><p>Réservation sur le site (8), paiement mobile money et carte (9), channel manager (10), envoi réel des messages (13), espace client (11), langues et devises (16). Premiers connecteurs de l’ESB en production.</p></div></div>
+    <div class="phase"><div class="phase-side"><b>Phase 4</b><span>Équiper</span></div><div class="phase-body"><h4>Mobile, pilotage et opérations</h4><p>Applications client et personnel (14, 15), check-in en ligne et clé (12), planning des chambres (5), groupes et allotements (7), tableau de bord temps réel (19), IA sur données réelles (20), consolidation et budgets (22), maintenance préventive (26), paie (27), référencement (17).</p></div></div>
+    <div class="phase"><div class="phase-side"><b>Phase 5</b><span>Se différencier</span></div><div class="phase-body"><h4>Prendre une avance durable</h4><p>Recommandations de prix (21), portails propriétaires et partenaires (28), e-réputation (29), offre SaaS en libre-service (30) ; courtier RabbitMQ lorsque les destinataires de l’ESB se multiplient.</p></div></div>
+  </div>
+
+  <div class="chap" id="p-c"><div class="k">Partie C</div><h2>Volet sécurité</h2><p>PleasantStay manipule des pièces d’identité, des paiements et les données de plusieurs organisations dans une même base. Ce volet part de l’existant, vérifié dans le code, pour ne proposer aucun doublon. Chaque mesure précise si le backend est modifié.</p></div>
+
+  <h3 class="sub">Ce qui existe déjà (à conserver)</h3>
+  <table class="dense">
+    <thead><tr><th style="width:68mm">Mécanisme</th><th>Où</th></tr></thead>
+    <tbody>
+      <tr><td>Garde JWT globale puis garde des rôles, permissions déduites de chaque route et relues en base</td><td><code>src/app.module.ts</code> (APP_GUARD), <code>src/auth/guards/jwt-auth.guard.ts</code>, <code>src/auth/guards/roles.guard.ts</code>, <code>src/auth/permissions/permission.util.ts</code></td></tr>
+      <tr><td>Jetons de rafraîchissement opaques hachés, rotation atomique, détection de réutilisation</td><td><code>src/session/services/session.service.ts</code>, <code>src/auth/utils/crypto.util.ts</code> (<code>safeCompare</code>)</td></tr>
+      <tr><td>Verrouillage du compte après échecs, comparaison factice si l’e-mail est inconnu</td><td><code>src/auth/services/auth.service.ts</code>, <code>src/auth/auth.config.ts</code></td></tr>
+      <tr><td>Double authentification TOTP, jetons de réinitialisation à usage unique (SHA-256, TTL)</td><td><code>src/auth/services/totp.service.ts</code>, <code>src/auth/schemas/auth-token.entity.ts</code></td></tr>
+      <tr><td>Journal d’audit non modifiable (hooks qui refusent les mises à jour)</td><td><code>src/audit-log/schemas/audit-log.entity.ts</code></td></tr>
+      <tr><td>Validation globale des DTO (<code>whitelist</code>), export CSV protégé contre l’injection de formules</td><td><code>src/main.ts</code>, <code>src/report/engine/report-builder.ts</code></td></tr>
+      <tr><td>Socle ERP : webhooks sortants signés, entrée signée (corps brut activé), garde SSRF, secrets d’intégration chiffrés AES-256-GCM (partie E)</td><td><code>src/integration-bus/</code>, <code>src/main.ts</code> (<code>rawBody: true</code>)</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">Constats relevés dans le code</h3>
+  <table class="dense">
+    <thead><tr><th style="width:6mm">#</th><th>Constat</th><th style="width:60mm">Fichier</th><th style="width:12mm">Mesure</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Clé d’API en clair dans un fichier suivi par Git.</td><td><code>project-hotels-manager/Document.txt</code></td><td>S13</td></tr>
+      <tr><td>2</td><td>Aucune séparation entre organisations dans les services : <code>GET /reservations</code> renvoie toutes les réservations ; les lectures par identifiant ne vérifient pas l’établissement ; <code>property_id</code> utilisé pour choisir les rôles vient du client.</td><td><code>src/auth/guards/roles.guard.ts</code> l. 75-79, <code>src/common/services/base-crud.service.ts</code></td><td>S4</td></tr>
+      <tr><td>3</td><td>CORS : sans <code>CORS_ORIGIN</code>, toute origine est renvoyée avec <code>credentials: true</code> ; ni helmet, ni limite de taille, ni <code>trust proxy</code> ; Swagger public en production.</td><td><code>src/main.ts</code> l. 22-35</td><td>S1</td></tr>
+      <tr><td>4</td><td>Aucune limitation de débit (connexion, inscription, mot de passe oublié, lien magique, 2FA, contact, newsletter).</td><td><code>src/app.module.ts</code>, <code>src/auth/controllers/auth.controller.ts</code></td><td>S2</td></tr>
+      <tr><td>5</td><td>Jetons de réinitialisation et de vérification renvoyés dans la réponse si <code>NODE_ENV</code> n’est pas « production » — or aucun fichier Docker ne le définit ; configuration non validée au démarrage.</td><td><code>src/auth/services/auth.service.ts</code> (<code>withDevToken</code>, l. 186, 384, 490), <code>docker-compose.yml</code></td><td>S3</td></tr>
+      <tr><td>6</td><td>Un jeton d’accès reste valable jusqu’à 15 min après déconnexion ou révocation : la session <code>sid</code> n’est pas contrôlée.</td><td><code>src/auth/guards/jwt-auth.guard.ts</code></td><td>S3</td></tr>
+      <tr><td>7</td><td>Champs serveur acceptés du client : statut du paiement, montant total de la réservation, palier de fidélité ; corps de requête non typés ignorés par la validation (12 contrôleurs) ; identifiants non validés (erreurs 500).</td><td><code>src/payment/dto/create-payment.dto.ts</code> l. 44, <code>src/reservation/dto/create-reservation.dto.ts</code>, <code>src/guest/dto/create-guest.dto.ts</code></td><td>S5</td></tr>
+      <tr><td>8</td><td>Suppression d’une ligne de facture sans vérifier qu’elle appartient à la facture.</td><td><code>src/invoice/services/invoice.service.ts</code> l. 135-138</td><td>S5</td></tr>
+      <tr><td>9</td><td>Secret 2FA, identifiants OTA, pièces d’identité, comptes bancaires et salaires en clair en base.</td><td><code>src/base-entities/user.abstract.ts</code> l. 169, <code>src/ota-connection/schemas/ota-connection.entity.ts</code> l. 96</td><td>S6</td></tr>
+      <tr><td>10</td><td>Le journal d’audit n’est alimenté par aucun module (seule une route POST du client l’écrit) et n’est pas chaîné.</td><td><code>src/audit-log/services/audit-log.service.ts</code></td><td>S7</td></tr>
+      <tr><td>11</td><td>Recherche client avec expression régulière non échappée (ReDoS) ; tri libre sur n’importe quel champ, y compris masqué.</td><td><code>src/guest/services/guest.service.ts</code> l. 57-60, <code>src/common/repositories/base.repository.ts</code> l. 25-26</td><td>S8</td></tr>
+      <tr><td>12</td><td>Données personnelles dans les journaux (<code>console.log</code> à l’enregistrement) ; erreurs Mongo non gérées en 500.</td><td><code>src/admins/schemas/admin.entity.ts</code> l. 218, <code>src/receptionist/schemas/receptionist.entity.ts</code> l. 427, <code>src/role/schemas/role.schema.ts</code> l. 141</td><td>S9</td></tr>
+      <tr><td>13</td><td>Front-office : jetons dans des cookies lisibles par JavaScript (30 jours) ; <code>middleware.ts</code> ne vérifie que leur présence. Back-office : jetons en <code>sessionStorage</code>.</td><td><code>project-hotels-manager/services/api/client.ts</code> l. 44-45, <code>middleware.ts</code> l. 20 ; back-office <code>src/lib/api.ts</code></td><td>S10</td></tr>
+      <tr><td>14</td><td>Aucun en-tête de sécurité (CSP, HSTS, X-Frame-Options) sur les deux applications Next.js.</td><td><code>project-hotels-manager/next.config.ts</code>, back-office <code>next.config.ts</code></td><td>S11</td></tr>
+      <tr><td>15</td><td>Webhooks entrants non signés : <code>signature_verified</code> est posé à la main par une route.</td><td><code>src/webhook-log/controllers/webhook-log.controller.ts</code> l. 78</td><td>S12</td></tr>
+      <tr><td>16</td><td>MongoDB exposé sans authentification, image Docker lancée en root avec <code>npm install</code> ; dépendances mortes (<code>bcrypt</code>, <code>@types/mongoose</code>, <code>newrelic</code>, scripts TypeORM) ; le back-office embarque <code>typeorm</code>, <code>mysql2</code>, <code>@nestjs/*</code>.</td><td><code>docker-compose.yml</code>, <code>Dockerfile</code>, <code>package.json</code> ; back-office <code>package.json</code></td><td>S14</td></tr>
+    </tbody>
+  </table>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S1</span><h3>En-têtes HTTP, CORS strict et Swagger réservé</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">L’API ne sert que du JSON : politique la plus stricte, liste blanche d’origines obligatoire, corps limité, vraie adresse IP derrière le proxy (utile aux sessions, au verrouillage et à l’audit).</p>
+    <div class="meta"><b>Fichier à modifier</b><span><code>src/main.ts</code></span><b>Fichier à créer</b><span>—</span><b>Dépendance</b><span><code>npm i helmet</code></span></div>
+  </div>
+  <div class="codehead">src/main.ts</div>
+<pre class="code"><span class="k">import</span> helmet <span class="k">from</span> <span class="s">'helmet'</span>;
+<span class="k">import</span> { json, urlencoded } <span class="k">from</span> <span class="s">'express'</span>;
+<span class="k">import</span> <span class="k">type</span> { NestExpressApplication } <span class="k">from</span> <span class="s">'@nestjs/platform-express'</span>;
+
+<span class="k">const</span> app = <span class="k">await</span> NestFactory.create&lt;NestExpressApplication&gt;(AppModule, { rawBody: <span class="k">true</span> }); <span class="c">// rawBody : S12</span>
+app.set(<span class="s">'trust proxy'</span>, 1);
+app.disable(<span class="s">'x-powered-by'</span>);
+app.use(helmet({ contentSecurityPolicy: { directives: { defaultSrc: [<span class="s">"'none'"</span>], frameAncestors: [<span class="s">"'none'"</span>] } } }));
+app.use(json({ limit: <span class="s">'1mb'</span> }), urlencoded({ extended: <span class="k">true</span>, limit: <span class="s">'1mb'</span> }));
+
+<span class="k">const</span> origins = (process.env.CORS_ORIGIN ?? <span class="s">''</span>).split(<span class="s">','</span>).map((o) =&gt; o.trim()).filter(Boolean);
+<span class="k">if</span> (!origins.length) <span class="k">throw new</span> Error(<span class="s">'CORS_ORIGIN est obligatoire'</span>);
+app.enableCors({ origin: origins, credentials: <span class="k">true</span>, maxAge: 600 });
+
+<span class="k">if</span> (process.env.SWAGGER_ENABLED === <span class="s">'true'</span>) {     <span class="c">// jamais par défaut en production</span>
+  SwaggerModule.setup(<span class="s">'api/docs'</span>, app, SwaggerModule.createDocument(app, config));
+}</pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S2</span><h3>Limitation de débit</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Une limite globale raisonnable, plus des limites serrées sur les routes publiques sensibles ; compteur par IP et par e-mail pour la connexion (le verrouillage par compte seul permet de bloquer volontairement le compte d’autrui). Stockage Redis dès qu’il y a plusieurs instances.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/app.module.ts</code>, <code>src/auth/controllers/auth.controller.ts</code>, <code>src/contact-message/</code>, <code>src/newsletter-subscription/</code></span><b>Dépendances</b><span><code>npm i @nestjs/throttler</code> (+ <code>@nest-lab/throttler-storage-redis</code> en multi-instance)</span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/app.module.ts</div>
+<pre class="code">ThrottlerModule.forRoot({
+  throttlers: [{ name: <span class="s">'default'</span>, ttl: 60_000, limit: 120 }],
+}),
+<span class="c">// providers :</span>
+{ provide: APP_GUARD, useClass: ThrottlerGuard },</pre>
+  </div><div>
+  <div class="codehead">src/auth/controllers/auth.controller.ts</div>
+<pre class="code"><span class="k">@Throttle</span>({ default: { ttl: 15 * 60_000, limit: 10 } })
+<span class="k">@Public</span>()
+<span class="k">@Post</span>(<span class="s">'login'</span>)
+login(<span class="k">@Body</span>() dto: LoginDto, <span class="k">@Client</span>() client: ClientInfo) {
+  <span class="k">return this</span>.authService.login(dto, client);
+}</pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S3</span><h3>Configuration validée et jetons révocables</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Le démarrage échoue si une variable est absente ou dangereuse ; <code>NODE_ENV</code> devient obligatoire (fin de la fuite des jetons par <code>withDevToken</code>) ; la garde JWT refuse un jeton dont la session est révoquée (cache court en mémoire).</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/app.module.ts</code>, <code>src/auth/guards/jwt-auth.guard.ts</code>, <code>src/auth/services/auth.service.ts</code>, <code>docker-compose.yml</code>, <code>.env.example</code></span><b>Fichier à créer</b><span><code>src/config/env.validation.ts</code></span><b>Dépendance</b><span><code>npm i joi</code></span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/config/env.validation.ts</div>
+<pre class="code"><span class="k">export const</span> envSchema = Joi.object({
+  NODE_ENV: Joi.string().valid(<span class="s">'development'</span>, <span class="s">'test'</span>, <span class="s">'production'</span>).required(),
+  MONGODB_URI: Joi.string().uri({ scheme: [<span class="s">'mongodb'</span>, <span class="s">'mongodb+srv'</span>] }).required(),
+  JWT_SECRET: Joi.string().min(48)
+    .invalid(<span class="s">'change-me-with-a-long-random-secret'</span>).required(),
+  CORS_ORIGIN: Joi.string().required(),
+  INTEGRATION_ENCRYPTION_KEY: Joi.string().when(<span class="s">'NODE_ENV'</span>,
+    { is: <span class="s">'production'</span>, then: Joi.required() }),
+});
+<span class="c">// app.module.ts</span>
+ConfigModule.forRoot({ isGlobal: <span class="k">true</span>, validationSchema: envSchema }),</pre>
+  </div><div>
+  <div class="codehead">src/auth/guards/jwt-auth.guard.ts (extrait)</div>
+<pre class="code"><span class="k">const</span> payload = <span class="k">await this</span>.jwt.verifyAsync&lt;JwtPayload&gt;(token, opts);
+<span class="k">if</span> (payload.type !== <span class="s">'access'</span>) <span class="k">throw new</span> UnauthorizedException();
+<span class="c">// nouvelle vérification : session encore active ?</span>
+<span class="k">if</span> (payload.sid &amp;&amp; !(<span class="k">await this</span>.sessions.isActive(payload.sid))) {
+  <span class="k">throw new</span> UnauthorizedException(<span class="s">'Session révoquée'</span>);
+}
+<span class="c">// SessionService.isActive : findOne({ _id: sid, revoked_at: null })
+// avec un cache mémoire de 30 s pour éviter une requête par appel</span></pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S4</span><h3>Cloisonnement par organisation et par établissement</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Faille la plus grave : un utilisateur d’un hôtel peut lire ou modifier les données d’un autre. Principe : l’établissement n’est jamais cru sur parole ; on calcule une fois par requête la liste des établissements autorisés (affectations <code>user-role</code>, <code>organization.members</code>, <code>owner.property_ids</code>, <code>staff</code>) et chaque requête Mongo est filtrée. Le <code>TenantScopeService</code> du socle (partie E) fournit déjà la résolution établissement → organisation.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/auth/guards/roles.guard.ts</code> (portée vérifiée), <code>src/common/services/base-crud.service.ts</code> (filtre et contrôle par identifiant), <code>src/user-role/services/user-role.service.ts</code>, tous les contrôleurs prenant <code>:propertyId</code> ou <code>:organizationId</code></span><b>Fichiers à créer</b><span><code>src/common/tenancy/tenant-context.ts</code> (AsyncLocalStorage), <code>src/common/tenancy/tenant.guard.ts</code>, <code>src/common/tenancy/tenant-filter.ts</code></span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/common/tenancy/tenant.guard.ts</div>
+<pre class="code"><span class="k">@Injectable</span>()
+<span class="k">export class</span> TenantGuard <span class="k">implements</span> CanActivate {
+  <span class="k">constructor</span>(<span class="k">private readonly</span> access: UserRoleService) {}
+  <span class="k">async</span> canActivate(ctx: ExecutionContext) {
+    <span class="k">const</span> req = ctx.switchToHttp().getRequest();
+    <span class="k">if</span> (!req.user) <span class="k">return true</span>;              <span class="c">// route publique</span>
+    <span class="k">const</span> scope = <span class="k">await this</span>.access.getAllowedProperties(req.user);
+    <span class="c">// null = super administrateur (toutes les propriétés)</span>
+    <span class="k">const</span> asked = req.params.propertyId ?? req.query.property_id
+      ?? req.body?.property_id;
+    <span class="k">if</span> (asked &amp;&amp; scope &amp;&amp; !scope.includes(String(asked))) {
+      <span class="k">throw new</span> ForbiddenException(<span class="s">'Établissement non autorisé'</span>);
+    }
+    tenantContext.enterWith({ allowedPropertyIds: scope });
+    <span class="k">return true</span>;
+  }
+}</pre>
+  </div><div>
+  <div class="codehead">src/common/services/base-crud.service.ts (extrait)</div>
+<pre class="code"><span class="k">protected</span> scoped&lt;F <span class="k">extends</span> object&gt;(filter: F): F {
+  <span class="k">const</span> ids = tenantContext.getStore()?.allowedPropertyIds;
+  <span class="k">if</span> (!ids) <span class="k">return</span> filter;               <span class="c">// super administrateur</span>
+  <span class="k">return</span> { ...filter, property_id: { $in: ids.map(toObjectId) } };
+}
+
+<span class="k">async</span> findOne(id: string): Promise&lt;T&gt; {
+  <span class="k">const</span> doc = <span class="k">await this</span>.model
+    .findOne(<span class="k">this</span>.scoped({ _id: id, is_deleted: { $ne: <span class="k">true</span> } }))
+    .exec();
+  <span class="k">if</span> (!doc) <span class="k">throw new</span> NotFoundException(<span class="s">'Introuvable'</span>);
+  <span class="k">return</span> doc;                   <span class="c">// même règle pour update et remove</span>
+}</pre>
+  </div></div>
+  <p class="why">Tests attendus : pour chaque contrôleur, un utilisateur de l’établissement A reçoit 403 ou 404 sur une ressource de B (test de bout en bout paramétré sur toutes les routes listées par <code>PermissionCatalogService</code>).</p>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S5</span><h3>Validation stricte des entrées et champs calculés par le serveur</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Refuser les champs inconnus, typer tous les corps (aujourd’hui <code>{ points }</code>, <code>{ amount, reason }</code>, <code>Record&lt;string, any&gt;</code> passent sans contrôle), valider les identifiants avant <code>new Types.ObjectId()</code>, et retirer des DTO les champs que seul le serveur calcule.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/main.ts</code> (<code>forbidNonWhitelisted: true</code>), <code>src/payment/dto/create-payment.dto.ts</code>, <code>src/reservation/dto/create-reservation.dto.ts</code>, <code>src/guest/dto/create-guest.dto.ts</code> (mot de passe de 8 caractères comme l’auth), <code>src/invoice/services/invoice.service.ts</code> (<code>removeItem</code>), contrôleurs à corps non typés</span><b>Fichier à créer</b><span><code>src/common/pipes/parse-object-id.pipe.ts</code></span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/common/pipes/parse-object-id.pipe.ts</div>
+<pre class="code"><span class="k">@Injectable</span>()
+<span class="k">export class</span> ParseObjectIdPipe <span class="k">implements</span> PipeTransform&lt;string&gt; {
+  transform(value: string) {
+    <span class="k">if</span> (!Types.ObjectId.isValid(value)) {
+      <span class="k">throw new</span> BadRequestException(<span class="s">'Identifiant invalide'</span>);
+    }
+    <span class="k">return</span> value;
+  }
+}
+<span class="c">// usage : @Param('propertyId', ParseObjectIdPipe) propertyId: string</span></pre>
+  </div><div>
+  <div class="codehead">src/invoice/services/invoice.service.ts</div>
+<pre class="code"><span class="k">async</span> removeItem(invoiceId: string, itemId: string) {
+  <span class="k">const</span> res = <span class="k">await this</span>.invoiceItemModel.deleteOne({
+    _id: itemId,
+    invoice_id: <span class="k">new</span> Types.ObjectId(invoiceId), <span class="c">// appartenance</span>
+  });
+  <span class="k">if</span> (!res.deletedCount) <span class="k">throw new</span> NotFoundException(<span class="s">'Ligne introuvable'</span>);
+  <span class="k">return this</span>.recalculateTotals(invoiceId);
+}</pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S6</span><h3>Chiffrement des champs sensibles (AES-256-GCM)</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span><span class="state done">Partiellement réalisé</span></div>
+    <p class="why">Une fuite de la base ne doit révéler ni les secrets 2FA, ni les identifiants OTA, ni les pièces d’identité. Chiffrement applicatif avec clé versionnée (rotation possible) ; recherche exacte par empreinte HMAC séparée si nécessaire. <b>Déjà fait :</b> les secrets d’intégration de l’ESB sont chiffrés (<code>src/integration-bus/services/secret-cipher.service.ts</code>). <b>Reste à faire :</b> secret 2FA, identifiants OTA, données personnelles.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/base-entities/user.abstract.ts</code> (<code>two_factor_secret</code>), <code>src/auth/services/auth.service.ts</code>, <code>src/ota-connection/schemas/ota-connection.entity.ts</code>, <code>src/guest/schemas/guest.entity.ts</code>, <code>src/partner/schemas/partner.entity.ts</code>, <code>src/staff/schemas/staff.entity.ts</code></span><b>Fichier à créer</b><span><code>src/common/crypto/field-cipher.ts</code> + script de migration des données existantes</span></div>
+  </div>
+  <div class="codehead">src/common/crypto/field-cipher.ts</div>
+<pre class="code keep"><span class="k">const</span> keys = parseKeyring(process.env.FIELD_ENCRYPTION_KEYS); <span class="c">// "v2:base64,v1:base64" — la première chiffre</span>
+
+<span class="k">export function</span> encryptField(plain: string): string {
+  <span class="k">const</span> [version, key] = keys[0];
+  <span class="k">const</span> iv = randomBytes(12);
+  <span class="k">const</span> cipher = createCipheriv(<span class="s">'aes-256-gcm'</span>, key, iv);
+  <span class="k">const</span> data = Buffer.concat([cipher.update(plain, <span class="s">'utf8'</span>), cipher.final()]);
+  <span class="k">return</span> [version, iv, cipher.getAuthTag(), data].map((p) =&gt; Buffer.from(p).toString(<span class="s">'base64url'</span>)).join(<span class="s">'.'</span>);
+}
+
+<span class="k">export function</span> decryptField(stored: string): string {
+  <span class="k">const</span> [v, iv, tag, data] = stored.split(<span class="s">'.'</span>);
+  <span class="k">const</span> key = keyFor(Buffer.from(v, <span class="s">'base64url'</span>).toString());   <span class="c">// lève si version inconnue</span>
+  <span class="k">const</span> decipher = createDecipheriv(<span class="s">'aes-256-gcm'</span>, key, Buffer.from(iv, <span class="s">'base64url'</span>));
+  decipher.setAuthTag(Buffer.from(tag, <span class="s">'base64url'</span>));           <span class="c">// toute altération est détectée</span>
+  <span class="k">return</span> Buffer.concat([decipher.update(Buffer.from(data, <span class="s">'base64url'</span>)), decipher.final()]).toString(<span class="s">'utf8'</span>);
+}
+<span class="c">// Schéma Mongoose : @Prop({ type: String, select: false, set: encryptField, get: decryptField })</span></pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S7</span><h3>Journal d’audit automatique et chaîné</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Tracer automatiquement toutes les écritures (POST, PATCH, PUT, DELETE), connexions, changements de rôles et exports, et rendre toute suppression détectable : chaque entrée contient l’empreinte de la précédente. La route <code>POST /audit-logs</code> ouverte au client est fermée.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/audit-log/schemas/audit-log.entity.ts</code> (<code>prev_hash</code>, <code>hash</code>, <code>seq</code>), <code>src/audit-log/services/audit-log.service.ts</code>, <code>src/audit-log/controllers/audit-log.controller.ts</code>, <code>src/auth/services/auth.service.ts</code>, <code>src/app.module.ts</code></span><b>Fichier à créer</b><span><code>src/audit-log/audit.interceptor.ts</code>, <code>src/audit-log/audit-chain.ts</code></span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">src/audit-log/audit.interceptor.ts</div>
+<pre class="code"><span class="k">intercept</span>(ctx: ExecutionContext, next: CallHandler) {
+  <span class="k">const</span> req = ctx.switchToHttp().getRequest();
+  <span class="k">if</span> (!WRITE_METHODS.has(req.method)) <span class="k">return</span> next.handle();
+  <span class="k">return</span> next.handle().pipe(tap((result) =&gt; <span class="k">void this</span>.audit.record({
+    actor_id: req.user?.sub, actor_type: req.user?.user_type,
+    action: actionFor(req.method), entity_type: resourceOf(req),
+    entity_id: req.params.id ?? result?._id,
+    property_id: req.body?.property_id, ip_address: req.ip,
+    user_agent: req.headers[<span class="s">'user-agent'</span>],
+  })));        <span class="c">// sans le corps : pas de données personnelles</span>
+}</pre>
+  </div><div>
+  <div class="codehead">src/audit-log/audit-chain.ts</div>
+<pre class="code"><span class="k">export function</span> chainHash(prev: string, entry: AuditEntry) {
+  <span class="k">return</span> createHash(<span class="s">'sha256'</span>)
+    .update(prev)
+    .update(canonicalJson(entry))   <span class="c">// clés triées</span>
+    .digest(<span class="s">'hex'</span>);
+}
+<span class="c">// record() : lit la dernière entrée (seq, hash) puis insère
+// { seq: last.seq + 1, prev_hash: last.hash, hash } avec un
+// index unique sur seq ; en cas de conflit, on relit et on recommence.
+// GET /audit-logs/verify recalcule la chaîne et signale la 1re rupture.</span></pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S8</span><h3>Recherche et tri sûrs</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Échapper toute saisie utilisée dans <code>$regex</code> (déjà fait dans plusieurs services, pas dans la recherche client) et n’accepter que des champs de tri déclarés par chaque service.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/guest/services/guest.service.ts</code>, <code>src/common/dto/pagination-query.dto.ts</code>, <code>src/common/services/base-crud.service.ts</code></span><b>Fichier à créer</b><span><code>src/common/utils/query-safety.ts</code></span></div>
+  </div>
+  <div class="codehead">src/common/utils/query-safety.ts</div>
+<pre class="code keep"><span class="k">export const</span> escapeRegex = (s: string) =&gt; s.slice(0, 100).replace(<span class="s">/[.*+?^${}()|[\]\\]/g</span>, <span class="s">'\\$&amp;'</span>);
+
+<span class="k">export function</span> safeSort(sort: string | undefined, allowed: readonly string[], fallback = <span class="s">'-created_at'</span>) {
+  <span class="k">if</span> (!sort) <span class="k">return</span> fallback;
+  <span class="k">const</span> field = sort.replace(<span class="s">/^-/</span>, <span class="s">''</span>);
+  <span class="k">return</span> allowed.includes(field) ? sort : fallback;     <span class="c">// champs masqués jamais triables</span>
+}
+<span class="c">// BaseCrudService : protected sortableFields: readonly string[] = ['created_at'];</span></pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S9</span><h3>Erreurs maîtrisées et journaux sans données personnelles</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Traduire les erreurs Mongo (doublon 11000, identifiant invalide, validation) en 409 / 400 au lieu de 500, ne jamais renvoyer de détail interne, supprimer les <code>console.log</code> des schémas et masquer e-mails, téléphones et jetons dans les journaux.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>src/main.ts</code>, <code>src/admins/schemas/admin.entity.ts</code>, <code>src/receptionist/schemas/receptionist.entity.ts</code>, <code>src/role/schemas/role.schema.ts</code>, <code>src/housekeeping-staff/schemas/housekeeping-staff.entity.ts</code>, <code>src/auth/services/auth-notifier.service.ts</code></span><b>Fichier à créer</b><span><code>src/common/filters/mongo-exception.filter.ts</code></span></div>
+  </div>
+  <div class="codehead">src/common/filters/mongo-exception.filter.ts</div>
+<pre class="code keep"><span class="k">@Catch</span>(mongo.MongoServerError, mongoose.Error.CastError, mongoose.Error.ValidationError)
+<span class="k">export class</span> MongoExceptionFilter <span class="k">implements</span> ExceptionFilter {
+  catch(error: Error, host: ArgumentsHost) {
+    <span class="k">const</span> res = host.switchToHttp().getResponse&lt;Response&gt;();
+    <span class="k">if</span> ((error <span class="k">as</span> mongo.MongoServerError).code === 11000) {
+      <span class="k">return</span> res.status(409).json({ statusCode: 409, message: <span class="s">'Cette valeur existe déjà'</span> });
+    }
+    <span class="k">const</span> message = error <span class="k">instanceof</span> mongoose.Error.CastError ? <span class="s">'Identifiant invalide'</span> : <span class="s">'Données invalides'</span>;
+    <span class="k">return</span> res.status(400).json({ statusCode: 400, message });
+  }
+}
+<span class="c">// main.ts : app.useGlobalFilters(new MongoExceptionFilter());</span></pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S10</span><h3>Sessions web en cookies httpOnly (BFF)</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier (léger)</span></div>
+    <p class="why">Les jetons ne doivent plus être lisibles par JavaScript. Les deux applications Next.js passent par leurs propres routes serveur (« backend for frontend ») qui posent des cookies <code>httpOnly; Secure; SameSite=Lax</code> et relaient les appels ; le middleware vérifie la signature et l’expiration. Côté API : liste blanche des origines et refus des jetons dans l’URL.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span>front-office <code>services/api/client.ts</code>, <code>services/api/session.ts</code>, <code>middleware.ts</code> ; back-office <code>src/lib/api.ts</code>, <code>src/app/login/page.tsx</code></span><b>Fichiers à créer</b><span><code>app/api/auth/login/route.ts</code>, <code>app/api/auth/refresh/route.ts</code>, <code>app/api/auth/logout/route.ts</code>, <code>app/api/proxy/[...path]/route.ts</code> (dans chaque application)</span><b>Dépendance</b><span><code>npm i jose</code> (vérification du JWT dans le middleware)</span></div>
+  </div>
+  <div class="two"><div>
+  <div class="codehead">app/api/auth/login/route.ts</div>
+<pre class="code"><span class="k">export async function</span> POST(req: Request) {
+  <span class="k">const</span> r = <span class="k">await</span> fetch(<span class="s">`${API}/auth/login`</span>, {
+    method: <span class="s">'POST'</span>, body: <span class="k">await</span> req.text(),
+    headers: { <span class="s">'content-type'</span>: <span class="s">'application/json'</span> },
+  });
+  <span class="k">const</span> body = <span class="k">await</span> r.json();
+  <span class="k">if</span> (!r.ok || body.requires_two_factor) <span class="k">return</span> Response.json(body, { status: r.status });
+  <span class="k">const</span> jar = <span class="k">await</span> cookies();
+  <span class="k">const</span> base = { httpOnly: <span class="k">true</span>, secure: <span class="k">true</span>, sameSite: <span class="s">'lax'</span> <span class="k">as const</span>, path: <span class="s">'/'</span> };
+  jar.set(<span class="s">'ps_at'</span>, body.access_token, { ...base, maxAge: 15 * 60 });
+  jar.set(<span class="s">'ps_rt'</span>, body.refresh_token, { ...base, path: <span class="s">'/api/auth'</span>, maxAge: 30 * 86400 });
+  <span class="k">return</span> Response.json({ user: body.user });
+}</pre>
+  </div><div>
+  <div class="codehead">middleware.ts</div>
+<pre class="code"><span class="k">const</span> secret = <span class="k">new</span> TextEncoder().encode(process.env.JWT_SECRET);
+<span class="k">export async function</span> middleware(req: NextRequest) {
+  <span class="k">const</span> token = req.cookies.get(<span class="s">'ps_at'</span>)?.value;
+  <span class="k">try</span> {
+    <span class="k">const</span> { payload } = <span class="k">await</span> jwtVerify(token ?? <span class="s">''</span>, secret);
+    <span class="k">if</span> (payload.type !== <span class="s">'access'</span>) <span class="k">throw new</span> Error();
+    <span class="k">return</span> NextResponse.next();
+  } <span class="k">catch</span> {
+    <span class="c">// jeton expiré : tentative de /api/auth/refresh côté client</span>
+    <span class="k">return</span> NextResponse.redirect(<span class="k">new</span> URL(<span class="s">'/login'</span>, req.url));
+  }
+}</pre>
+  </div></div>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S11</span><h3>En-têtes de sécurité des applications Next.js</h3><span class="tag mid">Moyenne</span><span class="be no">Backend : non</span></div>
+    <p class="why">CSP limitant scripts et connexions à l’API, interdiction d’intégration dans un cadre, HSTS ; domaines d’images explicites (nécessaire aussi pour les images externes de la configuration du site).</p>
+    <div class="meta"><b>Fichiers à modifier</b><span>front-office <code>next.config.ts</code> ; back-office <code>next.config.ts</code></span><b>Dépendance</b><span>—</span></div>
+  </div>
+  <div class="codehead">next.config.ts</div>
+<pre class="code keep"><span class="k">const</span> csp = [
+  <span class="s">"default-src 'self'"</span>, <span class="s">"script-src 'self'"</span>, <span class="s">"style-src 'self' 'unsafe-inline'"</span>,
+  <span class="s">`connect-src 'self' ${process.env.NEXT_PUBLIC_API_URL}`</span>, <span class="s">"img-src 'self' data: https:"</span>,
+  <span class="s">"frame-ancestors 'none'"</span>, <span class="s">"base-uri 'self'"</span>, <span class="s">"form-action 'self'"</span>,
+].join(<span class="s">'; '</span>);
+
+<span class="k">const</span> nextConfig: NextConfig = {
+  <span class="k">async</span> headers() {
+    <span class="k">return</span> [{ source: <span class="s">'/(.*)'</span>, headers: [
+      { key: <span class="s">'Content-Security-Policy'</span>, value: csp },
+      { key: <span class="s">'Strict-Transport-Security'</span>, value: <span class="s">'max-age=31536000; includeSubDomains'</span> },
+      { key: <span class="s">'X-Content-Type-Options'</span>, value: <span class="s">'nosniff'</span> },
+      { key: <span class="s">'Referrer-Policy'</span>, value: <span class="s">'strict-origin-when-cross-origin'</span> },
+      { key: <span class="s">'Permissions-Policy'</span>, value: <span class="s">'camera=(), microphone=(), geolocation=()'</span> },
+    ] }];
+  },
+  images: { remotePatterns: [{ protocol: <span class="s">'https'</span>, hostname: <span class="s">'**.pleasantstay.ci'</span> }] },
+};</pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S12</span><h3>Webhooks entrants signés</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier (léger)</span><span class="state done">Partiellement réalisé</span></div>
+    <p class="why"><b>Déjà fait</b> dans l’application ESB (partie E) : route publique <code>POST /api/integration/inbound/:endpointKey</code>, corps brut activé (<code>NestFactory.create(AppModule, { rawBody: true })</code> dans <code>src/main.ts</code>), signature HMAC-SHA256 comparée en temps constant, fenêtre anti-rejeu de 5 minutes, dédoublonnage, écriture dans <code>webhook-log</code> avec <code>signature_verified</code>. <b>Reste à faire :</b> retirer la route manuelle <code>PATCH /webhook-logs/:id/signature</code> et faire passer chaque fournisseur (n° 9, 10) par cette entrée.</p>
+    <div class="meta"><b>Fichier à modifier</b><span><code>src/webhook-log/controllers/webhook-log.controller.ts</code></span><b>Fichiers existants</b><span><code>src/integration-bus/</code>, <code>src/main.ts</code></span></div>
+  </div>
+<pre class="code keep"><span class="k">const</span> expected = createHmac(<span class="s">'sha256'</span>, secret).update(<span class="s">`${timestamp}.`</span>).update(req.rawBody).digest();
+<span class="k">const</span> received = Buffer.from(signature.replace(<span class="s">/^v1=/</span>, <span class="s">''</span>), <span class="s">'hex'</span>);
+<span class="k">if</span> (Math.abs(Date.now() / 1000 - timestamp) &gt; 300
+  || received.length !== expected.length || !timingSafeEqual(received, expected)) {
+  <span class="k">throw new</span> UnauthorizedException(<span class="s">'Signature invalide'</span>);
+}</pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S13</span><h3>Gestion des secrets</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Révoquer la clé de <code>Document.txt</code>, purger l’historique, puis ne plus jamais committer de secret : fichiers <code>.env</code> ignorés, secrets injectés par l’hébergeur (Docker secrets, Vault, gestionnaire du cloud), rotation planifiée de <code>JWT_SECRET</code> (support de deux clés pendant la transition), de <code>FIELD_ENCRYPTION_KEYS</code> et de <code>INTEGRATION_ENCRYPTION_KEY</code>.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>project-hotels-manager/Document.txt</code> (supprimer), <code>.gitignore</code> de chaque dépôt, <code>docker-compose.yml</code> (valeurs par défaut retirées), <code>src/auth/auth.config.ts</code> (clé précédente acceptée en vérification)</span><b>Fichier à créer</b><span><code>.gitleaks.toml</code> + étape CI <code>gitleaks detect</code> ; crochet <code>pre-commit</code></span></div>
+  </div>
+<pre class="code keep"><span class="c"># 1. révoquer la clé chez le fournisseur, puis :</span>
+git rm --cached project-hotels-manager/Document.txt
+git filter-repo --path project-hotels-manager/Document.txt --invert-paths
+git push --force-with-lease --all   <span class="c"># prévenir l’équipe : chacun reclone</span>
+<span class="c"># 2. CI : refuser tout nouveau secret</span>
+gitleaks detect --source . --redact --exit-code 1</pre>
+  </div>
+
+  <div class="sm"><div class="sm-top">
+    <div class="sm-h"><span class="id">S14</span><h3>Conteneurs, base de données et dépendances</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Image construite en deux étapes avec <code>npm ci</code>, sans dépendances de développement, exécutée par un utilisateur non root, <code>NODE_ENV=production</code> ; MongoDB avec authentification, non exposé hors du réseau Docker ; dépendances mortes retirées et audit automatique en CI.</p>
+    <div class="meta"><b>Fichiers à modifier</b><span><code>Dockerfile</code>, <code>docker-compose.yml</code> (backend et racine), <code>package.json</code> (retirer <code>bcrypt</code>, <code>@types/bcrypt</code>, <code>@types/mongoose</code>, <code>newrelic</code> ou le brancher, scripts <code>typeorm</code> / <code>migration:*</code>, <code>dotenv</code>) ; back-office <code>package.json</code> (retirer <code>typeorm</code>, <code>mysql2</code>, <code>@nestjs/config</code>, <code>@nestjs/typeorm</code>)</span><b>Fichier à créer</b><span><code>.github/workflows/ci.yml</code> (<code>npm audit --omit=dev --audit-level=high</code>, tests, gitleaks)</span></div>
+  </div>
+  <div class="codehead">Dockerfile</div>
+<pre class="code keep"><span class="k">FROM</span> node:22-alpine <span class="k">AS</span> build
+<span class="k">WORKDIR</span> /app
+<span class="k">COPY</span> package*.json ./
+<span class="k">RUN</span> npm ci --no-audit --no-fund
+<span class="k">COPY</span> . .
+<span class="k">RUN</span> npm run build &amp;&amp; npm prune --omit=dev
+
+<span class="k">FROM</span> node:22-alpine
+<span class="k">ENV</span> NODE_ENV=production
+<span class="k">WORKDIR</span> /app
+<span class="k">COPY</span> --from=build --chown=node:node /app/node_modules ./node_modules
+<span class="k">COPY</span> --from=build --chown=node:node /app/dist ./dist
+<span class="k">USER</span> node
+<span class="k">EXPOSE</span> 3000
+<span class="k">CMD</span> [<span class="s">"node"</span>, <span class="s">"dist/main.js"</span>]
+<span class="c"># docker-compose : mongo avec MONGO_INITDB_ROOT_USERNAME / _PASSWORD (secrets), sans "ports:" publiés</span></pre>
+  <p class="why"><b>Exploitation :</b> la limite de fichiers ouverts de MongoDB est déjà portée à 64 000 (<code>ulimits: nofile</code>) dans les deux <code>docker-compose.yml</code> : avec la valeur par défaut de 1 024, <code>mongod</code> s’arrêtait (erreur WiredTiger EMFILE) dès qu’environ 90 collections existaient, ce qui est le cas avec le socle ERP. À reproduire sur tout serveur de production.</p>
+  </div>
+
+
+  <div class="chap" id="p-d"><div class="k">Partie D</div><h2>ESB — bus de services d’entreprise</h2><p>Un ESB est un intermédiaire placé entre PleasantStay et les systèmes extérieurs : il reçoit les événements métier, les achemine vers les bons destinataires, les signe, réessaie en cas d’échec et garde une trace de chaque échange. PleasantStay ne connaît ainsi qu’un seul format interne ; chaque partenaire est branché sans toucher aux modules métier.</p></div>
+
+  <h3 class="sub">Dans quel cadre l’utiliser… et dans quel cadre ne pas l’utiliser</h3>
+  <div class="uses">
+    <div class="use ok"><b class="t">✓ Utiliser l’ESB pour les échanges avec l’extérieur</b>
+      <ul>
+        <li><b>Canaux de vente</b> : Booking.com, Expedia, Airbnb, Agoda, directement ou via un channel manager (SiteMinder, Channex) — disponibilités et tarifs sortants, réservations entrantes (n° 10).</li>
+        <li><b>Paiement</b> : CinetPay, Orange Money, MTN MoMo, Moov, Wave, Stripe — confirmations de paiement entrantes signées (n° 9).</li>
+        <li><b>Comptabilité externe</b> : Sage, Odoo comptable, cabinet d’expertise — écritures validées (<code>accounting.entry.posted</code>).</li>
+        <li><b>Décisionnel</b> : entrepôt de données, Power BI, Metabase — flux de réservations, ventes et stocks.</li>
+        <li><b>Serrures et clés</b> : Salto, ASSA ABLOY Vostio — clé émise à l’arrivée, révoquée au départ (n° 12).</li>
+        <li><b>Centrale de réservation</b> d’un groupe multi-établissements.</li>
+        <li><b>Autorités</b> : transmission des fiches de police (n° 23).</li>
+        <li><b>Messagerie</b> : fournisseurs SMS et WhatsApp, routage des campagnes (n° 13).</li>
+        <li><b>E-réputation</b> : import des avis Google et OTA (n° 29).</li>
+      </ul>
+    </div>
+    <div class="use ko"><b class="t">✗ Ne pas l’utiliser pour la communication interne</b>
+      <ul>
+        <li><b>Back-office, site public et application mobile ↔ API</b> : appels REST directs, avec les gardes d’authentification existantes.</li>
+        <li><b>Entre applications du même backend</b> (facture → comptabilité, départ → stock, départ → fidélité) : bus d’événements interne <code>DomainEventPublisher</code>, déjà en place, dans le même processus.</li>
+        <li><b>Temps réel</b> du tableau de bord (n° 19) : flux SSE direct.</li>
+        <li><b>Calculs synchrones</b> (disponibilité, devis) : appels de service ; l’ESB est asynchrone par nature.</li>
+        <li>Règle simple : si l’échange reste à l’intérieur de PleasantStay, pas d’ESB.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub">Architecture cible</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 760 370" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans, DejaVu Sans, sans-serif">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#178d80"/></marker>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2410c"/></marker>
+      </defs>
+      <rect x="8" y="10" width="220" height="276" rx="10" fill="#0f2a44"/>
+      <text x="20" y="32" fill="#7fd6c8" font-size="13" font-weight="800">PleasantStay (API NestJS)</text>
+      <rect x="20" y="44" width="196" height="40" rx="6" fill="#173a5c"/>
+      <text x="30" y="61" fill="#fff" font-size="10.5" font-weight="700">Services métier</text>
+      <text x="30" y="75" fill="#b8c9da" font-size="9">réservations, factures, POS, stock…</text>
+      <rect x="20" y="96" width="196" height="40" rx="6" fill="#173a5c"/>
+      <text x="30" y="113" fill="#fff" font-size="10.5" font-weight="700">DomainEventPublisher</text>
+      <text x="30" y="127" fill="#b8c9da" font-size="9">canal « domain.event »</text>
+      <rect x="20" y="148" width="196" height="44" rx="6" fill="#173a5c"/>
+      <text x="30" y="165" fill="#fff" font-size="10.5" font-weight="700">Collection outbox_messages</text>
+      <text x="30" y="179" fill="#b8c9da" font-size="9">1 ligne par événement × destinataire</text>
+      <rect x="20" y="204" width="196" height="40" rx="6" fill="#173a5c"/>
+      <text x="30" y="221" fill="#fff" font-size="10.5" font-weight="700">Dispatcher (toutes les 30 s)</text>
+      <text x="30" y="235" fill="#b8c9da" font-size="9">bail, reprises, file des messages morts</text>
+      <rect x="20" y="252" width="196" height="26" rx="6" fill="#11776d"/>
+      <text x="30" y="269" fill="#fff" font-size="9.5" font-weight="700">POST /integration/inbound/:clé</text>
+      <line x1="118" y1="84" x2="118" y2="94" stroke="#7fd6c8" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="118" y1="136" x2="118" y2="146" stroke="#7fd6c8" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="118" y1="192" x2="118" y2="202" stroke="#7fd6c8" stroke-width="2" marker-end="url(#ar)"/>
+
+      <rect x="262" y="20" width="160" height="106" rx="10" fill="#e9f7f4" stroke="#9fd9cf"/>
+      <text x="274" y="42" fill="#11776d" font-size="12" font-weight="800">Webhooks signés</text>
+      <text x="274" y="60" fill="#1d2f45" font-size="9">HTTPS uniquement</text>
+      <text x="274" y="75" fill="#1d2f45" font-size="9">HMAC-SHA256 + horodatage</text>
+      <text x="274" y="90" fill="#1d2f45" font-size="9">garde SSRF (IP privées)</text>
+      <text x="274" y="105" fill="#1d2f45" font-size="9">secret chiffré AES-256-GCM</text>
+      <text x="274" y="118" fill="#11776d" font-size="8.5" font-weight="700">réalisé</text>
+      <rect x="262" y="140" width="160" height="104" rx="10" fill="#fff1e8" stroke="#f0b48f"/>
+      <text x="274" y="162" fill="#c2410c" font-size="12" font-weight="800">RabbitMQ</text>
+      <text x="274" y="177" fill="#7a3a12" font-size="9">(ou Kafka à grande échelle)</text>
+      <rect x="274" y="186" width="136" height="22" rx="5" fill="#fff" stroke="#f0b48f"/>
+      <text x="282" y="201" fill="#1d2f45" font-size="9">échange pleasantstay.events</text>
+      <rect x="274" y="214" width="136" height="22" rx="5" fill="#fff" stroke="#c2410c" stroke-dasharray="3 2"/>
+      <text x="282" y="229" fill="#c2410c" font-size="9">pleasantstay.dlx (échecs)</text>
+      <line x1="216" y1="216" x2="260" y2="80" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="216" y1="226" x2="260" y2="196" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+      <text x="236" y="134" fill="#178d80" font-size="8.5" font-weight="700">HTTP</text>
+      <text x="232" y="244" fill="#178d80" font-size="8.5" font-weight="700">AMQP</text>
+
+      <rect x="452" y="20" width="132" height="224" rx="10" fill="#f5f8fb" stroke="#dbe3ea"/>
+      <text x="462" y="40" fill="#0f2a44" font-size="11" font-weight="800">Connecteurs</text>
+      <g font-size="8.8" fill="#1d2f45">
+        <text x="462" y="60">• channel manager</text>
+        <text x="462" y="80">• paiement</text>
+        <text x="462" y="100">• comptabilité</text>
+        <text x="462" y="120">• serrures</text>
+        <text x="462" y="140">• SMS / WhatsApp</text>
+        <text x="462" y="160">• police</text>
+        <text x="462" y="180">• décisionnel</text>
+        <text x="462" y="200">• e-réputation</text>
+      </g>
+      <text x="462" y="226" fill="#66768b" font-size="8">un consommateur par file</text>
+      <line x1="422" y1="72" x2="450" y2="72" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="422" y1="196" x2="450" y2="196" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+
+      <rect x="612" y="20" width="140" height="224" rx="10" fill="#f5f8fb" stroke="#dbe3ea"/>
+      <text x="622" y="40" fill="#0f2a44" font-size="11" font-weight="800">Systèmes externes</text>
+      <g font-size="8.8" fill="#1d2f45">
+        <text x="622" y="60">• Booking, Expedia…</text>
+        <text x="622" y="80">• CinetPay, Wave, Stripe</text>
+        <text x="622" y="100">• Sage, Odoo</text>
+        <text x="622" y="120">• Salto, Vostio</text>
+        <text x="622" y="140">• Orange, WhatsApp</text>
+        <text x="622" y="160">• autorités</text>
+        <text x="622" y="180">• Power BI, Metabase</text>
+        <text x="622" y="200">• Google, TripAdvisor</text>
+      </g>
+      <line x1="584" y1="132" x2="610" y2="132" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+
+      <path d="M682 244 L 682 300 L 170 300 L 170 280" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#ar2)"/>
+      <text x="236" y="294" fill="#c2410c" font-size="9" font-weight="700">entrant : paiement confirmé, réservation OTA, avis → signature vérifiée, anti-rejeu → webhook-log</text>
+      <rect x="8" y="314" width="744" height="48" rx="8" fill="#fff" stroke="#dbe3ea" stroke-dasharray="4 3"/>
+      <text x="20" y="334" fill="#66768b" font-size="10" font-weight="700">Hors ESB (direct)</text>
+      <text x="20" y="352" fill="#66768b" font-size="9">Back-office, site, mobile ↔ API REST · applications internes (bus en mémoire) · flux SSE · calculs de prix</text>
+    </svg>
+  </div>
+  <p>Le principe clé est la <b>boîte d’envoi (outbox)</b> : quand un événement est publié, l’ESB insère une ligne par destinataire dans <code>outbox_messages</code>, sans jamais appeler le réseau pendant la requête métier. Le dispatcher lit ensuite les lignes dues, les réserve par un bail (deux instances ne livrent jamais le même message), livre, puis marque « livré », « à réessayer » ou « mort ». L’index unique (<code>event_id</code>, <code>endpoint_id</code>) rend l’ajout idempotent. Pour une garantie totale (événement écrit si et seulement si l’écriture métier réussit), l’étape suivante consiste à insérer la ligne outbox dans la même transaction MongoDB que l’écriture, ce qui suppose un replica set (n° 25).</p>
+
+  <h3 class="sub">Choix de la technologie</h3>
+  <table class="dense">
+    <thead><tr><th style="width:24mm">Critère</th><th><b>Outbox + webhooks intégrés</b> (réalisé)</th><th>RabbitMQ</th><th>Kafka</th><th>ESB du marché (WSO2, Apache Camel, MuleSoft)</th><th>n8n (sans code)</th></tr></thead>
+    <tbody>
+      <tr><td>Rôle</td><td>Publication fiable vers des URL partenaires, réception signée</td><td>Courtier : files par destinataire, routage par sujet</td><td>Journal d’événements distribué, rejouable</td><td>Transformation et orchestration lourdes</td><td>Scénarios d’intégration visuels</td></tr>
+      <tr><td>Exploitation</td><td>Aucune infrastructure en plus (MongoDB)</td><td>Un conteneur, console web</td><td>Cluster, compétences dédiées</td><td>JVM, licences possibles (MuleSoft)</td><td>Un conteneur</td></tr>
+      <tr><td>Quand</td><td>Dès maintenant, 1 à 3 partenaires</td><td>À partir de 3 consommateurs ou plusieurs sites</td><td>Très gros volumes, analyse en flux</td><td>Si un client grand compte l’impose</td><td>Prototypes, automatisations marketing</td></tr>
+      <tr><td>Verdict</td><td><b>Point de départ</b></td><td><b>Étape suivante</b> : adaptateur prêt</td><td>Non nécessaire à moyen terme</td><td>Non recommandé (coût, complexité)</td><td>En complément, branché sur les webhooks</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">Catalogue des événements métier</h3>
+  <p class="intro">Source : <code>src/platform/events/domain-events.ts</code> (38 événements). Les noms servent de clés de routage sur l’ESB et de déclencheurs dans les automatisations. Un point de terminaison s’abonne par nom exact, par préfixe (<code>billing.*</code>) ou à tout (<code>*</code>).</p>
+  <table class="dense evt">
+    <thead><tr><th style="width:52mm">Événement</th><th style="width:48mm">Émis par</th><th>Consommateurs internes</th><th style="width:46mm">Usage externe typique</th></tr></thead>
+    <tbody>
+      <tr><td><code>hotel.reservation.created</code> / <code>.confirmed</code> / <code>.cancelled</code></td><td><code>src/reservation/services/reservation.service.ts</code></td><td>fil d’activité, automatisations</td><td>channel manager, centrale, CRM externe</td></tr>
+      <tr><td><code>hotel.reservation.checked_in</code></td><td>idem (check-in et check-in autonome)</td><td>fil d’activité, folio (n° 3)</td><td>serrures, autorités (fiche de police)</td></tr>
+      <tr><td><code>hotel.reservation.checked_out</code></td><td>idem</td><td>stock (kits d’accueil), fidélité (points), gouvernance (n° 6)</td><td>serrures (révocation), enquête de satisfaction</td></tr>
+      <tr><td><code>hotel.reservation.no_show</code></td><td>idem</td><td>automatisations (pénalité)</td><td>channel manager</td></tr>
+      <tr><td><code>billing.invoice.created</code> / <code>.paid</code> / <code>.cancelled</code></td><td><code>src/invoice/services/invoice.service.ts</code></td><td>comptabilité (écriture de vente, extourne)</td><td>comptabilité externe, FNE</td></tr>
+      <tr><td><code>billing.payment.completed</code> / <code>.refunded</code></td><td><code>src/payment/services/payment.service.ts</code></td><td>comptabilité (trésorerie)</td><td>décisionnel, rapprochement bancaire</td></tr>
+      <tr><td><code>pos.transaction.completed</code> / <code>.voided</code></td><td><code>src/pos-transaction/services/pos-transaction.service.ts</code></td><td>comptabilité, fidélité</td><td>décisionnel</td></tr>
+      <tr><td><code>accounting.entry.posted</code> / <code>.reversed</code></td><td><code>src/accounting/</code></td><td>automatisations</td><td>Sage, Odoo, expert-comptable</td></tr>
+      <tr><td><code>inventory.move.done</code>, <code>inventory.stock.low</code></td><td><code>src/inventory/</code></td><td>achats (réapprovisionnement), automatisations</td><td>fournisseur (EDI), décisionnel</td></tr>
+      <tr><td><code>purchase.order.confirmed</code> / <code>.received</code>, <code>purchase.bill.posted</code></td><td><code>src/purchase/</code></td><td>comptabilité (écriture d’achat)</td><td>fournisseur (bon de commande)</td></tr>
+      <tr><td><code>hr.leave.requested</code> / <code>.approved</code> / <code>.refused</code>, <code>hr.attendance.checked_in</code></td><td><code>src/hr/</code></td><td>fil d’activité, automatisations</td><td>logiciel de paie externe</td></tr>
+      <tr><td><code>crm.lead.created</code> / <code>.stage_changed</code> / <code>.won</code> / <code>.lost</code></td><td><code>src/crm/</code></td><td>groupes et allotements (n° 7)</td><td>outil marketing, n8n</td></tr>
+      <tr><td><code>loyalty.points.earned</code> / <code>.redeemed</code>, <code>loyalty.tier.changed</code></td><td><code>src/loyalty/</code></td><td>automatisations (message de félicitation)</td><td>partenaires de fidélité</td></tr>
+      <tr><td><code>platform.app.installed</code> / <code>.uninstalled</code>, <code>platform.activity.due</code></td><td><code>src/platform/apps/apps.service.ts</code>, <code>src/activity/</code></td><td>facturation SaaS (n° 30)</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p class="why">Les événements <code>hotel.housekeeping.completed</code>, <code>hotel.maintenance.created</code>, <code>platform.record.created</code> / <code>.updated</code> sont réservés au catalogue et seront publiés par les fiches n° 6 et n° 26.</p>
+
+  <h3 class="sub">Enveloppe et signature</h3>
+  <div class="two"><div>
+  <div class="codehead">Requête envoyée à un partenaire</div>
+<pre class="code">POST https://partenaire.example/hooks/pleasantstay
+Content-Type: application/json
+User-Agent: PleasantStay-ESB/1.0
+X-PleasantStay-Event: billing.payment.completed
+X-PleasantStay-Delivery: 6745f1c2e4b0a9d3c1f2a7b8
+X-PleasantStay-Timestamp: 1795430400
+X-PleasantStay-Signature: v1=5d1c…e9a0
+
+{ <span class="s">"id"</span>: <span class="s">"0d9b…"</span>, <span class="s">"name"</span>: <span class="s">"billing.payment.completed"</span>,
+  <span class="s">"occurred_at"</span>: <span class="s">"2026-11-17T10:00:00Z"</span>,
+  <span class="s">"organization_id"</span>: <span class="s">"…"</span>, <span class="s">"property_id"</span>: <span class="s">"…"</span>,
+  <span class="s">"record"</span>: { <span class="s">"model"</span>: <span class="s">"Payment"</span>, <span class="s">"id"</span>: <span class="s">"…"</span> },
+  <span class="s">"payload"</span>: { … } }</pre>
+  </div><div>
+  <div class="codehead">Vérification côté partenaire (Node.js)</div>
+<pre class="code"><span class="k">const</span> ts = req.headers[<span class="s">'x-pleasantstay-timestamp'</span>];
+<span class="k">const</span> sig = req.headers[<span class="s">'x-pleasantstay-signature'</span>];
+<span class="k">const</span> expected = <span class="s">'v1='</span> + createHmac(<span class="s">'sha256'</span>, SECRET)
+  .update(<span class="s">`${ts}.${rawBody}`</span>).digest(<span class="s">'hex'</span>);
+<span class="k">const</span> fresh = Math.abs(Date.now() / 1000 - Number(ts)) &lt; 300;
+<span class="k">if</span> (!fresh || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+  <span class="k">return</span> res.status(401).end();
+}
+<span class="c">// idempotence : ignorer un "id" déjà traité
+// répondre 2xx rapidement, traiter ensuite</span></pre>
+  </div></div>
+  <table class="dense">
+    <thead><tr><th style="width:40mm">Règle</th><th>Comportement réalisé</th></tr></thead>
+    <tbody>
+      <tr><td>Réponse attendue</td><td>2xx = livré ; 410 = point de terminaison désactivé ; toute autre réponse ou délai dépassé = nouvelle tentative.</td></tr>
+      <tr><td>Reprises</td><td>Délai exponentiel 30 s × 2<sup>n</sup> avec 20 % d’aléa, plafonné à 6 h ; 8 tentatives par défaut puis statut « mort », relançable depuis <code>POST /integration/outbox/:id/retry</code>.</td></tr>
+      <tr><td>Désactivation automatique</td><td>Après 50 échecs consécutifs, le point de terminaison est désactivé pour protéger le dispatcher.</td></tr>
+      <tr><td>SSRF</td><td>HTTPS obligatoire en production ; refus des identifiants dans l’URL et des adresses privées, de bouclage, lien-local et de métadonnées cloud, vérifiées à l’enregistrement et à chaque livraison (résolution DNS) ; dérogation locale par <code>INTEGRATION_ALLOW_PRIVATE_URLS=true</code>.</td></tr>
+      <tr><td>Secrets</td><td>Chiffrés AES-256-GCM avec <code>INTEGRATION_ENCRYPTION_KEY</code> ; jamais relus par l’API (indice masqué), nouveau secret affiché une seule fois à la rotation.</td></tr>
+      <tr><td>Entrant</td><td>Clé d’URL aléatoire par source, signature <code>v1</code> ou en-tête HMAC configurable, tolérance 300 s, dédoublonnage par identifiant d’événement du fournisseur, réponse 202.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">Déploiement et étapes restantes</h3>
+  <div class="two"><div>
+  <div class="codehead">docker-compose.yml (ajout)</div>
+<pre class="code">  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: pleasantstay
+      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/rabbitmq_password
+    ports:
+      - <span class="s">"127.0.0.1:15672:15672"</span>   <span class="c"># console, locale uniquement</span>
+    volumes: [rabbitmq_data:/var/lib/rabbitmq]
+    secrets: [rabbitmq_password]
+
+  api:
+    environment:
+      INTEGRATION_ENCRYPTION_KEY_FILE: /run/secrets/integration_key
+      INTEGRATION_ALLOW_PRIVATE_URLS: <span class="s">"false"</span>
+      AMQP_URL: amqp://pleasantstay@rabbitmq:5672</pre>
+  </div><div>
+  <div class="codehead">src/integration-bus/brokers/amqp-broker.adapter.ts (à créer)</div>
+<pre class="code"><span class="k">@Injectable</span>()
+<span class="k">export class</span> AmqpBrokerAdapter <span class="k">implements</span> MessageBrokerAdapter, OnModuleDestroy {
+  <span class="k">private</span> channel?: ConfirmChannel;
+  <span class="k">private async</span> ch() {
+    <span class="k">if</span> (!<span class="k">this</span>.channel) {
+      <span class="k">const</span> conn = <span class="k">await</span> amqp.connect(process.env.AMQP_URL!);
+      <span class="k">this</span>.channel = <span class="k">await</span> conn.createConfirmChannel();
+      <span class="k">await this</span>.channel.assertExchange(<span class="s">'pleasantstay.events'</span>, <span class="s">'topic'</span>, { durable: <span class="k">true</span> });
+    }
+    <span class="k">return this</span>.channel;
+  }
+  <span class="k">async</span> publish(routingKey: string, envelope: OutboundEnvelope, o?: { messageId?: string }) {
+    <span class="k">const</span> ch = <span class="k">await this</span>.ch();
+    ch.publish(<span class="s">'pleasantstay.events'</span>, routingKey, Buffer.from(JSON.stringify(envelope)),
+      { persistent: <span class="k">true</span>, messageId: o?.messageId, contentType: <span class="s">'application/json'</span> });
+    <span class="k">await</span> ch.waitForConfirms();     <span class="c">// sinon : erreur → message retenté</span>
+  }
+  <span class="k">async</span> onModuleDestroy() { <span class="k">await this</span>.channel?.close(); }
+}
+<span class="c">// integration-bus.module.ts : { provide: MESSAGE_BROKER_ADAPTER, useClass: AmqpBrokerAdapter }</span></pre>
+  </div></div>
+  <div class="note"><b class="t">Ce qui est livré et ce qui reste à faire</b>
+    <ul>
+      <li><b>Livré</b> (<code>src/integration-bus/</code>, partie E) : boîte d’envoi, dispatcher, webhooks signés, garde SSRF, secrets chiffrés, sources entrantes signées, interface <code>MessageBrokerAdapter</code> avec un adaptateur de journalisation, statistiques et relance manuelle.</li>
+      <li><b>Vérifié</b> : le test de bout en bout <code>npm run test:erp-smoke</code> reçoit les webhooks sur un serveur local et contrôle leur signature HMAC ; <code>src/main.ts</code> active le corps brut pour l’entrée signée.</li>
+      <li><b>À faire</b> : adaptateur <code>amqplib</code> ci-dessus (<code>npm i amqplib</code>) ; un connecteur par fournisseur (traduction de format : channel manager, CinetPay, Wave, Stripe, serrures, autorités) sous forme de consommateurs de files ; écran de suivi dans le back-office (<code>src/app/admin/integration/page.tsx</code>).</li>
+    </ul>
+  </div>
+
+
+  <div class="chap" id="p-e"><div class="k">Partie E</div><h2>Socle ERP modulable</h2><p>Réalisé et vérifié en novembre 2026 : 141 suites et 1682 tests unitaires, plus un test de bout en bout de 14 contrôles sur une base réelle. Ces éléments ne font pas partie des 30 fonctionnalités manquantes. Ils transforment PleasantStay en plateforme d’applications activables par organisation, à la manière d’Odoo.</p></div>
+  <p class="intro">Toutes les applications sont enregistrées dans <code>src/app.module.ts</code> et reposent sur <code>src/platform/</code>, module global : chaque contrôleur porte <code>@RequiresApp('&lt;clé&gt;')</code>, les applications communiquent uniquement par événements, et toutes les pièces sont numérotées sans trou par établissement et par année. Côté back-office (<code>project-manager-hotles-backoffice</code>), 28 pages de ressources <code>src/app/admin/&lt;clé&gt;/page.tsx</code> sont déclarées dans <code>src/lib/erp-resources.ts</code> ; <code>src/lib/workspace.tsx</code> mémorise l’organisation et l’établissement courants ; <code>src/components/ui/ResourcePage.tsx</code> gère les actions de workflow par ligne et l’éditeur de lignes ; <code>src/components/layouts/Sidebar.tsx</code> affiche une section par application installée.</p>
+  <div class="erp">
+    <div class="card"><b class="t">Magasin d’applications avec dépendances <span class="state done">Réalisé</span></b>
+      <p>21 applications au catalogue (11 existantes regroupées, 10 nouvelles). Installer une application installe d’abord ses dépendances (ex. Achats → Stock) ; une désinstallation est refusée tant qu’une application dépendante est installée ; la garde globale renvoie 403 si l’organisation n’a pas installé l’application.</p>
+      <ul><li>Backend : <code>src/platform/apps/app-catalog.ts</code>, <code>apps.service.ts</code>, <code>apps.controller.ts</code> (<code>GET /apps</code>, <code>POST /apps/:key/install</code>, <code>/uninstall</code>), <code>app-installed.guard.ts</code>, <code>requires-app.decorator.ts</code>, <code>organization-app.entity.ts</code></li><li>Back-office : <code>src/app/admin/apps/page.tsx</code> (magasin d’applications), <code>src/components/layouts/Sidebar.tsx</code></li></ul></div>
+    <div class="card"><b class="t">Événements métier, portée et numérotation <span class="state done">Réalisé</span></b>
+      <p>Catalogue de 38 événements, publication qui n’interrompt jamais l’opération d’origine ; réservations, factures, paiements et point de vente publient désormais leurs événements. Résolution établissement → organisation mise en cache ; compteurs atomiques sans trou.</p>
+      <ul><li>Backend : <code>src/platform/events/domain-events.ts</code>, <code>domain-event.publisher.ts</code>, <code>src/platform/tenancy/tenant-scope.service.ts</code>, <code>src/platform/sequences/sequence.service.ts</code>, <code>src/platform/platform.module.ts</code> ; dépendances <code>@nestjs/event-emitter</code>, <code>@nestjs/schedule</code></li></ul></div>
+    <div class="card"><b class="t">Comptabilité SYSCOHADA <span class="state done">Réalisé</span></b>
+      <p>Plan SYSCOHADA de 51 comptes adapté à l’hôtellerie (dont 552 « monnaie électronique » pour le mobile money), journaux VTE, ACH, CAI, BNQ, MOB et OD, écritures en partie double contrôlées, date de verrouillage, extourne. Comptabilisation automatique des factures, paiements, remboursements, ventes et annulations du point de vente, factures fournisseurs ; balance, grand livre, compte de résultat, bilan, balance âgée clients.</p>
+      <ul><li>Backend : <code>src/accounting/</code> (domain/syscohada-chart.ts, domain/posting-rules.ts, domain/accounting.logic.ts, listeners/accounting-auto-posting.listener.ts)</li><li>Back-office : <code>src/app/admin/accounting-accounts/</code>, <code>accounting-journals/</code>, <code>accounting-entries/</code>, <code>accounting-reports/page.tsx</code></li></ul></div>
+    <div class="card"><b class="t">Stock <span class="state done">Réalisé</span></b>
+      <p>Articles (minibar, restauration, produits d’accueil, entretien, linge, pièces), emplacements, mouvements validés, quantités par emplacement sans stock négatif, coût moyen pondéré, inventaires physiques, valorisation. Consommation automatique des kits d’accueil à chaque départ ; alerte de seuil bas.</p>
+      <ul><li>Backend : <code>src/inventory/</code> (product, stock-location, stock-move, stock-quant, inventory-count ; listeners/checkout-consumption.listener.ts)</li><li>Back-office : <code>src/app/admin/products/</code>, <code>stock-locations/</code>, <code>stock-moves/</code>, <code>inventory-counts/</code></li></ul></div>
+    <div class="card"><b class="t">Achats <span class="state done">Réalisé</span></b>
+      <p>Fournisseurs, bons de commande avec seuil d’approbation, réceptions partielles qui alimentent le stock, factures fournisseurs comptabilisées automatiquement. Réapprovisionnement intelligent : une alerte de stock bas ajoute la quantité manquante au brouillon de commande du fournisseur préféré.</p>
+      <ul><li>Backend : <code>src/purchase/</code></li><li>Back-office : <code>src/app/admin/vendors/</code>, <code>purchase-orders/</code>, <code>vendor-bills/</code></li></ul></div>
+    <div class="card"><b class="t">Ressources humaines <span class="state done">Réalisé</span></b>
+      <p>Construite sur le personnel existant (<code>src/staff/</code>) : départements, contrats (CDI, CDD, intérim, stage, journalier) avec expiration automatique, types de congés, allocations, demandes avec soldes et circuit de validation, planning des équipes avec détection des chevauchements (y compris de nuit), pointage. La paie (n° 27) s’appuiera sur cette application.</p>
+      <ul><li>Backend : <code>src/hr/</code></li><li>Back-office : <code>src/app/admin/hr-departments/</code>, <code>hr-contracts/</code>, <code>hr-leave-types/</code>, <code>hr-leave-allocations/</code>, <code>hr-leaves/</code>, <code>hr-shifts/</code>, <code>hr-attendance/</code></li></ul></div>
+    <div class="card"><b class="t">CRM <span class="state done">Réalisé</span></b>
+      <p>Étapes de pipeline paramétrables, comptes entreprises (remise négociée, plafond de crédit), pistes et opportunités par segment (groupe, séminaire, mariage, contrat entreprise, long séjour), nuitées calculées, chiffre d’affaires pondéré et prévision par mois d’arrivée.</p>
+      <ul><li>Backend : <code>src/crm/</code></li><li>Back-office : <code>src/app/admin/crm-pipeline/page.tsx</code> (colonnes par étape), <code>crm-leads/</code>, <code>crm-stages/</code>, <code>crm-corporate-accounts/</code></li></ul></div>
+    <div class="card"><b class="t">Fidélité <span class="state done">Réalisé</span></b>
+      <p>Programmes par établissement ou par organisation, paliers avec multiplicateurs, grand livre des points idempotent, gain automatique au départ et au point de vente, utilisation contrôlée (solde, minimum), ajustements motivés, expiration planifiée ; synchronisation avec les champs fidélité de la fiche client.</p>
+      <ul><li>Backend : <code>src/loyalty/</code></li><li>Back-office : <code>src/app/admin/loyalty-programs/</code>, <code>loyalty-accounts/</code></li></ul></div>
+    <div class="card"><b class="t">Fil d’activité (« chatter ») <span class="state done">Réalisé</span></b>
+      <p>Sur chaque fiche déclarée au registre : notes, abonnés, activités planifiées (appel, réunion, tâche) avec échéance, « Mes activités », historique automatique alimenté par les événements métier (« Réservation confirmée », « Facture payée »…).</p>
+      <ul><li>Backend : <code>src/records/</code> (record-registry.ts), <code>src/activity/</code> (activity.service.ts, activity-tracking.listener.ts, activity-due.scheduler.ts)</li><li>Back-office : <code>src/app/admin/my-activities/page.tsx</code> ; fil d’activité sur les fiches : à faire (n° 18)</li></ul></div>
+    <div class="card"><b class="t">Studio : champs personnalisés <span class="state done">Réalisé</span></b>
+      <p>Chaque organisation ajoute ses propres champs (texte, nombre, date, liste, montant, e-mail…) aux fiches, sans développement ; valeurs validées selon leur définition et stockées à part des documents métier.</p>
+      <ul><li>Backend : <code>src/studio/</code> (custom-field.validator.ts, schemas/custom-field.entity.ts, schemas/custom-field-value.entity.ts)</li><li>Back-office : <code>src/app/admin/studio-fields/</code> (définitions) ; saisie des valeurs sur les fiches : à faire (n° 18)</li></ul></div>
+    <div class="card"><b class="t">Automatisations <span class="state done">Réalisé</span></b>
+      <p>Règles « quand… si… alors… » sur les 38 événements : conditions combinables, actions « créer une activité », « écrire une note », « notifier », « publier sur l’ESB » ; essai à blanc, journal d’exécution, protection contre les boucles.</p>
+      <ul><li>Backend : <code>src/automation/</code></li><li>Back-office : <code>src/app/admin/automation-rules/</code>, <code>automation-runs/</code> ; éditeur visuel : à faire (n° 18)</li></ul></div>
+    <div class="card"><b class="t">Bus d’intégration (ESB) <span class="state done">Réalisé</span></b>
+      <p>Boîte d’envoi, dispatcher avec reprises et messages morts, webhooks signés HMAC, garde SSRF, secrets chiffrés AES-256-GCM, entrée signée <code>POST /api/integration/inbound/:endpointKey</code> (corps brut activé dans <code>src/main.ts</code>), adaptateur de courtier prêt pour RabbitMQ (détails en partie D).</p>
+      <ul><li>Backend : <code>src/integration-bus/</code> (utils/signature.ts, utils/ssrf-guard.ts, utils/backoff.ts, brokers/message-broker.adapter.ts, services/endpoint-delivery.service.ts)</li><li>Back-office : <code>src/app/admin/integration-endpoints/</code>, <code>integration-inbound-sources/</code>, <code>integration-outbox/</code></li></ul></div>
+    <div class="card"><b class="t">Base de données et vérification <span class="state done">Réalisé</span></b>
+      <p><code>npm run seed</code> prépare une base complète et peut être relancé sans risque : 89 collections et leurs index, 8 rôles système, un super-administrateur, un hôtel de démonstration (3 types de chambre, 12 chambres), les 21 applications installées et configurées (plan comptable, emplacements de stock, 4 articles, un fournisseur, étapes CRM, 4 types de congés, programme de fidélité).</p>
+      <p><code>npm run test:erp-smoke</code> : 14 contrôles sur 14 réussis — séjour → fil d’activité, note d’automatisation, points de fidélité et consommation du kit d’accueil ; facture → écriture VTE ; paiement mobile money → MOB ; commande → réception → facture fournisseur → ACH et stock ; balance équilibrée ; webhooks ESB signés et vérifiés ; désinstallation → 403 ; dépendance → 409.</p>
+      <ul><li>Backend : <code>src/scripts/seed.ts</code>, <code>src/scripts/seed-erp.ts</code>, <code>test/erp-smoke.mjs</code></li><li>Exploitation : limite de fichiers ouverts de MongoDB portée à 64 000 dans les deux <code>docker-compose.yml</code> (sinon arrêt WiredTiger EMFILE vers 90 collections)</li></ul></div>
+  </div>
+  <div class="note"><b class="t">Liens avec le reste du document</b>
+    <ul>
+      <li>La comptabilité automatique n’est juste que si les factures le sont : les fiches n° 2, 3 et 4 (prix calculé, folio, facture légale) sont prioritaires.</li>
+      <li>Le back-office n’affiche pas encore les champs personnalisés et le fil d’activité sur les fiches, ni les rapports Stock et Achats, le planning RH, les réglages RH / Achats / Comptabilité et l’éditeur visuel d’automatisations : ces écrans sont repris dans la fiche n° 18.</li>
+      <li>Toutes les nouvelles applications portent un <code>property_id</code> ; le cloisonnement S4 doit s’y appliquer comme au reste du code, et le chiffrement S6 aux champs sensibles des contrats RH.</li>
+      <li>Les automatisations peuvent publier vers l’ESB (partie D) : « quand une facture est payée, si le client est une entreprise, alors envoyer l’écriture au cabinet comptable ».</li>
+      <li>Le magasin d’applications est la base de l’offre SaaS (n° 30) : une formule = une liste d’applications installables.</li>
+    </ul>
+  </div>
+
+  <div class="chap flow" id="p-f"><div class="k">Partie F</div><h2>Récapitulatif</h2><p>Les 30 fonctionnalités, leur axe, leur priorité, leur phase et la nécessité de modifier le backend.</p></div>
+  <table class="dense recap">
+    <thead><tr><th style="width:8mm">N°</th><th>Fonctionnalité</th><th style="width:40mm">Axe</th><th style="width:22mm">Priorité</th><th style="width:13mm">Phase</th><th style="width:24mm">Backend</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Moteur de disponibilité et contrôle des chevauchements</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>2</td><td>Prix calculé à la réservation</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>3</td><td>Folio de séjour et facture automatique</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>4</td><td>Facture légale : numérotation, avoirs et PDF</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>5</td><td>Planning graphique des chambres</td><td>Cœur hôtelier</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>6</td><td>Gouvernance reliée au statut des chambres</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>7</td><td>Groupes, allotements et séminaires</td><td>Cœur hôtelier</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>8</td><td>Réservation en ligne sur le site public</td><td>Ventes et paiements</td><td>Haute</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>9</td><td>Paiement mobile money et carte</td><td>Ventes et paiements</td><td>Haute</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>10</td><td>Channel manager réel</td><td>Ventes et paiements</td><td>Haute</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>11</td><td>Espace client</td><td>Ventes et paiements</td><td>Moyenne</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>12</td><td>Check-in en ligne et clé mobile</td><td>Ventes et paiements</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>13</td><td>Envoi réel des e-mails, SMS et WhatsApp</td><td>Ventes et paiements</td><td>Haute</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>14</td><td>Application mobile client (PWA)</td><td>Mobile et expérience</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>15</td><td>Application mobile du personnel, hors ligne</td><td>Mobile et expérience</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>16</td><td>Langues et devises</td><td>Mobile et expérience</td><td>Moyenne</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>17</td><td>Référencement et performance du site public</td><td>Mobile et expérience</td><td>Moyenne</td><td>4</td><td class="no-c">Non</td></tr>
+      <tr><td>18</td><td>Écrans ERP complets et menu selon les droits</td><td>Back-office et pilotage</td><td>Haute</td><td>1</td><td class="no-c">Non</td></tr>
+      <tr><td>19</td><td>Tableau de bord en temps réel</td><td>Back-office et pilotage</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>20</td><td>IA et rapports branchés sur les données réelles</td><td>Back-office et pilotage</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>21</td><td>Recommandations de revenue management</td><td>Back-office et pilotage</td><td>Selon marché</td><td>5</td><td class="yes-c">Oui</td></tr>
+      <tr><td>22</td><td>Consolidation multi-établissements et budgets</td><td>Back-office et pilotage</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>23</td><td>Fiche de police et registre des voyageurs</td><td>Conformité</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>24</td><td>Protection des données personnelles</td><td>Conformité</td><td>Haute</td><td>1</td><td class="yes-c">Oui</td></tr>
+      <tr><td>25</td><td>Observabilité, sauvegardes et reprise</td><td>Conformité</td><td>Haute</td><td>1</td><td class="yes-c">Oui</td></tr>
+      <tr><td>26</td><td>Maintenance préventive et équipements</td><td>Conformité</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>27</td><td>Paie adaptée à la Côte d’Ivoire</td><td>Écosystème</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>28</td><td>Portail des propriétaires et des partenaires</td><td>Écosystème</td><td>Selon marché</td><td>5</td><td class="yes-c">Oui</td></tr>
+      <tr><td>29</td><td>E-réputation</td><td>Écosystème</td><td>Selon marché</td><td>5</td><td class="yes-c">Oui</td></tr>
+      <tr><td>30</td><td>Offre SaaS : abonnements et facturation de la plateforme</td><td>Écosystème</td><td>Selon marché</td><td>5</td><td class="yes-c">Oui</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Priorités et phases sont des recommandations ; chaque fonctionnalité peut ensuite être découpée en chantiers estimés. Les chemins « à créer » sont des propositions à confirmer lors de la conception détaillée. Les 14 mesures de sécurité (partie C) précèdent toute mise en production.</p>
+</div>
+</body>
+</html>

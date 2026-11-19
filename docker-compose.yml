@@ -1,69 +1,121 @@
+# Pile complète PleasantStay : MongoDB, API, back-office, front-office, mobile.
+#
+#   cp .env.example .env            # puis renseigner les secrets
+#   docker compose up -d --build
+#   docker compose run --rm api node dist/scripts/seed.js   # base initiale
+#
+# Ports publiés uniquement sur 127.0.0.1 (configurables dans .env).
+name: pleasantstay
+
+x-restart: &restart
+  restart: unless-stopped
+
 services:
   mongo:
     image: mongo:7
+    container_name: pleasantstay-mongo
+    <<: *restart
+    # MongoDB ouvre un fichier par collection et par index : la limite par
+    # défaut (1024) provoque un arrêt brutal (WiredTiger EMFILE).
+    ulimits:
+      nofile:
+        soft: 64000
+        hard: 64000
     environment:
-      MONGO_INITDB_DATABASE: bd_pleasantstay
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:?MONGO_ROOT_USERNAME manquant dans .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD manquant dans .env}
+      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME:-bd_pleasantstay}
+      # Lus par docker/mongo-init/01-create-app-user.js (premier démarrage).
+      MONGO_DB_NAME: ${MONGO_DB_NAME:-bd_pleasantstay}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME:?MONGO_APP_USERNAME manquant dans .env}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?MONGO_APP_PASSWORD manquant dans .env}
     ports:
-      - "127.0.0.1:27017:27017"
+      - "127.0.0.1:${MONGO_PORT:-27017}:27017"
     volumes:
       - mongo_data:/data/db
+      - ./docker/mongo-init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mongosh",
-          "--quiet",
-          "mongodb://localhost:27017/admin",
-          "--eval",
-          "db.runCommand({ ping: 1 }).ok",
-        ]
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.runCommand({ ping: 1 }).ok"]
       interval: 10s
       timeout: 5s
-      retries: 5
-      start_period: 10s
-    restart: unless-stopped
+      retries: 10
+      start_period: 20s
 
   api:
     build:
       context: ./project-hotels-manager-backend
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+    image: pleasantstay/api:latest
+    container_name: pleasantstay-api
+    <<: *restart
     environment:
+      NODE_ENV: production
       PORT: 3000
-      MONGODB_URI: mongodb://mongo:27017
-      MONGODB_DB_NAME: bd_pleasantstay
-      CORS_ORIGIN: http://localhost:3001,http://127.0.0.1:3001
-      JWT_SECRET: ${JWT_SECRET:-local-development-only-change-this-secret}
+      MONGODB_URI: mongodb://${MONGO_APP_USERNAME}:${MONGO_APP_PASSWORD}@mongo:27017/${MONGO_DB_NAME:-bd_pleasantstay}?authSource=${MONGO_DB_NAME:-bd_pleasantstay}
+      MONGODB_DB_NAME: ${MONGO_DB_NAME:-bd_pleasantstay}
+      CORS_ORIGIN: http://localhost:${BACKOFFICE_PORT:-3006},http://localhost:${FRONTOFFICE_PORT:-3007},http://localhost:${MOBILE_PORT:-3008}
+      FRONTEND_URL: http://localhost:${FRONTOFFICE_PORT:-3007}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET manquant dans .env}
+      JWT_ISSUER: pleasantstay-api
       JWT_EXPIRES_IN: 15m
       JWT_REFRESH_EXPIRES_IN: 30d
       JWT_2FA_EXPIRES_IN: 5m
-      FRONTEND_URL: http://localhost:3001
+      AUTH_BCRYPT_ROUNDS: 12
+      TWO_FACTOR_ISSUER: PleasantStay
+      INTEGRATION_ENCRYPTION_KEY: ${INTEGRATION_ENCRYPTION_KEY:?INTEGRATION_ENCRYPTION_KEY manquant dans .env}
+      INTEGRATION_PUBLIC_BASE_URL: http://localhost:${API_PORT:-3002}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-admin@pleasantstay.local}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:${API_PORT:-3002}:3000"
     depends_on:
       mongo:
         condition: service_healthy
-    restart: unless-stopped
 
-  frontend:
+  backoffice:
+    build:
+      context: ./project-manager-hotles-backoffice
+      args:
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3002}/api
+    image: pleasantstay/backoffice:latest
+    container_name: pleasantstay-backoffice
+    <<: *restart
+    ports:
+      - "127.0.0.1:${BACKOFFICE_PORT:-3006}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+  frontoffice:
     build:
       context: ./project-hotels-manager
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000/api}
-        NEXT_PUBLIC_BACKEND_API_URL: ${NEXT_PUBLIC_BACKEND_API_URL:-http://localhost:3000/api}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
+        NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-3002}/api
+        NEXT_PUBLIC_BACKEND_API_URL: http://localhost:${API_PORT:-3002}/api
+    image: pleasantstay/frontoffice:latest
+    container_name: pleasantstay-frontoffice
+    <<: *restart
     environment:
       HOSTNAME: 0.0.0.0
       NODE_ENV: production
     ports:
-      - "127.0.0.1:3001:3001"
+      - "127.0.0.1:${FRONTOFFICE_PORT:-3007}:3001"
     depends_on:
-      - api
-    restart: unless-stopped
+      api:
+        condition: service_healthy
 
   mobile:
     build:
       context: ./hotel-manager-mobile-react
+    image: pleasantstay/mobile:latest
+    container_name: pleasantstay-mobile
+    <<: *restart
     ports:
-      - "127.0.0.1:3002:80"
-    restart: unless-stopped
+      - "127.0.0.1:${MOBILE_PORT:-3008}:80"
 
 volumes:
   mongo_data:
+    name: pleasantstay_mongo_data

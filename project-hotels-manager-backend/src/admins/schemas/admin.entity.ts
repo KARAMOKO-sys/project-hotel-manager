@@ -22,7 +22,6 @@ export class SuperAdmin extends User {
     type: String,
     required: false,
     maxlength: 100,
-    index: true,
   })
   employee_id?: string;
 

@@ -4,7 +4,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody : nécessaire à la vérification HMAC des webhooks entrants (ESB).
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   // Préfixe global des routes API.
   app.setGlobalPrefix('api');

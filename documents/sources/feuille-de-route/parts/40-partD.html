@@ -1,0 +1,237 @@
+
+  <div class="chap" id="p-d"><div class="k">Partie D</div><h2>ESB — bus de services d’entreprise</h2><p>Un ESB est un intermédiaire placé entre PleasantStay et les systèmes extérieurs : il reçoit les événements métier, les achemine vers les bons destinataires, les signe, réessaie en cas d’échec et garde une trace de chaque échange. PleasantStay ne connaît ainsi qu’un seul format interne ; chaque partenaire est branché sans toucher aux modules métier.</p></div>
+
+  <h3 class="sub">Dans quel cadre l’utiliser… et dans quel cadre ne pas l’utiliser</h3>
+  <div class="uses">
+    <div class="use ok"><b class="t">✓ Utiliser l’ESB pour les échanges avec l’extérieur</b>
+      <ul>
+        <li><b>Canaux de vente</b> : Booking.com, Expedia, Airbnb, Agoda, directement ou via un channel manager (SiteMinder, Channex) — disponibilités et tarifs sortants, réservations entrantes (n° 10).</li>
+        <li><b>Paiement</b> : CinetPay, Orange Money, MTN MoMo, Moov, Wave, Stripe — confirmations de paiement entrantes signées (n° 9).</li>
+        <li><b>Comptabilité externe</b> : Sage, Odoo comptable, cabinet d’expertise — écritures validées (<code>accounting.entry.posted</code>).</li>
+        <li><b>Décisionnel</b> : entrepôt de données, Power BI, Metabase — flux de réservations, ventes et stocks.</li>
+        <li><b>Serrures et clés</b> : Salto, ASSA ABLOY Vostio — clé émise à l’arrivée, révoquée au départ (n° 12).</li>
+        <li><b>Centrale de réservation</b> d’un groupe multi-établissements.</li>
+        <li><b>Autorités</b> : transmission des fiches de police (n° 23).</li>
+        <li><b>Messagerie</b> : fournisseurs SMS et WhatsApp, routage des campagnes (n° 13).</li>
+        <li><b>E-réputation</b> : import des avis Google et OTA (n° 29).</li>
+      </ul>
+    </div>
+    <div class="use ko"><b class="t">✗ Ne pas l’utiliser pour la communication interne</b>
+      <ul>
+        <li><b>Back-office, site public et application mobile ↔ API</b> : appels REST directs, avec les gardes d’authentification existantes.</li>
+        <li><b>Entre applications du même backend</b> (facture → comptabilité, départ → stock, départ → fidélité) : bus d’événements interne <code>DomainEventPublisher</code>, déjà en place, dans le même processus.</li>
+        <li><b>Temps réel</b> du tableau de bord (n° 19) : flux SSE direct.</li>
+        <li><b>Calculs synchrones</b> (disponibilité, devis) : appels de service ; l’ESB est asynchrone par nature.</li>
+        <li>Règle simple : si l’échange reste à l’intérieur de PleasantStay, pas d’ESB.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3 class="sub">Architecture cible</h3>
+  <div class="diagram">
+    <svg viewBox="0 0 760 370" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans, DejaVu Sans, sans-serif">
+      <defs>
+        <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#178d80"/></marker>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#c2410c"/></marker>
+      </defs>
+      <rect x="8" y="10" width="220" height="276" rx="10" fill="#0f2a44"/>
+      <text x="20" y="32" fill="#7fd6c8" font-size="13" font-weight="800">PleasantStay (API NestJS)</text>
+      <rect x="20" y="44" width="196" height="40" rx="6" fill="#173a5c"/>
+      <text x="30" y="61" fill="#fff" font-size="10.5" font-weight="700">Services métier</text>
+      <text x="30" y="75" fill="#b8c9da" font-size="9">réservations, factures, POS, stock…</text>
+      <rect x="20" y="96" width="196" height="40" rx="6" fill="#173a5c"/>
+      <text x="30" y="113" fill="#fff" font-size="10.5" font-weight="700">DomainEventPublisher</text>
+      <text x="30" y="127" fill="#b8c9da" font-size="9">canal « domain.event »</text>
+      <rect x="20" y="148" width="196" height="44" rx="6" fill="#173a5c"/>
+      <text x="30" y="165" fill="#fff" font-size="10.5" font-weight="700">Collection outbox_messages</text>
+      <text x="30" y="179" fill="#b8c9da" font-size="9">1 ligne par événement × destinataire</text>
+      <rect x="20" y="204" width="196" height="40" rx="6" fill="#173a5c"/>
+      <text x="30" y="221" fill="#fff" font-size="10.5" font-weight="700">Dispatcher (toutes les 30 s)</text>
+      <text x="30" y="235" fill="#b8c9da" font-size="9">bail, reprises, file des messages morts</text>
+      <rect x="20" y="252" width="196" height="26" rx="6" fill="#11776d"/>
+      <text x="30" y="269" fill="#fff" font-size="9.5" font-weight="700">POST /integration/inbound/:clé</text>
+      <line x1="118" y1="84" x2="118" y2="94" stroke="#7fd6c8" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="118" y1="136" x2="118" y2="146" stroke="#7fd6c8" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="118" y1="192" x2="118" y2="202" stroke="#7fd6c8" stroke-width="2" marker-end="url(#ar)"/>
+
+      <rect x="262" y="20" width="160" height="106" rx="10" fill="#e9f7f4" stroke="#9fd9cf"/>
+      <text x="274" y="42" fill="#11776d" font-size="12" font-weight="800">Webhooks signés</text>
+      <text x="274" y="60" fill="#1d2f45" font-size="9">HTTPS uniquement</text>
+      <text x="274" y="75" fill="#1d2f45" font-size="9">HMAC-SHA256 + horodatage</text>
+      <text x="274" y="90" fill="#1d2f45" font-size="9">garde SSRF (IP privées)</text>
+      <text x="274" y="105" fill="#1d2f45" font-size="9">secret chiffré AES-256-GCM</text>
+      <text x="274" y="118" fill="#11776d" font-size="8.5" font-weight="700">réalisé</text>
+      <rect x="262" y="140" width="160" height="104" rx="10" fill="#fff1e8" stroke="#f0b48f"/>
+      <text x="274" y="162" fill="#c2410c" font-size="12" font-weight="800">RabbitMQ</text>
+      <text x="274" y="177" fill="#7a3a12" font-size="9">(ou Kafka à grande échelle)</text>
+      <rect x="274" y="186" width="136" height="22" rx="5" fill="#fff" stroke="#f0b48f"/>
+      <text x="282" y="201" fill="#1d2f45" font-size="9">échange pleasantstay.events</text>
+      <rect x="274" y="214" width="136" height="22" rx="5" fill="#fff" stroke="#c2410c" stroke-dasharray="3 2"/>
+      <text x="282" y="229" fill="#c2410c" font-size="9">pleasantstay.dlx (échecs)</text>
+      <line x1="216" y1="216" x2="260" y2="80" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="216" y1="226" x2="260" y2="196" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+      <text x="236" y="134" fill="#178d80" font-size="8.5" font-weight="700">HTTP</text>
+      <text x="232" y="244" fill="#178d80" font-size="8.5" font-weight="700">AMQP</text>
+
+      <rect x="452" y="20" width="132" height="224" rx="10" fill="#f5f8fb" stroke="#dbe3ea"/>
+      <text x="462" y="40" fill="#0f2a44" font-size="11" font-weight="800">Connecteurs</text>
+      <g font-size="8.8" fill="#1d2f45">
+        <text x="462" y="60">• channel manager</text>
+        <text x="462" y="80">• paiement</text>
+        <text x="462" y="100">• comptabilité</text>
+        <text x="462" y="120">• serrures</text>
+        <text x="462" y="140">• SMS / WhatsApp</text>
+        <text x="462" y="160">• police</text>
+        <text x="462" y="180">• décisionnel</text>
+        <text x="462" y="200">• e-réputation</text>
+      </g>
+      <text x="462" y="226" fill="#66768b" font-size="8">un consommateur par file</text>
+      <line x1="422" y1="72" x2="450" y2="72" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+      <line x1="422" y1="196" x2="450" y2="196" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+
+      <rect x="612" y="20" width="140" height="224" rx="10" fill="#f5f8fb" stroke="#dbe3ea"/>
+      <text x="622" y="40" fill="#0f2a44" font-size="11" font-weight="800">Systèmes externes</text>
+      <g font-size="8.8" fill="#1d2f45">
+        <text x="622" y="60">• Booking, Expedia…</text>
+        <text x="622" y="80">• CinetPay, Wave, Stripe</text>
+        <text x="622" y="100">• Sage, Odoo</text>
+        <text x="622" y="120">• Salto, Vostio</text>
+        <text x="622" y="140">• Orange, WhatsApp</text>
+        <text x="622" y="160">• autorités</text>
+        <text x="622" y="180">• Power BI, Metabase</text>
+        <text x="622" y="200">• Google, TripAdvisor</text>
+      </g>
+      <line x1="584" y1="132" x2="610" y2="132" stroke="#178d80" stroke-width="2" marker-end="url(#ar)"/>
+
+      <path d="M682 244 L 682 300 L 170 300 L 170 280" fill="none" stroke="#c2410c" stroke-width="2" marker-end="url(#ar2)"/>
+      <text x="236" y="294" fill="#c2410c" font-size="9" font-weight="700">entrant : paiement confirmé, réservation OTA, avis → signature vérifiée, anti-rejeu → webhook-log</text>
+      <rect x="8" y="314" width="744" height="48" rx="8" fill="#fff" stroke="#dbe3ea" stroke-dasharray="4 3"/>
+      <text x="20" y="334" fill="#66768b" font-size="10" font-weight="700">Hors ESB (direct)</text>
+      <text x="20" y="352" fill="#66768b" font-size="9">Back-office, site, mobile ↔ API REST · applications internes (bus en mémoire) · flux SSE · calculs de prix</text>
+    </svg>
+  </div>
+  <p>Le principe clé est la <b>boîte d’envoi (outbox)</b> : quand un événement est publié, l’ESB insère une ligne par destinataire dans <code>outbox_messages</code>, sans jamais appeler le réseau pendant la requête métier. Le dispatcher lit ensuite les lignes dues, les réserve par un bail (deux instances ne livrent jamais le même message), livre, puis marque « livré », « à réessayer » ou « mort ». L’index unique (<code>event_id</code>, <code>endpoint_id</code>) rend l’ajout idempotent. Pour une garantie totale (événement écrit si et seulement si l’écriture métier réussit), l’étape suivante consiste à insérer la ligne outbox dans la même transaction MongoDB que l’écriture, ce qui suppose un replica set (n° 25).</p>
+
+  <h3 class="sub">Choix de la technologie</h3>
+  <table class="dense">
+    <thead><tr><th style="width:24mm">Critère</th><th><b>Outbox + webhooks intégrés</b> (réalisé)</th><th>RabbitMQ</th><th>Kafka</th><th>ESB du marché (WSO2, Apache Camel, MuleSoft)</th><th>n8n (sans code)</th></tr></thead>
+    <tbody>
+      <tr><td>Rôle</td><td>Publication fiable vers des URL partenaires, réception signée</td><td>Courtier : files par destinataire, routage par sujet</td><td>Journal d’événements distribué, rejouable</td><td>Transformation et orchestration lourdes</td><td>Scénarios d’intégration visuels</td></tr>
+      <tr><td>Exploitation</td><td>Aucune infrastructure en plus (MongoDB)</td><td>Un conteneur, console web</td><td>Cluster, compétences dédiées</td><td>JVM, licences possibles (MuleSoft)</td><td>Un conteneur</td></tr>
+      <tr><td>Quand</td><td>Dès maintenant, 1 à 3 partenaires</td><td>À partir de 3 consommateurs ou plusieurs sites</td><td>Très gros volumes, analyse en flux</td><td>Si un client grand compte l’impose</td><td>Prototypes, automatisations marketing</td></tr>
+      <tr><td>Verdict</td><td><b>Point de départ</b></td><td><b>Étape suivante</b> : adaptateur prêt</td><td>Non nécessaire à moyen terme</td><td>Non recommandé (coût, complexité)</td><td>En complément, branché sur les webhooks</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">Catalogue des événements métier</h3>
+  <p class="intro">Source : <code>src/platform/events/domain-events.ts</code> (38 événements). Les noms servent de clés de routage sur l’ESB et de déclencheurs dans les automatisations. Un point de terminaison s’abonne par nom exact, par préfixe (<code>billing.*</code>) ou à tout (<code>*</code>).</p>
+  <table class="dense evt">
+    <thead><tr><th style="width:52mm">Événement</th><th style="width:48mm">Émis par</th><th>Consommateurs internes</th><th style="width:46mm">Usage externe typique</th></tr></thead>
+    <tbody>
+      <tr><td><code>hotel.reservation.created</code> / <code>.confirmed</code> / <code>.cancelled</code></td><td><code>src/reservation/services/reservation.service.ts</code></td><td>fil d’activité, automatisations</td><td>channel manager, centrale, CRM externe</td></tr>
+      <tr><td><code>hotel.reservation.checked_in</code></td><td>idem (check-in et check-in autonome)</td><td>fil d’activité, folio (n° 3)</td><td>serrures, autorités (fiche de police)</td></tr>
+      <tr><td><code>hotel.reservation.checked_out</code></td><td>idem</td><td>stock (kits d’accueil), fidélité (points), gouvernance (n° 6)</td><td>serrures (révocation), enquête de satisfaction</td></tr>
+      <tr><td><code>hotel.reservation.no_show</code></td><td>idem</td><td>automatisations (pénalité)</td><td>channel manager</td></tr>
+      <tr><td><code>billing.invoice.created</code> / <code>.paid</code> / <code>.cancelled</code></td><td><code>src/invoice/services/invoice.service.ts</code></td><td>comptabilité (écriture de vente, extourne)</td><td>comptabilité externe, FNE</td></tr>
+      <tr><td><code>billing.payment.completed</code> / <code>.refunded</code></td><td><code>src/payment/services/payment.service.ts</code></td><td>comptabilité (trésorerie)</td><td>décisionnel, rapprochement bancaire</td></tr>
+      <tr><td><code>pos.transaction.completed</code> / <code>.voided</code></td><td><code>src/pos-transaction/services/pos-transaction.service.ts</code></td><td>comptabilité, fidélité</td><td>décisionnel</td></tr>
+      <tr><td><code>accounting.entry.posted</code> / <code>.reversed</code></td><td><code>src/accounting/</code></td><td>automatisations</td><td>Sage, Odoo, expert-comptable</td></tr>
+      <tr><td><code>inventory.move.done</code>, <code>inventory.stock.low</code></td><td><code>src/inventory/</code></td><td>achats (réapprovisionnement), automatisations</td><td>fournisseur (EDI), décisionnel</td></tr>
+      <tr><td><code>purchase.order.confirmed</code> / <code>.received</code>, <code>purchase.bill.posted</code></td><td><code>src/purchase/</code></td><td>comptabilité (écriture d’achat)</td><td>fournisseur (bon de commande)</td></tr>
+      <tr><td><code>hr.leave.requested</code> / <code>.approved</code> / <code>.refused</code>, <code>hr.attendance.checked_in</code></td><td><code>src/hr/</code></td><td>fil d’activité, automatisations</td><td>logiciel de paie externe</td></tr>
+      <tr><td><code>crm.lead.created</code> / <code>.stage_changed</code> / <code>.won</code> / <code>.lost</code></td><td><code>src/crm/</code></td><td>groupes et allotements (n° 7)</td><td>outil marketing, n8n</td></tr>
+      <tr><td><code>loyalty.points.earned</code> / <code>.redeemed</code>, <code>loyalty.tier.changed</code></td><td><code>src/loyalty/</code></td><td>automatisations (message de félicitation)</td><td>partenaires de fidélité</td></tr>
+      <tr><td><code>platform.app.installed</code> / <code>.uninstalled</code>, <code>platform.activity.due</code></td><td><code>src/platform/apps/apps.service.ts</code>, <code>src/activity/</code></td><td>facturation SaaS (n° 30)</td><td>—</td></tr>
+    </tbody>
+  </table>
+  <p class="why">Les événements <code>hotel.housekeeping.completed</code>, <code>hotel.maintenance.created</code>, <code>platform.record.created</code> / <code>.updated</code> sont réservés au catalogue et seront publiés par les fiches n° 6 et n° 26.</p>
+
+  <h3 class="sub">Enveloppe et signature</h3>
+  <div class="two"><div>
+  <div class="codehead">Requête envoyée à un partenaire</div>
+<pre class="code">POST https://partenaire.example/hooks/pleasantstay
+Content-Type: application/json
+User-Agent: PleasantStay-ESB/1.0
+X-PleasantStay-Event: billing.payment.completed
+X-PleasantStay-Delivery: 6745f1c2e4b0a9d3c1f2a7b8
+X-PleasantStay-Timestamp: 1795430400
+X-PleasantStay-Signature: v1=5d1c…e9a0
+
+{ <span class="s">"id"</span>: <span class="s">"0d9b…"</span>, <span class="s">"name"</span>: <span class="s">"billing.payment.completed"</span>,
+  <span class="s">"occurred_at"</span>: <span class="s">"2026-11-17T10:00:00Z"</span>,
+  <span class="s">"organization_id"</span>: <span class="s">"…"</span>, <span class="s">"property_id"</span>: <span class="s">"…"</span>,
+  <span class="s">"record"</span>: { <span class="s">"model"</span>: <span class="s">"Payment"</span>, <span class="s">"id"</span>: <span class="s">"…"</span> },
+  <span class="s">"payload"</span>: { … } }</pre>
+  </div><div>
+  <div class="codehead">Vérification côté partenaire (Node.js)</div>
+<pre class="code"><span class="k">const</span> ts = req.headers[<span class="s">'x-pleasantstay-timestamp'</span>];
+<span class="k">const</span> sig = req.headers[<span class="s">'x-pleasantstay-signature'</span>];
+<span class="k">const</span> expected = <span class="s">'v1='</span> + createHmac(<span class="s">'sha256'</span>, SECRET)
+  .update(<span class="s">`${ts}.${rawBody}`</span>).digest(<span class="s">'hex'</span>);
+<span class="k">const</span> fresh = Math.abs(Date.now() / 1000 - Number(ts)) &lt; 300;
+<span class="k">if</span> (!fresh || !timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+  <span class="k">return</span> res.status(401).end();
+}
+<span class="c">// idempotence : ignorer un "id" déjà traité
+// répondre 2xx rapidement, traiter ensuite</span></pre>
+  </div></div>
+  <table class="dense">
+    <thead><tr><th style="width:40mm">Règle</th><th>Comportement réalisé</th></tr></thead>
+    <tbody>
+      <tr><td>Réponse attendue</td><td>2xx = livré ; 410 = point de terminaison désactivé ; toute autre réponse ou délai dépassé = nouvelle tentative.</td></tr>
+      <tr><td>Reprises</td><td>Délai exponentiel 30 s × 2<sup>n</sup> avec 20 % d’aléa, plafonné à 6 h ; 8 tentatives par défaut puis statut « mort », relançable depuis <code>POST /integration/outbox/:id/retry</code>.</td></tr>
+      <tr><td>Désactivation automatique</td><td>Après 50 échecs consécutifs, le point de terminaison est désactivé pour protéger le dispatcher.</td></tr>
+      <tr><td>SSRF</td><td>HTTPS obligatoire en production ; refus des identifiants dans l’URL et des adresses privées, de bouclage, lien-local et de métadonnées cloud, vérifiées à l’enregistrement et à chaque livraison (résolution DNS) ; dérogation locale par <code>INTEGRATION_ALLOW_PRIVATE_URLS=true</code>.</td></tr>
+      <tr><td>Secrets</td><td>Chiffrés AES-256-GCM avec <code>INTEGRATION_ENCRYPTION_KEY</code> ; jamais relus par l’API (indice masqué), nouveau secret affiché une seule fois à la rotation.</td></tr>
+      <tr><td>Entrant</td><td>Clé d’URL aléatoire par source, signature <code>v1</code> ou en-tête HMAC configurable, tolérance 300 s, dédoublonnage par identifiant d’événement du fournisseur, réponse 202.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sub">Déploiement et étapes restantes</h3>
+  <div class="two"><div>
+  <div class="codehead">docker-compose.yml (ajout)</div>
+<pre class="code">  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: pleasantstay
+      RABBITMQ_DEFAULT_PASS_FILE: /run/secrets/rabbitmq_password
+    ports:
+      - <span class="s">"127.0.0.1:15672:15672"</span>   <span class="c"># console, locale uniquement</span>
+    volumes: [rabbitmq_data:/var/lib/rabbitmq]
+    secrets: [rabbitmq_password]
+
+  api:
+    environment:
+      INTEGRATION_ENCRYPTION_KEY_FILE: /run/secrets/integration_key
+      INTEGRATION_ALLOW_PRIVATE_URLS: <span class="s">"false"</span>
+      AMQP_URL: amqp://pleasantstay@rabbitmq:5672</pre>
+  </div><div>
+  <div class="codehead">src/integration-bus/brokers/amqp-broker.adapter.ts (à créer)</div>
+<pre class="code"><span class="k">@Injectable</span>()
+<span class="k">export class</span> AmqpBrokerAdapter <span class="k">implements</span> MessageBrokerAdapter, OnModuleDestroy {
+  <span class="k">private</span> channel?: ConfirmChannel;
+  <span class="k">private async</span> ch() {
+    <span class="k">if</span> (!<span class="k">this</span>.channel) {
+      <span class="k">const</span> conn = <span class="k">await</span> amqp.connect(process.env.AMQP_URL!);
+      <span class="k">this</span>.channel = <span class="k">await</span> conn.createConfirmChannel();
+      <span class="k">await this</span>.channel.assertExchange(<span class="s">'pleasantstay.events'</span>, <span class="s">'topic'</span>, { durable: <span class="k">true</span> });
+    }
+    <span class="k">return this</span>.channel;
+  }
+  <span class="k">async</span> publish(routingKey: string, envelope: OutboundEnvelope, o?: { messageId?: string }) {
+    <span class="k">const</span> ch = <span class="k">await this</span>.ch();
+    ch.publish(<span class="s">'pleasantstay.events'</span>, routingKey, Buffer.from(JSON.stringify(envelope)),
+      { persistent: <span class="k">true</span>, messageId: o?.messageId, contentType: <span class="s">'application/json'</span> });
+    <span class="k">await</span> ch.waitForConfirms();     <span class="c">// sinon : erreur → message retenté</span>
+  }
+  <span class="k">async</span> onModuleDestroy() { <span class="k">await this</span>.channel?.close(); }
+}
+<span class="c">// integration-bus.module.ts : { provide: MESSAGE_BROKER_ADAPTER, useClass: AmqpBrokerAdapter }</span></pre>
+  </div></div>
+  <div class="note"><b class="t">Ce qui est livré et ce qui reste à faire</b>
+    <ul>
+      <li><b>Livré</b> (<code>src/integration-bus/</code>, partie E) : boîte d’envoi, dispatcher, webhooks signés, garde SSRF, secrets chiffrés, sources entrantes signées, interface <code>MessageBrokerAdapter</code> avec un adaptateur de journalisation, statistiques et relance manuelle.</li>
+      <li><b>Vérifié</b> : le test de bout en bout <code>npm run test:erp-smoke</code> reçoit les webhooks sur un serveur local et contrôle leur signature HMAC ; <code>src/main.ts</code> active le corps brut pour l’entrée signée.</li>
+      <li><b>À faire</b> : adaptateur <code>amqplib</code> ci-dessus (<code>npm i amqplib</code>) ; un connecteur par fournisseur (traduction de format : channel manager, CinetPay, Wave, Stripe, serrures, autorités) sous forme de consommateurs de files ; écran de suivi dans le back-office (<code>src/app/admin/integration/page.tsx</code>).</li>
+    </ul>
+  </div>

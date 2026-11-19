@@ -52,6 +52,15 @@ export function useApiList<T extends Entity>(
   const queryKey = JSON.stringify(query);
 
   const load = useCallback(async () => {
+    if (!endpoint) {
+      // Aucune ressource à charger (ressource inconnue ou portée non choisie).
+      setData([]);
+      setMeta(EMPTY_META);
+      setError(null);
+      setUsingFallback(false);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError(null);
     try {

@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { apiFetch, clearAuthSession, saveAuthSession } from "@/lib/api";
+import { useTheme } from "@/lib/theme";
 
 interface AuthTokensResponse {
   access_token: string;
@@ -31,6 +32,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const { theme } = useTheme();
   const [code, setCode] = useState("");
   const [twoFactorToken, setTwoFactorToken] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -91,9 +94,14 @@ export default function LoginPage() {
       <section className="login-card" aria-labelledby="login-title">
         <Link className="login-brand" href="/login">
           <span className="login-brand-icon">
-            <i className="pi pi-building"></i>
+            {theme.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={theme.logoUrl} alt="" />
+            ) : (
+              <i className="pi pi-building"></i>
+            )}
           </span>
-          <span>PleasantStay</span>
+          <span>{theme.appName}</span>
         </Link>
 
         <div className="login-heading">
@@ -130,13 +138,30 @@ export default function LoginPage() {
                 <i className="pi pi-lock" aria-hidden="true"></i>
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
                   placeholder="Votre mot de passe"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   required
                 />
+                <button
+                  type="button"
+                  className="login-eye"
+                  onClick={() => setShowPassword((visible) => !visible)}
+                  aria-label={
+                    showPassword
+                      ? "Masquer le mot de passe"
+                      : "Afficher le mot de passe"
+                  }
+                  aria-pressed={showPassword}
+                  title={showPassword ? "Masquer" : "Afficher"}
+                >
+                  <i
+                    className={`pi ${showPassword ? "pi-eye-slash" : "pi-eye"}`}
+                    aria-hidden="true"
+                  ></i>
+                </button>
               </div>
             </>
           ) : (
@@ -207,7 +232,7 @@ export default function LoginPage() {
           padding: 2rem 1rem;
           background:
             radial-gradient(circle at 20% 18%, rgb(255 255 255 / 0.13), transparent 27rem),
-            linear-gradient(135deg, #0f5132, #16844a 58%, #22a05b);
+            linear-gradient(135deg, var(--ps-login-start), var(--ps-login-end));
         }
 
         .login-decoration {
@@ -260,7 +285,7 @@ export default function LoginPage() {
           place-items: center;
           border-radius: 12px;
           background: #eaf6ed;
-          color: #16844a;
+          color: var(--ps-primary-dark);
         }
 
         .login-heading {
@@ -269,7 +294,7 @@ export default function LoginPage() {
 
         .login-eyebrow {
           margin: 0 0 0.55rem;
-          color: #16844a;
+          color: var(--ps-primary-dark);
           font-size: 0.68rem;
           font-weight: 800;
           letter-spacing: 0.13em;
@@ -316,8 +341,8 @@ export default function LoginPage() {
         }
 
         .login-input:focus-within {
-          border-color: #16844a;
-          box-shadow: 0 0 0 3px rgb(22 132 74 / 0.1);
+          border-color: var(--ps-primary-dark);
+          box-shadow: 0 0 0 3px rgba(var(--ps-primary-rgb), 0.1);
         }
 
         .login-input input {
@@ -329,6 +354,34 @@ export default function LoginPage() {
           color: #1f2937;
           font: inherit;
           font-size: 0.9rem;
+        }
+
+        .login-eye {
+          display: grid;
+          flex: none;
+          width: 34px;
+          height: 34px;
+          place-items: center;
+          margin-right: -0.4rem;
+          border: 0;
+          border-radius: 8px;
+          background: transparent;
+          color: #869189;
+          cursor: pointer;
+        }
+
+        .login-eye:hover,
+        .login-eye:focus-visible {
+          background: rgba(var(--ps-primary-rgb), 0.1);
+          color: var(--ps-primary-dark);
+          outline: none;
+        }
+
+        .login-brand-icon img {
+          width: 100%;
+          height: 100%;
+          border-radius: inherit;
+          object-fit: cover;
         }
 
         .login-input input::placeholder {
@@ -344,7 +397,7 @@ export default function LoginPage() {
           margin-top: 0.25rem;
           border: 0;
           border-radius: 12px;
-          background: #16844a;
+          background: var(--ps-primary-dark);
           color: #fff;
           font: inherit;
           font-size: 0.9rem;
@@ -353,7 +406,7 @@ export default function LoginPage() {
         }
 
         .login-submit:hover:not(:disabled) {
-          background: #116a3b;
+          background: var(--ps-primary-darker);
         }
 
         .login-submit:disabled {
@@ -381,7 +434,7 @@ export default function LoginPage() {
           padding: 0;
           border: 0;
           background: transparent;
-          color: #16844a;
+          color: var(--ps-primary-dark);
           font-size: 0.82rem;
         }
 

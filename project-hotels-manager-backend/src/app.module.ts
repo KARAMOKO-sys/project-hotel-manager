@@ -3,6 +3,10 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PlatformModule } from './platform/platform.module';
+import { AppInstalledGuard } from './platform/apps/app-installed.guard';
 import { AdminsModule } from './admins/admins.module';
 import { OwnersModule } from './owners/owners.module';
 import { ReceptionistModule } from './receptionist/receptionist.module';
@@ -53,6 +57,17 @@ import { AuthModule } from './auth/auth.module';
 import { ContactMessageModule } from './contact-message/contact-message.module';
 import { NewsletterSubscriptionModule } from './newsletter-subscription/newsletter-subscription.module';
 import { SiteConfigModule } from './site-config/site-config.module';
+import { AccountingModule } from './accounting/accounting.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { PurchaseModule } from './purchase/purchase.module';
+import { RecordsModule } from './records/records.module';
+import { ActivityModule } from './activity/activity.module';
+import { StudioModule } from './studio/studio.module';
+import { AutomationModule } from './automation/automation.module';
+import { IntegrationBusModule } from './integration-bus/integration-bus.module';
+import { HrModule } from './hr/hr.module';
+import { CrmModule } from './crm/crm.module';
+import { LoyaltyModule } from './loyalty/loyalty.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 
@@ -61,6 +76,11 @@ import { RolesGuard } from './auth/guards/roles.guard';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    // Socle ERP : bus d'événements métier, tâches planifiées, applications.
+    EventEmitterModule.forRoot({ wildcard: false, maxListeners: 50 }),
+    ScheduleModule.forRoot(),
+    PlatformModule,
 
     // Configuration MongoDB avec Mongoose - CORRIGÉE
     MongooseModule.forRootAsync({
@@ -185,10 +205,24 @@ import { RolesGuard } from './auth/guards/roles.guard';
     ContactMessageModule,
     NewsletterSubscriptionModule,
     SiteConfigModule,
+
+    // Applications ERP (activables par organisation, cf. platform/apps)
+    AccountingModule,
+    InventoryModule,
+    PurchaseModule,
+    RecordsModule,
+    ActivityModule,
+    StudioModule,
+    AutomationModule,
+    IntegrationBusModule,
+    HrModule,
+    CrmModule,
+    LoyaltyModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: AppInstalledGuard },
   ],
 })
 export class AppModule {}

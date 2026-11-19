@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Optional,
+  Logger,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, PipelineStage, QueryFilter, Types } from 'mongoose';
 import { randomBytes } from 'crypto';
@@ -20,6 +25,14 @@ import {
   PosTransactionQueryDto,
   RefundPosTransactionDto,
 } from '../dto/pos-transaction-actions.dto';
+import {
+  DomainEventPublisher,
+  publishRecordEvent,
+} from '../../platform/events/domain-event.publisher';
+import {
+  DomainEventName,
+  DomainEvents,
+} from '../../platform/events/domain-events';
 
 /** Rapport des ventes journalières d'un établissement. */
 export interface PosDailySales {
@@ -81,6 +94,7 @@ export class PosTransactionService extends BaseCrudService<
     @InjectModel(PosTransaction.name)
     protected readonly transactionModel: Model<PosTransaction>,
     private readonly posItemService: PosItemService,
+    @Optional() private readonly events?: DomainEventPublisher,
   ) {
     super(transactionModel, PosTransaction.name);
   }
@@ -132,17 +146,20 @@ export class PosTransactionService extends BaseCrudService<
         decremented.push([itemId, qty]);
       }
 
-      return await super.create({
-        ...dto,
-        items: lines,
-        currency,
-        ...totals,
-        transaction_number: this.generateTransactionNumber(),
-        status: PosTransactionStatus.COMPLETED,
-        transaction_date: dto.transaction_date
-          ? new Date(dto.transaction_date)
-          : new Date(),
-      } as unknown as CreatePosTransactionDto);
+      return await this.emitted(
+        DomainEvents.POS_TRANSACTION_COMPLETED,
+        super.create({
+          ...dto,
+          items: lines,
+          currency,
+          ...totals,
+          transaction_number: this.generateTransactionNumber(),
+          status: PosTransactionStatus.COMPLETED,
+          transaction_date: dto.transaction_date
+            ? new Date(dto.transaction_date)
+            : new Date(),
+        } as unknown as CreatePosTransactionDto),
+      );
     } catch (error) {
       await this.restock(decremented);
       throw error;
@@ -263,7 +280,7 @@ export class PosTransactionService extends BaseCrudService<
     }
 
     await this.restock(this.quantitiesOf(trx.items));
-    return updated;
+    return this.emitted(DomainEvents.POS_TRANSACTION_VOIDED, updated);
   }
 
   /**
@@ -575,5 +592,14 @@ export class PosTransactionService extends BaseCrudService<
   private generateTransactionNumber(): string {
     const suffix = randomBytes(3).toString('hex').toUpperCase();
     return `POS-${Date.now()}-${suffix}`;
+  }
+  /** Publie l'événement métier correspondant puis renvoie le document. */
+  private async emitted<R>(
+    name: DomainEventName,
+    result: R | Promise<R>,
+  ): Promise<R> {
+    const doc = await result;
+    await publishRecordEvent(this.events, name, PosTransaction.name, doc);
+    return doc;
   }
 }

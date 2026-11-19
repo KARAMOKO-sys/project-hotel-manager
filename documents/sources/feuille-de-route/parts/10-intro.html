@@ -1,0 +1,83 @@
+
+<section class="hero">
+  <div class="hero-top">
+    <div class="logo">
+      <svg viewBox="0 0 512 512"><rect width="512" height="512" rx="112" fill="#1b9a8a"/><path d="M136 392V168l120-64 120 64v224" fill="none" stroke="#fff" stroke-width="34" stroke-linejoin="round"/><rect x="214" y="290" width="84" height="102" rx="10" fill="#fff"/><rect x="188" y="196" width="40" height="40" rx="6" fill="#fff"/><rect x="284" y="196" width="40" height="40" rx="6" fill="#fff"/></svg>
+      <span>Pleasant<span class="light">Stay</span><span class="sub">ERP hôtelier</span></span>
+    </div>
+    <div class="hero-ref">Document de cadrage technique<br><b>Novembre 2026</b> · version 1</div>
+  </div>
+  <div class="eyebrow">Feuille de route ERP</div>
+  <h1>Fonctionnalités à ajouter<br>pour un <em>ERP hôtelier complet et modulable</em></h1>
+  <p class="lead">Analyse du système actuel (API NestJS, back-office Next.js, site public Next.js, application mobile) : ce qui est déjà solide, les 30 fonctionnalités qui manquent avec, pour chacune, <b>les fichiers à modifier et à créer</b> (backend, back-office, front-office, mobile), un <b>volet sécurité</b> avec extraits de code, l’usage d’un <b>bus de services d’entreprise (ESB)</b> pour les échanges avec les systèmes externes, et le socle ERP modulable réalisé, inspiré d’Odoo.</p>
+  <div class="kpis">
+    <div class="kpi"><b>30</b><span>fonctionnalités identifiées</span></div>
+    <div class="kpi"><b>13</b><span>priorités hautes</span></div>
+    <div class="kpi"><b>28</b><span>demandent une modification du backend</span></div>
+    <div class="kpi"><b>14</b><span>mesures de sécurité détaillées</span></div>
+    <div class="kpi"><b>38</b><span>événements métier publiables sur l’ESB</span></div>
+    <div class="kpi"><b>10</b><span>applications ERP ajoutées au socle</span></div>
+  </div>
+</section>
+
+<div class="first-page-body">
+  <h2><span class="n">✓</span>Ce qui est déjà solide</h2>
+  <div class="strengths">
+    <div class="strength"><b>Couverture hôtelière large</b><span>55 modules NestJS : établissements, chambres, réservations, liste d’attente prioritaire, plans tarifaires, prix journaliers, tarification dynamique bornée, taxes, factures, paiements, point de vente avec stock, gouvernance, maintenance, campagnes.</span></div>
+    <div class="strength"><b>Sécurité d’accès sérieuse</b><span>Permissions déduites de chaque route et relues en base, rotation des jetons de rafraîchissement avec détection de réutilisation, double authentification TOTP, verrouillage après échecs, jetons à usage unique hachés.</span></div>
+    <div class="strength"><b>Intelligence intégrée</b><span>Moteurs de prévision, chatbot bilingue, analyse de sentiment, recommandations et calcul des KPI hôteliers (TO, ADR, RevPAR, GOPPAR) ; 141 suites et 1682 tests unitaires au vert, plus un test de bout en bout des applications ERP (14 contrôles sur 14).</span></div>
+  </div>
+
+  <div class="alert"><b class="t">Avertissement urgent : une clé d’API est publiée dans le dépôt</b>Le fichier <code>project-hotels-manager/Document.txt</code>, suivi par Git, contient une clé d’API en clair. Elle doit être <b>révoquée immédiatement</b> chez le fournisseur, remplacée par une variable d’environnement, puis le fichier retiré de l’historique (<code>git filter-repo --path project-hotels-manager/Document.txt --invert-paths</code>) avant toute publication du dépôt. Voir la mesure S13.</div>
+
+</div>
+
+<div class="wrap pb">
+  <h2 style="margin-top:0"><span class="n">i</span>Objet de ce document</h2>
+  <p>Ce document répond à quatre questions pratiques :</p>
+  <ul>
+    <li><b>Où intervenir dans le code ?</b> Chaque fiche indique les fichiers existants à modifier et les fichiers ou modules à créer, séparés Backend / Back-office / Front-office / Mobile, ainsi que les écrans, routes d’API et entités à ajouter. Une pastille dit explicitement si <b>le backend doit être modifié</b>.</li>
+    <li><b>Que faut-il durcir avant la mise en production ?</b> Le volet sécurité part de ce qui existe réellement dans le code et propose, mesure par mesure, le fichier, les dépendances et un extrait de code.</li>
+    <li><b>Dans quel cadre utiliser un ESB, et comment ?</b> Le chapitre D décrit les échanges qui passent par le bus (OTA, paiement mobile, comptabilité externe, serrures, police…) et ceux qui n’y passent pas.</li>
+    <li><b>Qu’est-ce qui fait déjà de PleasantStay un ERP ?</b> La partie E décrit le socle modulable ajouté en novembre 2026 : magasin d’applications, comptabilité, stock, achats, RH, CRM, fidélité, fil d’activité, Studio, automatisations et ESB.</li>
+  </ul>
+  <p class="note"><b class="t">Méthode</b>Les chemins « à modifier » ont été vérifiés dans les dépôts en novembre 2026 (<code>project-hotels-manager-backend/src</code>, <code>project-manager-hotles-backoffice/src</code>, <code>project-hotels-manager/app</code> et <code>services</code>, <code>hotel-manager-mobile-react/src</code>). Les chemins « à créer » sont des propositions qui suivent les conventions du projet (un dossier par module, <code>schemas/*.entity.ts</code>, <code>services/*.service.ts</code>, <code>controllers/*.controller.ts</code>, <code>dto/</code>).</p>
+
+  <h2><span class="n">≡</span>Sommaire</h2>
+  <div class="toc">
+    <a href="#p-a"><span class="tk">A</span><span class="tt"><b>Les 30 fonctionnalités à ajouter</b><small>Fiches avec priorités, fichiers à modifier et à créer, routes et entités</small></span><span class="tp" id="tp-a">3</span></a>
+    <a class="lvl2" href="#ax1"><span></span><span>1 · <b>Cœur hôtelier (PMS)</b> (1 à 7)</span><span class="tp" id="tp-ax1">3</span></a>
+    <a class="lvl2" href="#ax2"><span></span><span>2 · <b>Canaux de vente et paiements</b> (8 à 13)</span><span class="tp" id="tp-ax2">6</span></a>
+    <a class="lvl2" href="#ax3"><span></span><span>3 · <b>Mobile et expérience client</b> (14 à 17)</span><span class="tp" id="tp-ax3">8</span></a>
+    <a class="lvl2" href="#ax4"><span></span><span>4 · <b>Back-office et pilotage</b> (18 à 22)</span><span class="tp" id="tp-ax4">9</span></a>
+    <a class="lvl2" href="#ax5"><span></span><span>5 · <b>Conformité et exploitation</b> (23 à 26)</span><span class="tp" id="tp-ax5">11</span></a>
+    <a class="lvl2" href="#ax6"><span></span><span>6 · <b>Écosystème et modèle économique</b> (27 à 30)</span><span class="tp" id="tp-ax6">13</span></a>
+    <a href="#p-b"><span class="tk">B</span><span class="tt"><b>Ordre recommandé de mise en œuvre</b><small>Cinq phases, du durcissement à la différenciation</small></span><span class="tp" id="tp-b">14</span></a>
+    <a href="#p-c"><span class="tk">C</span><span class="tt"><b>Volet sécurité</b><small>Constats relevés dans le code, 14 mesures avec fichiers, dépendances et extraits de code</small></span><span class="tp" id="tp-c">15</span></a>
+    <a href="#p-d"><span class="tk">D</span><span class="tt"><b>ESB — bus de services d’entreprise</b><small>Cadre d’usage, architecture, comparatif, événements, signature, déploiement</small></span><span class="tp" id="tp-d">22</span></a>
+    <a href="#p-e"><span class="tk">E</span><span class="tt"><b>Socle ERP modulable</b><small>Réalisé (novembre 2026) : magasin d’applications et 10 applications ERP</small></span><span class="tp" id="tp-e">26</span></a>
+    <a href="#p-f"><span class="tk">F</span><span class="tt"><b>Récapitulatif</b><small>Tableau des 30 fonctionnalités avec la colonne « Backend à modifier »</small></span><span class="tp" id="tp-f">28</span></a>
+  </div>
+</div>
+<div class="wrap pb">
+  <div class="legend">
+    <div class="card"><b class="t">Lire une fiche</b>
+      <ul>
+        <li><span class="tag high">Haute</span> <span class="tag mid">Moyenne</span> <span class="tag low">Selon marché</span> : priorité.</li>
+        <li><span class="be yes">Backend : à modifier</span> ou <span class="be no">Backend : non</span> : faut-il toucher à l’API NestJS ?</li>
+        <li>Grille « À modifier / À créer » : une ligne par application ; « — » signifie rien à faire.</li>
+        <li><b style="color:var(--teal-dark)">À ajouter</b> : écrans, routes d’API (préfixe <code>/api</code> implicite) et entités.</li>
+      </ul>
+    </div>
+    <div class="card"><b class="t">Conventions de chemins</b>
+      <ul>
+        <li><b>Backend</b> <code>project-hotels-manager-backend/</code> : <code>src/…</code>, <code>test/…</code>.</li>
+        <li><b>Back-office</b> <code>project-manager-hotles-backoffice/</code> : <code>src/app/admin/…</code>, <code>src/lib/resources.ts</code>, <code>src/components/…</code>. C’est l’application cible ; l’ancien back-office intégré au site (<code>project-hotels-manager/app/backoffice/</code>) est à retirer.</li>
+        <li><b>Front-office</b> <code>project-hotels-manager/</code> : <code>app/…</code>, <code>services/…</code>, <code>middleware.ts</code>.</li>
+        <li><b>Mobile</b> <code>hotel-manager-mobile-react/</code> : <code>src/…</code>.</li>
+        <li>Tout nouveau module backend s’enregistre dans <code>src/app.module.ts</code> et, s’il est activable, dans <code>src/platform/apps/app-catalog.ts</code> ; toute nouvelle page du back-office dans <code>src/lib/resources.ts</code> et <code>src/app/admin/&lt;clé&gt;/page.tsx</code>.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note"><b class="t">Faut-il modifier le backend ?</b>Oui pour 28 fonctionnalités sur 30 : seuls le référencement du site public (n° 17) et les écrans ERP du back-office (n° 18, qui s’appuient sur des routes déjà livrées) se traitent uniquement côté interfaces. Le volet sécurité modifie surtout <code>src/main.ts</code>, <code>src/app.module.ts</code>, <code>src/auth/</code> et <code>src/common/</code> ; l’ESB est déjà livré et branché (<code>src/integration-bus/</code>, corps brut activé dans <code>src/main.ts</code>) ; il ne reste à écrire que les connecteurs par fournisseur.</p>
+</div>

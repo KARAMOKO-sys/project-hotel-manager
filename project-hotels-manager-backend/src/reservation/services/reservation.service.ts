@@ -1,6 +1,7 @@
 import {
   ConflictException,
   Injectable,
+  Optional,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -15,6 +16,14 @@ import {
 } from '../schemas/reservation.entity';
 import { CreateReservationDto } from '../dto/create-reservation.dto';
 import { UpdateReservationDto } from '../dto/update-reservation.dto';
+import {
+  DomainEventPublisher,
+  publishRecordEvent,
+} from '../../platform/events/domain-event.publisher';
+import {
+  DomainEventName,
+  DomainEvents,
+} from '../../platform/events/domain-events';
 
 /**
  * Service de gestion des réservations.
@@ -31,6 +40,7 @@ export class ReservationService extends BaseCrudService<
   constructor(
     @InjectModel(Reservation.name)
     protected readonly reservationModel: Model<Reservation>,
+    @Optional() private readonly events?: DomainEventPublisher,
   ) {
     super(reservationModel, Reservation.name);
   }
@@ -40,7 +50,10 @@ export class ReservationService extends BaseCrudService<
     createReservationDto: CreateReservationDto,
   ): Promise<Reservation> {
     const confirmation_code = this.generateConfirmationCode();
-    return super.create({ ...createReservationDto, confirmation_code } as any);
+    return this.emitted(
+      DomainEvents.RESERVATION_CREATED,
+      super.create({ ...createReservationDto, confirmation_code } as any),
+    );
   }
 
   /** Recherche une réservation par code de confirmation. */
@@ -57,31 +70,43 @@ export class ReservationService extends BaseCrudService<
 
   /** Confirme une réservation en attente. */
   async confirm(id: string): Promise<Reservation> {
-    return this.update(id, {
-      status: ReservationStatus.CONFIRMED,
-    } as UpdateReservationDto);
+    return this.emitted(
+      DomainEvents.RESERVATION_CONFIRMED,
+      this.update(id, {
+        status: ReservationStatus.CONFIRMED,
+      } as UpdateReservationDto),
+    );
   }
 
   /** Annule une réservation et enregistre la raison. */
   async cancel(id: string, reason?: string): Promise<Reservation> {
-    return this.update(id, {
-      status: ReservationStatus.CANCELLED,
-      cancellation_reason: reason,
-    } as UpdateReservationDto);
+    return this.emitted(
+      DomainEvents.RESERVATION_CANCELLED,
+      this.update(id, {
+        status: ReservationStatus.CANCELLED,
+        cancellation_reason: reason,
+      } as UpdateReservationDto),
+    );
   }
 
   /** Enregistre l'arrivée (check-in). */
   async checkIn(id: string): Promise<Reservation> {
-    return this.update(id, {
-      status: ReservationStatus.CHECKED_IN,
-    } as UpdateReservationDto);
+    return this.emitted(
+      DomainEvents.RESERVATION_CHECKED_IN,
+      this.update(id, {
+        status: ReservationStatus.CHECKED_IN,
+      } as UpdateReservationDto),
+    );
   }
 
   /** Enregistre le départ (check-out). */
   async checkOut(id: string): Promise<Reservation> {
-    return this.update(id, {
-      status: ReservationStatus.CHECKED_OUT,
-    } as UpdateReservationDto);
+    return this.emitted(
+      DomainEvents.RESERVATION_CHECKED_OUT,
+      this.update(id, {
+        status: ReservationStatus.CHECKED_OUT,
+      } as UpdateReservationDto),
+    );
   }
 
   /** Check-in autonome, limité au titulaire et à la période de séjour. */
@@ -128,7 +153,7 @@ export class ReservationService extends BaseCrudService<
         "La réservation a changé d'état ; veuillez actualiser puis réessayer",
       );
     }
-    return updated;
+    return this.emitted(DomainEvents.RESERVATION_CHECKED_IN, updated);
   }
 
   /** Check-out autonome d'une réservation appartenant au client connecté. */
@@ -156,14 +181,17 @@ export class ReservationService extends BaseCrudService<
         "La réservation a changé d'état ; veuillez actualiser puis réessayer",
       );
     }
-    return updated;
+    return this.emitted(DomainEvents.RESERVATION_CHECKED_OUT, updated);
   }
 
   /** Marque une réservation comme « non présentée ». */
   async markAsNoShow(id: string): Promise<Reservation> {
-    return this.update(id, {
-      status: ReservationStatus.NO_SHOW,
-    } as UpdateReservationDto);
+    return this.emitted(
+      DomainEvents.RESERVATION_NO_SHOW,
+      this.update(id, {
+        status: ReservationStatus.NO_SHOW,
+      } as UpdateReservationDto),
+    );
   }
 
   /** Liste les arrivées prévues dans les X prochains jours. */
@@ -222,5 +250,14 @@ export class ReservationService extends BaseCrudService<
       guest_id: new Types.ObjectId(guestId),
       is_deleted: { $ne: true },
     };
+  }
+  /** Publie l'événement métier correspondant puis renvoie le document. */
+  private async emitted<R>(
+    name: DomainEventName,
+    result: R | Promise<R>,
+  ): Promise<R> {
+    const doc = await result;
+    await publishRecordEvent(this.events, name, Reservation.name, doc);
+    return doc;
   }
 }

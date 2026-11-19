@@ -1,0 +1,250 @@
+
+<div class="wrap">
+  <div class="chap flow" id="p-a"><div class="k">Partie A</div><h2>Les 30 fonctionnalités à ajouter</h2><p>Six axes, du cœur hôtelier à l’écosystème. Pour chaque fiche : le constat relevé dans le code, le contenu attendu, puis les fichiers concernés. Les applications déjà livrées par le socle ERP (partie E) ne sont pas répétées ici ; plusieurs fiches s’appuient sur elles.</p></div>
+
+  <h2 id="ax1"><span class="n">1</span>Cœur hôtelier (PMS)<small>Priorité haute</small></h2>
+  <p class="intro">Les modules existent mais travaillent isolément : une réservation ne vérifie ni la disponibilité, ni le prix, ni les dates bloquées, et ne produit pas de facture.</p>
+
+  <div class="item first"><span class="num">1</span><div>
+    <div class="head"><h3>Moteur de disponibilité et contrôle des chevauchements</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>getAvailableRooms</code> ne regarde que le statut de ménage (<code>src/room/services/room.service.ts</code>, l. 64-73) ; <code>ReservationService.create</code> accepte n’importe quelles dates, sans contrôle de surréservation ni des dates bloquées (<code>BlockedDateService.isBlocked</code> n’est jamais appelé).</p>
+    <ul><li>Calcul de disponibilité par type de chambre et par nuit : stock − réservations confirmées − blocages − allotements (n° 7), avec seuil de surréservation paramétrable.</li><li>Verrou optimiste à la création (compteur d’inventaire par nuit, mise à jour conditionnelle) pour empêcher deux réservations simultanées de la dernière chambre.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/services/reservation.service.ts</code> (create, cancel) <code>src/room/services/room.service.ts</code> <code>src/blocked-date/services/blocked-date.service.ts</code> <code>src/reservation/reservation.module.ts</code></span><span><code>src/availability/</code> (availability.module.ts, services/availability.service.ts, schemas/room-inventory.entity.ts, controllers/availability.controller.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code> (réservations) <code>src/components/ui/ResourcePage.tsx</code></span><span><code>src/app/admin/availability/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/shared/components/Search.tsx</code> (dates, voyageurs)</span><span>voir n° 8</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /availability?property_id=&amp;from=&amp;to=&amp;guests=</code> · <code>GET /availability/calendar</code> · entité <code>room_inventory</code> (property, room_type, date, total, sold, blocked, version) · erreur 409 « Plus de disponibilité » à la création.</p>
+  </div></div>
+
+  <div class="item"><span class="num">2</span><div>
+    <div class="head"><h3>Prix calculé à la réservation</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>total_amount</code> est envoyé par le client (<code>src/reservation/dto/create-reservation.dto.ts</code>) alors que le calcul existe déjà en morceaux : <code>DailyPriceService.calculateStayPrice</code>, <code>DynamicPricingRuleService.calculateAdjustedPrice</code>, <code>RatePlanService.findApplicable</code> et <code>TaxRateService.calculateTaxes</code>.</p>
+    <ul><li>Service de devis unique : prix de base par nuit × plan tarifaire × règles dynamiques (occupation calculée par le n° 1) + taxes (TVA, taxe de séjour par personne et par nuit).</li><li>Le total devient un champ serveur, figé à la confirmation avec le détail par nuit ; frais d’annulation calculés par <code>calculateCancellationFee</code>.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/dto/create-reservation.dto.ts</code> (retirer total_amount) <code>src/reservation/schemas/reservation.entity.ts</code> (price_breakdown) <code>src/daily-price/services/daily-price.service.ts</code> <code>src/dynamic-pricing-rule/services/dynamic-pricing-rule.service.ts</code> <code>src/tax-rate/services/tax-rate.service.ts</code></span><span><code>src/pricing/</code> (pricing.module.ts, services/quote.service.ts, dto/quote.dto.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code></span><span><code>src/components/ui/QuotePanel.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/property/components/PropertyDetail.tsx</code> (prix réel par séjour)</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /pricing/quote</code> (public, limité en débit) · champs <code>price_breakdown[]</code>, <code>taxes[]</code>, <code>rate_plan_id</code> sur la réservation.</p>
+  </div></div>
+
+  <div class="item"><span class="num">3</span><div>
+    <div class="head"><h3>Folio de séjour et facture automatique</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Aucun lien automatique séjour → facture ; <code>PosTransactionService.settle</code> ne fait que référencer une facture sans créer de ligne ; les taxes de facture sont saisies à la main.</p>
+    <ul><li>Un folio ouvert au check-in regroupe nuitées, charges point de vente (bar, restaurant, spa), extras et acomptes ; facture générée au check-out, avec répartition possible entre plusieurs payeurs (société / client).</li><li>Abonnement aux événements <code>hotel.reservation.checked_in</code>, <code>pos.transaction.completed</code> et <code>hotel.reservation.checked_out</code> déjà publiés par le socle.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/invoice/services/invoice.service.ts</code> <code>src/invoice-item/schemas/invoice-item.entity.ts</code> (source_model, source_id) <code>src/pos-transaction/services/pos-transaction.service.ts</code> (settle)</span><span><code>src/folio/</code> (schemas/folio.entity.ts, services/folio.service.ts, listeners/folio.listener.ts, controllers/folio.controller.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/reservations/page.tsx</code> <code>src/app/admin/invoices/page.tsx</code></span><span><code>src/app/admin/folios/[id]/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /folios/reservation/:id</code> · <code>POST /folios/:id/charges</code> · <code>POST /folios/:id/split</code> · <code>POST /folios/:id/invoice</code> · entité <code>folio</code> (lignes, acomptes, solde).</p>
+  </div></div>
+
+  <div class="item"><span class="num">4</span><div>
+    <div class="head"><h3>Facture légale : numérotation, avoirs et PDF</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Les numéros sont aléatoires (<code>INV-&lt;horodatage&gt;-&lt;hex&gt;</code>, <code>src/invoice/services/invoice.service.ts</code> l. 159-160) ; pas d’avoir, pas de PDF ; une facture émise reste modifiable.</p>
+    <ul><li>Numérotation continue par établissement et par année avec <code>SequenceService</code> (déjà livré, <code>src/platform/sequences/</code>) ; facture verrouillée après émission ; correction uniquement par avoir.</li><li>PDF conforme (mentions légales, NCC, régime fiscal, taxes détaillées), envoyé par e-mail (n° 13) ; prêt pour la facture normalisée électronique (FNE) lorsque l’administration fiscale l’impose.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/invoice/services/invoice.service.ts</code> (generateInvoiceNumber, update) <code>src/invoice/schemas/invoice.entity.ts</code> (credit_note_of, locked_at) <code>src/property/schemas/property.entity.ts</code> (mentions légales)</span><span><code>src/invoice/services/invoice-pdf.service.ts</code> <code>src/invoice/templates/invoice.hbs</code> <code>src/invoice/services/credit-note.service.ts</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/invoices/page.tsx</code> <code>src/lib/resources.ts</code></span><span>bouton « Télécharger le PDF », « Créer un avoir »</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span>voir n° 11 (factures du client)</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /invoices/:id/pdf</code> · <code>POST /invoices/:id/credit-note</code> · <code>POST /invoices/:id/send</code> · dépendance <code>pdfmake</code> ou Chrome sans interface.</p>
+  </div></div>
+
+  <div class="item"><span class="num">5</span><div>
+    <div class="head"><h3>Planning graphique des chambres</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Le back-office n’affiche que des tableaux ; l’affectation d’une chambre passe par <code>reservation-rooms</code> sans vue d’ensemble ni contrôle de conflit.</p>
+    <ul><li>Vue « tape chart » chambres × jours : glisser-déposer pour affecter, déplacer ou prolonger un séjour ; couleurs par statut (confirmé, arrivé, hors service, ménage).</li><li>Affectation automatique selon préférences client (étage, vue) et statut de ménage.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation-room/services/reservation-room.service.ts</code> (contrôle de chevauchement par chambre) <code>src/room/controllers/room.controller.ts</code></span><span><code>src/availability/services/room-planning.service.ts</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/components/layouts/Sidebar.tsx</code></span><span><code>src/app/admin/planning/page.tsx</code> <code>src/components/planning/TapeChart.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /availability/planning?property_id=&amp;from=&amp;to=</code> · <code>POST /reservation-rooms/:id/move</code> · <code>POST /reservation-rooms/auto-assign</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">6</span><div>
+    <div class="head"><h3>Gouvernance reliée au statut des chambres</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Terminer une tâche de ménage ne change pas <code>room.status</code> (<code>src/housekeeping/services/housekeeping.service.ts</code>) ; un départ ne crée pas de tâche ; les compteurs du personnel se remettent à zéro à la main (<code>reset-daily</code>).</p>
+    <ul><li>Départ → chambre « sale » + tâche créée et affectée selon la charge ; tâche terminée → « à inspecter » puis « propre » ; signalement → demande de maintenance.</li><li>Tâches planifiées (<code>@nestjs/schedule</code>, déjà installé) pour les remises à zéro et le ménage en recouche.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/housekeeping/services/housekeeping.service.ts</code> <code>src/room/services/room.service.ts</code> <code>src/housekeeping-staff/services/housekeeping-staff.service.ts</code></span><span><code>src/housekeeping/listeners/checkout.listener.ts</code> <code>src/housekeeping/services/housekeeping-scheduler.service.ts</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/housekeeping/page.tsx</code> <code>src/app/admin/rooms/page.tsx</code></span><span><code>src/app/admin/housekeeping/board/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>voir n° 15 (application du personnel)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> événement <code>hotel.housekeeping.completed</code> publié (déjà au catalogue) · <code>POST /housekeeping/:id/inspect</code> · règle d’affectation par étage.</p>
+  </div></div>
+
+  <div class="item"><span class="num">7</span><div>
+    <div class="head"><h3>Groupes, allotements et séminaires</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Une réservation porte un seul type de chambre ; pas de bloc de chambres réservé à une agence, une entreprise ou un événement. L’application CRM (partie E) gère déjà les opportunités « groupe / séminaire / mariage ».</p>
+    <ul><li>Bloc de chambres par type et par nuit avec date de relâche (release), liste de noms (rooming list), facturation maître.</li><li>Opportunité CRM gagnée → création du bloc ; salles de réunion et prestations (pause-café, déjeuner) facturées au folio maître.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/schemas/reservation.entity.ts</code> (group_id) <code>src/crm/</code> (écoute de <code>crm.lead.won</code>)</span><span><code>src/group-booking/</code> (schemas/room-block.entity.ts, schemas/group.entity.ts, services/group-booking.service.ts, controllers/group-booking.controller.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code></span><span><code>src/app/admin/groups/page.tsx</code> <code>src/components/groups/RoomingListImport.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/contact/components/Contact.tsx</code> (demande de devis groupe → piste CRM)</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /groups</code> · <code>POST /groups/:id/blocks</code> · <code>POST /groups/:id/rooming-list</code> (CSV) · tâche planifiée de relâche des chambres non nommées.</p>
+  </div></div>
+
+  <h2 id="ax2"><span class="n">2</span>Canaux de vente et paiements<small>Chiffre d’affaires</small></h2>
+  <p class="intro">Le site public présente les établissements mais ne vend rien ; les paiements et les canaux OTA sont modélisés sans intégration réelle.</p>
+
+  <div class="item first"><span class="num">8</span><div>
+    <div class="head"><h3>Réservation en ligne sur le site public</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">La fiche établissement (<code>app/property/components/PropertyDetail.tsx</code>) n’a pas de bouton de réservation ; <code>services/api/reservation.service.ts</code> existe mais n’est utilisé par aucune page ; la recherche n’a pas de dates.</p>
+    <ul><li>Tunnel en 4 étapes : dates et voyageurs → choix chambre et tarif (n° 1 et 2) → coordonnées → paiement (n° 9) ; confirmation par e-mail (n° 13).</li><li>Réservation « invité » sans compte, rattachée ensuite au compte client par e-mail vérifié ; protection anti-robots.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/controllers/reservation.controller.ts</code> <code>src/guest/services/guest.service.ts</code> (rattachement)</span><span><code>src/booking-engine/</code> (controllers/public-booking.controller.ts, services/public-booking.service.ts, dto/public-booking.dto.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code> (source « site web »)</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/property/components/PropertyDetail.tsx</code> <code>app/shared/components/Search.tsx</code> <code>hooks/useProperties.ts</code></span><span><code>app/booking/[propertyId]/page.tsx</code> <code>app/booking/components/</code> (StayPicker, RoomOffers, GuestForm, Summary) <code>app/booking/confirmation/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>voir n° 14</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /public/properties/:id/offers?from=&amp;to=&amp;guests=</code> · <code>POST /public/bookings</code> (clé d’idempotence) · <code>GET /public/bookings/:code</code> (code + e-mail).</p>
+  </div></div>
+
+  <div class="item"><span class="num">9</span><div>
+    <div class="head"><h3>Paiement mobile money et carte</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Aucune passerelle : <code>PaymentStatus</code> est fixé par le client (<code>src/payment/dto/create-payment.dto.ts</code> l. 44) et les fournisseurs n’apparaissent que dans l’énumération de <code>src/webhook-log/schemas/webhook-log.entity.ts</code>.</p>
+    <ul><li>Connecteurs <b>CinetPay</b> (agrégateur Orange Money, MTN MoMo, Moov, Wave, cartes), <b>Wave</b> direct, <b>Stripe</b> pour la clientèle internationale ; acompte à la réservation, solde au départ, lien de paiement par SMS.</li><li>Confirmation uniquement par webhook signé reçu sur l’ESB (route entrante déjà livrée, partie D) et vérification serveur à serveur ; rapprochement automatique paiement → facture.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/payment/services/payment.service.ts</code> <code>src/payment/dto/create-payment.dto.ts</code> (status retiré) <code>src/payment/schemas/payment.entity.ts</code> (provider, provider_ref)</span><span><code>src/payment-gateway/</code> (gateway.interface.ts, providers/cinetpay.provider.ts, providers/wave.provider.ts, providers/stripe.provider.ts, services/checkout.service.ts, listeners/inbound-payment.listener.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/payments/page.tsx</code></span><span><code>src/app/admin/payment-providers/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span><code>app/booking/payment/page.tsx</code> <code>app/booking/payment/return/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>écran de paiement (n° 14)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /payments/checkout</code> · <code>GET /payments/:id/status</code> · source entrante ESB par fournisseur · entité <code>payment_attempt</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">10</span><div>
+    <div class="head"><h3>Channel manager réel</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>OtaConnectionService.testConnection</code> ne fait aucun appel réseau, <code>findDueForSync</code> n’est appelé par aucune tâche, et les identifiants OTA sont stockés en clair (<code>src/ota-connection/schemas/ota-connection.entity.ts</code> l. 96).</p>
+    <ul><li>Envoi des disponibilités, tarifs et restrictions (ARI) vers Booking.com, Expedia, Airbnb, Agoda — en direct ou via un agrégateur (SiteMinder, Channex) ; récupération des réservations et annulations.</li><li>Flux sortants et entrants par l’ESB (partie D) ; correspondance des types de chambre déjà modélisée.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/ota-connection/services/ota-connection.service.ts</code> <code>src/ota-connection/schemas/ota-connection.entity.ts</code> (chiffrement, S6)</span><span><code>src/channel-manager/</code> (adapters/channex.adapter.ts, services/ari-push.service.ts, services/reservation-pull.service.ts, jobs/ota-sync.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/lib/resources.ts</code></span><span><code>src/app/admin/channels/page.tsx</code> (correspondances, journal de synchronisation)</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /channels/:id/push-ari</code> · <code>POST /channels/:id/pull</code> · tâche toutes les 5 minutes · source <code>ota</code> sur les réservations importées.</p>
+  </div></div>
+
+  <div class="item"><span class="num">11</span><div>
+    <div class="head"><h3>Espace client</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>middleware.ts</code> protège <code>/account</code> et <code>/dashboard</code>, mais ces pages n’existent pas ; <code>signUp</code> et <code>signInWithMagicLink</code> (<code>services/api/session.ts</code>) ne sont utilisés nulle part.</p>
+    <ul><li>Inscription, connexion par lien magique, mes réservations (modifier, annuler selon la politique), mes factures (PDF), mes points de fidélité (application Fidélité, partie E), préférences.</li><li>Routes « me » côté API : un client ne voit que ses données, sans passer d’identifiant.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/controllers/reservation.controller.ts</code> <code>src/invoice/controllers/invoice.controller.ts</code> <code>src/guest/controllers/guest.controller.ts</code></span><span><code>src/guest-portal/</code> (controllers/me.controller.ts : réservations, factures, fidélité, préférences)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span><code>middleware.ts</code> <code>app/shared/components/Navbar.jsx</code> <code>services/api/session.ts</code></span><span><code>app/account/page.tsx</code> <code>app/account/reservations/page.tsx</code> <code>app/account/invoices/page.tsx</code> <code>app/account/loyalty/page.tsx</code> <code>app/login/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>mêmes écrans (n° 14)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /me/reservations</code> · <code>POST /me/reservations/:id/cancel</code> · <code>GET /me/invoices</code> · <code>GET /me/loyalty</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">12</span><div>
+    <div class="head"><h3>Check-in en ligne et clé mobile</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Le check-in autonome existe côté API (<code>selfCheckIn</code>, <code>src/reservation/services/reservation.service.ts</code>) mais aucune interface ne l’utilise ; pas de collecte de pièce d’identité ni de clé.</p>
+    <ul><li>Pré-enregistrement 48 h avant l’arrivée : pièce d’identité, signature, heure d’arrivée, paiement du solde ; QR code présenté à la réception ou au kiosque.</li><li>Clé mobile via l’ESB vers les serrures (Salto, ASSA ABLOY Vostio) quand l’établissement en est équipé.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/reservation/controllers/reservation.controller.ts</code> <code>src/guest/schemas/guest.entity.ts</code> (pièce chiffrée, S6)</span><span><code>src/online-checkin/</code> (services/precheckin.service.ts, services/qr-token.service.ts) <code>src/storage/</code> (stockage objet des pièces)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/reservations/page.tsx</code> (statut du pré-enregistrement)</span><span><code>src/app/admin/checkin-scan/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span><code>app/checkin/[code]/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>écran « Mon séjour » avec QR et clé</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /reservations/:id/precheckin</code> · <code>GET /reservations/:id/qr</code> · <code>POST /reservations/checkin-by-qr</code> · événement <code>hotel.reservation.checked_in</code> vers les serrures.</p>
+  </div></div>
+
+  <div class="item"><span class="num">13</span><div>
+    <div class="head"><h3>Envoi réel des e-mails, SMS et WhatsApp</h3><span class="tag high">Haute</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>LoggingAuthNotifier</code> (<code>src/auth/services/auth-notifier.service.ts</code>) écrit les liens dans les journaux ; <code>notification-log</code> gère une file mais n’envoie rien ; <code>@nestjs-modules/mailer</code>, <code>nodemailer</code> et <code>handlebars</code> sont installés sans être utilisés ; <code>CampaignService.send</code> est une simulation.</p>
+    <ul><li>Fournisseurs : SMTP / Brevo pour l’e-mail, Orange SMS API ou agrégateur local pour le SMS, WhatsApp Cloud API ; modèles bilingues ; tâche planifiée qui vide la file avec reprises.</li><li>Notifications métier : confirmation, rappel J-2, facture, lien de paiement, codes de connexion, campagnes avec désabonnement.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/auth/services/auth-notifier.service.ts</code> <code>src/notification-log/services/notification-log.service.ts</code> <code>src/campaign/services/campaign.service.ts</code></span><span><code>src/messaging/</code> (channels/email.channel.ts, channels/sms.channel.ts, channels/whatsapp.channel.ts, templates/*.hbs, jobs/notification-dispatch.job.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/admin/campaigns/page.tsx</code></span><span><code>src/app/admin/templates/page.tsx</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>services/newsletter.service.ts</code> (double opt-in)</span><span><code>app/unsubscribe/page.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span>notifications push (n° 14)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> variables <code>SMTP_URL</code>, <code>SMS_PROVIDER_*</code>, <code>WHATSAPP_TOKEN</code> · entité <code>message_template</code> · <code>POST /notification-logs/dispatch</code>.</p>
+  </div></div>
+
+  <h2 id="ax3"><span class="n">3</span>Mobile et expérience client</h2>
+  <p class="intro">L’application <code>hotel-manager-mobile-react</code> est encore le modèle de démarrage Vite (compteur « Count is N ») : tout est à construire.</p>
+
+  <div class="item first"><span class="num">14</span><div>
+    <div class="head"><h3>Application mobile client (PWA)</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why"><code>src/App.jsx</code> est la page de démonstration de Vite ; aucune route, aucun appel d’API, pas de manifeste ni de service worker. Le README racine annonce à tort « Mobile react native ».</p>
+    <ul><li>Application web installable (PWA) en React + TypeScript : recherche et réservation, « Mon séjour » (QR, clé, Wi-Fi, room service vers le point de vente), chat avec le chatbot existant, fidélité, factures.</li><li>Notifications push (Web Push) ; jetons dans un stockage sécurisé, pas de <code>localStorage</code>.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/chatbot-conversation/controllers/chatbot-conversation.controller.ts</code> (routes client) <code>src/pos-transaction/controllers/pos-transaction.controller.ts</code> (commande en chambre)</span><span><code>src/push/</code> (schemas/push-subscription.entity.ts, services/web-push.service.ts)</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span><code>src/App.jsx</code> <code>src/main.jsx</code> <code>index.html</code> <code>vite.config.js</code> <code>package.json</code></span><span><code>src/routes/</code> <code>src/features/{booking,stay,loyalty,chat}/</code> <code>src/lib/api.ts</code> <code>public/manifest.webmanifest</code> <code>src/sw.ts</code> (vite-plugin-pwa)</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>POST /push/subscriptions</code> · <code>POST /me/room-service</code> · réutilisation des routes « me » (n° 11).</p>
+  </div></div>
+
+  <div class="item"><span class="num">15</span><div>
+    <div class="head"><h3>Application mobile du personnel, hors ligne</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Femmes de chambre et techniciens n’ont aucun outil mobile ; les tâches se consultent dans le back-office sur ordinateur.</p>
+    <ul><li>Mode « personnel » de la même PWA : mes tâches de ménage du jour, statut de chambre en un geste, photo d’un problème → demande de maintenance, pointage (application RH), consignes.</li><li>Fonctionnement hors ligne (IndexedDB + file d’envoi avec clés d’idempotence) pour les étages sans réseau.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/housekeeping/controllers/housekeeping.controller.ts</code> (« mes tâches ») <code>src/maintenance-request/controllers/maintenance-request.controller.ts</code> (photo)</span><span><code>src/common/interceptors/idempotency.interceptor.ts</code> <code>src/storage/</code></span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Mobile</b><span><code>src/App.jsx</code></span><span><code>src/features/staff/{tasks,maintenance,attendance}/</code> <code>src/lib/offline-queue.ts</code></span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /housekeeping/me/today</code> · <code>POST /maintenance-requests/:id/photos</code> · en-tête <code>Idempotency-Key</code>.</p>
+  </div></div>
+
+  <div class="item"><span class="num">16</span><div>
+    <div class="head"><h3>Langues et devises</h3><span class="tag mid">Moyenne</span><span class="be yes">Backend : à modifier</span></div>
+    <p class="why">Interfaces en français en dur (<code>&lt;html lang="fr"&gt;</code>, quelques restes anglais du modèle dans <code>app/shared/components/Navbar.jsx</code>) ; l’énumération <code>Currency</code> existe mais aucun taux de change n’est géré.</p>
+    <ul><li>Français / anglais au minimum sur le site, le back-office, les e-mails et les PDF ; langue préférée du client.</li><li>Taux de change quotidiens (XOF pivot), affichage dans la devise du visiteur, encaissement et comptabilisation en XOF avec écart de change.</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span><code>src/base-entities/enums/currency.enum.ts</code> <code>src/guest/schemas/guest.entity.ts</code> (locale)</span><span><code>src/currency/</code> (schemas/exchange-rate.entity.ts, jobs/rates.job.ts, services/fx.service.ts) <code>src/common/i18n/</code></span></div>
+      <div class="fr"><b>Back-office</b><span><code>src/app/layout.tsx</code> <code>src/components/layouts/AdminHeader.tsx</code></span><span><code>src/i18n/{fr,en}.json</code></span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/layout.tsx</code> <code>lib/format.ts</code> <code>app/shared/components/Navbar.jsx</code></span><span><code>app/[locale]/</code> (next-intl) <code>messages/{fr,en}.json</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span><code>src/i18n/</code></span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> <code>GET /currency/rates</code> · réglage de devise d’affichage · sélecteur de langue.</p>
+  </div></div>
+
+  <div class="item"><span class="num">17</span><div>
+    <div class="head"><h3>Référencement et performance du site public</h3><span class="tag mid">Moyenne</span><span class="be no">Backend : non</span></div>
+    <p class="why">Pages surtout rendues côté client (<code>"use client"</code>, <code>useAsync</code>) ; titres statiques encore marqués « Makaan » (<code>app/properties/page.tsx</code>, <code>app/property/[id]/page.tsx</code>) ; pas de sitemap, de robots, d’OpenGraph ; liens vers <code>/appointment</code> et <code>/services</code> inexistants.</p>
+    <ul><li><code>generateMetadata</code> par établissement, données structurées <code>Hotel</code> / <code>Offer</code> (schema.org), sitemap et robots générés, images optimisées.</li><li>Nettoyage des restes du modèle (liens htmlcodex, libellés anglais).</li></ul>
+    <div class="fx">
+      <div class="fr fh"><i></i><i>À modifier</i><i>À créer</i></div>
+      <div class="fr"><b>Backend</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Back-office</b><span class="none">—</span><span class="none">—</span></div>
+      <div class="fr"><b>Front-office</b><span><code>app/property/[id]/page.tsx</code> <code>app/properties/page.tsx</code> <code>app/layout.tsx</code> <code>app/home/components/CallToAction.tsx</code> <code>app/shared/components/layouts/Footer.jsx</code> <code>next.config.ts</code> (images.remotePatterns)</span><span><code>app/sitemap.ts</code> <code>app/robots.ts</code> <code>app/property/[id]/opengraph-image.tsx</code></span></div>
+      <div class="fr"><b>Mobile</b><span class="none">—</span><span class="none">—</span></div>
+    </div>
+    <p class="feat"><b>À ajouter :</b> rendu serveur des listes d’établissements · balises canoniques · balisage JSON-LD.</p>
+  </div></div>

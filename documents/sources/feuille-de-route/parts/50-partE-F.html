@@ -1,0 +1,95 @@
+
+  <div class="chap" id="p-e"><div class="k">Partie E</div><h2>Socle ERP modulable</h2><p>Réalisé et vérifié en novembre 2026 : 141 suites et 1682 tests unitaires, plus un test de bout en bout de 14 contrôles sur une base réelle. Ces éléments ne font pas partie des 30 fonctionnalités manquantes. Ils transforment PleasantStay en plateforme d’applications activables par organisation, à la manière d’Odoo.</p></div>
+  <p class="intro">Toutes les applications sont enregistrées dans <code>src/app.module.ts</code> et reposent sur <code>src/platform/</code>, module global : chaque contrôleur porte <code>@RequiresApp('&lt;clé&gt;')</code>, les applications communiquent uniquement par événements, et toutes les pièces sont numérotées sans trou par établissement et par année. Côté back-office (<code>project-manager-hotles-backoffice</code>), 28 pages de ressources <code>src/app/admin/&lt;clé&gt;/page.tsx</code> sont déclarées dans <code>src/lib/erp-resources.ts</code> ; <code>src/lib/workspace.tsx</code> mémorise l’organisation et l’établissement courants ; <code>src/components/ui/ResourcePage.tsx</code> gère les actions de workflow par ligne et l’éditeur de lignes ; <code>src/components/layouts/Sidebar.tsx</code> affiche une section par application installée.</p>
+  <div class="erp">
+    <div class="card"><b class="t">Magasin d’applications avec dépendances <span class="state done">Réalisé</span></b>
+      <p>21 applications au catalogue (11 existantes regroupées, 10 nouvelles). Installer une application installe d’abord ses dépendances (ex. Achats → Stock) ; une désinstallation est refusée tant qu’une application dépendante est installée ; la garde globale renvoie 403 si l’organisation n’a pas installé l’application.</p>
+      <ul><li>Backend : <code>src/platform/apps/app-catalog.ts</code>, <code>apps.service.ts</code>, <code>apps.controller.ts</code> (<code>GET /apps</code>, <code>POST /apps/:key/install</code>, <code>/uninstall</code>), <code>app-installed.guard.ts</code>, <code>requires-app.decorator.ts</code>, <code>organization-app.entity.ts</code></li><li>Back-office : <code>src/app/admin/apps/page.tsx</code> (magasin d’applications), <code>src/components/layouts/Sidebar.tsx</code></li></ul></div>
+    <div class="card"><b class="t">Événements métier, portée et numérotation <span class="state done">Réalisé</span></b>
+      <p>Catalogue de 38 événements, publication qui n’interrompt jamais l’opération d’origine ; réservations, factures, paiements et point de vente publient désormais leurs événements. Résolution établissement → organisation mise en cache ; compteurs atomiques sans trou.</p>
+      <ul><li>Backend : <code>src/platform/events/domain-events.ts</code>, <code>domain-event.publisher.ts</code>, <code>src/platform/tenancy/tenant-scope.service.ts</code>, <code>src/platform/sequences/sequence.service.ts</code>, <code>src/platform/platform.module.ts</code> ; dépendances <code>@nestjs/event-emitter</code>, <code>@nestjs/schedule</code></li></ul></div>
+    <div class="card"><b class="t">Comptabilité SYSCOHADA <span class="state done">Réalisé</span></b>
+      <p>Plan SYSCOHADA de 51 comptes adapté à l’hôtellerie (dont 552 « monnaie électronique » pour le mobile money), journaux VTE, ACH, CAI, BNQ, MOB et OD, écritures en partie double contrôlées, date de verrouillage, extourne. Comptabilisation automatique des factures, paiements, remboursements, ventes et annulations du point de vente, factures fournisseurs ; balance, grand livre, compte de résultat, bilan, balance âgée clients.</p>
+      <ul><li>Backend : <code>src/accounting/</code> (domain/syscohada-chart.ts, domain/posting-rules.ts, domain/accounting.logic.ts, listeners/accounting-auto-posting.listener.ts)</li><li>Back-office : <code>src/app/admin/accounting-accounts/</code>, <code>accounting-journals/</code>, <code>accounting-entries/</code>, <code>accounting-reports/page.tsx</code></li></ul></div>
+    <div class="card"><b class="t">Stock <span class="state done">Réalisé</span></b>
+      <p>Articles (minibar, restauration, produits d’accueil, entretien, linge, pièces), emplacements, mouvements validés, quantités par emplacement sans stock négatif, coût moyen pondéré, inventaires physiques, valorisation. Consommation automatique des kits d’accueil à chaque départ ; alerte de seuil bas.</p>
+      <ul><li>Backend : <code>src/inventory/</code> (product, stock-location, stock-move, stock-quant, inventory-count ; listeners/checkout-consumption.listener.ts)</li><li>Back-office : <code>src/app/admin/products/</code>, <code>stock-locations/</code>, <code>stock-moves/</code>, <code>inventory-counts/</code></li></ul></div>
+    <div class="card"><b class="t">Achats <span class="state done">Réalisé</span></b>
+      <p>Fournisseurs, bons de commande avec seuil d’approbation, réceptions partielles qui alimentent le stock, factures fournisseurs comptabilisées automatiquement. Réapprovisionnement intelligent : une alerte de stock bas ajoute la quantité manquante au brouillon de commande du fournisseur préféré.</p>
+      <ul><li>Backend : <code>src/purchase/</code></li><li>Back-office : <code>src/app/admin/vendors/</code>, <code>purchase-orders/</code>, <code>vendor-bills/</code></li></ul></div>
+    <div class="card"><b class="t">Ressources humaines <span class="state done">Réalisé</span></b>
+      <p>Construite sur le personnel existant (<code>src/staff/</code>) : départements, contrats (CDI, CDD, intérim, stage, journalier) avec expiration automatique, types de congés, allocations, demandes avec soldes et circuit de validation, planning des équipes avec détection des chevauchements (y compris de nuit), pointage. La paie (n° 27) s’appuiera sur cette application.</p>
+      <ul><li>Backend : <code>src/hr/</code></li><li>Back-office : <code>src/app/admin/hr-departments/</code>, <code>hr-contracts/</code>, <code>hr-leave-types/</code>, <code>hr-leave-allocations/</code>, <code>hr-leaves/</code>, <code>hr-shifts/</code>, <code>hr-attendance/</code></li></ul></div>
+    <div class="card"><b class="t">CRM <span class="state done">Réalisé</span></b>
+      <p>Étapes de pipeline paramétrables, comptes entreprises (remise négociée, plafond de crédit), pistes et opportunités par segment (groupe, séminaire, mariage, contrat entreprise, long séjour), nuitées calculées, chiffre d’affaires pondéré et prévision par mois d’arrivée.</p>
+      <ul><li>Backend : <code>src/crm/</code></li><li>Back-office : <code>src/app/admin/crm-pipeline/page.tsx</code> (colonnes par étape), <code>crm-leads/</code>, <code>crm-stages/</code>, <code>crm-corporate-accounts/</code></li></ul></div>
+    <div class="card"><b class="t">Fidélité <span class="state done">Réalisé</span></b>
+      <p>Programmes par établissement ou par organisation, paliers avec multiplicateurs, grand livre des points idempotent, gain automatique au départ et au point de vente, utilisation contrôlée (solde, minimum), ajustements motivés, expiration planifiée ; synchronisation avec les champs fidélité de la fiche client.</p>
+      <ul><li>Backend : <code>src/loyalty/</code></li><li>Back-office : <code>src/app/admin/loyalty-programs/</code>, <code>loyalty-accounts/</code></li></ul></div>
+    <div class="card"><b class="t">Fil d’activité (« chatter ») <span class="state done">Réalisé</span></b>
+      <p>Sur chaque fiche déclarée au registre : notes, abonnés, activités planifiées (appel, réunion, tâche) avec échéance, « Mes activités », historique automatique alimenté par les événements métier (« Réservation confirmée », « Facture payée »…).</p>
+      <ul><li>Backend : <code>src/records/</code> (record-registry.ts), <code>src/activity/</code> (activity.service.ts, activity-tracking.listener.ts, activity-due.scheduler.ts)</li><li>Back-office : <code>src/app/admin/my-activities/page.tsx</code> ; fil d’activité sur les fiches : à faire (n° 18)</li></ul></div>
+    <div class="card"><b class="t">Studio : champs personnalisés <span class="state done">Réalisé</span></b>
+      <p>Chaque organisation ajoute ses propres champs (texte, nombre, date, liste, montant, e-mail…) aux fiches, sans développement ; valeurs validées selon leur définition et stockées à part des documents métier.</p>
+      <ul><li>Backend : <code>src/studio/</code> (custom-field.validator.ts, schemas/custom-field.entity.ts, schemas/custom-field-value.entity.ts)</li><li>Back-office : <code>src/app/admin/studio-fields/</code> (définitions) ; saisie des valeurs sur les fiches : à faire (n° 18)</li></ul></div>
+    <div class="card"><b class="t">Automatisations <span class="state done">Réalisé</span></b>
+      <p>Règles « quand… si… alors… » sur les 38 événements : conditions combinables, actions « créer une activité », « écrire une note », « notifier », « publier sur l’ESB » ; essai à blanc, journal d’exécution, protection contre les boucles.</p>
+      <ul><li>Backend : <code>src/automation/</code></li><li>Back-office : <code>src/app/admin/automation-rules/</code>, <code>automation-runs/</code> ; éditeur visuel : à faire (n° 18)</li></ul></div>
+    <div class="card"><b class="t">Bus d’intégration (ESB) <span class="state done">Réalisé</span></b>
+      <p>Boîte d’envoi, dispatcher avec reprises et messages morts, webhooks signés HMAC, garde SSRF, secrets chiffrés AES-256-GCM, entrée signée <code>POST /api/integration/inbound/:endpointKey</code> (corps brut activé dans <code>src/main.ts</code>), adaptateur de courtier prêt pour RabbitMQ (détails en partie D).</p>
+      <ul><li>Backend : <code>src/integration-bus/</code> (utils/signature.ts, utils/ssrf-guard.ts, utils/backoff.ts, brokers/message-broker.adapter.ts, services/endpoint-delivery.service.ts)</li><li>Back-office : <code>src/app/admin/integration-endpoints/</code>, <code>integration-inbound-sources/</code>, <code>integration-outbox/</code></li></ul></div>
+    <div class="card"><b class="t">Base de données et vérification <span class="state done">Réalisé</span></b>
+      <p><code>npm run seed</code> prépare une base complète et peut être relancé sans risque : 89 collections et leurs index, 8 rôles système, un super-administrateur, un hôtel de démonstration (3 types de chambre, 12 chambres), les 21 applications installées et configurées (plan comptable, emplacements de stock, 4 articles, un fournisseur, étapes CRM, 4 types de congés, programme de fidélité).</p>
+      <p><code>npm run test:erp-smoke</code> : 14 contrôles sur 14 réussis — séjour → fil d’activité, note d’automatisation, points de fidélité et consommation du kit d’accueil ; facture → écriture VTE ; paiement mobile money → MOB ; commande → réception → facture fournisseur → ACH et stock ; balance équilibrée ; webhooks ESB signés et vérifiés ; désinstallation → 403 ; dépendance → 409.</p>
+      <ul><li>Backend : <code>src/scripts/seed.ts</code>, <code>src/scripts/seed-erp.ts</code>, <code>test/erp-smoke.mjs</code></li><li>Exploitation : limite de fichiers ouverts de MongoDB portée à 64 000 dans les deux <code>docker-compose.yml</code> (sinon arrêt WiredTiger EMFILE vers 90 collections)</li></ul></div>
+  </div>
+  <div class="note"><b class="t">Liens avec le reste du document</b>
+    <ul>
+      <li>La comptabilité automatique n’est juste que si les factures le sont : les fiches n° 2, 3 et 4 (prix calculé, folio, facture légale) sont prioritaires.</li>
+      <li>Le back-office n’affiche pas encore les champs personnalisés et le fil d’activité sur les fiches, ni les rapports Stock et Achats, le planning RH, les réglages RH / Achats / Comptabilité et l’éditeur visuel d’automatisations : ces écrans sont repris dans la fiche n° 18.</li>
+      <li>Toutes les nouvelles applications portent un <code>property_id</code> ; le cloisonnement S4 doit s’y appliquer comme au reste du code, et le chiffrement S6 aux champs sensibles des contrats RH.</li>
+      <li>Les automatisations peuvent publier vers l’ESB (partie D) : « quand une facture est payée, si le client est une entreprise, alors envoyer l’écriture au cabinet comptable ».</li>
+      <li>Le magasin d’applications est la base de l’offre SaaS (n° 30) : une formule = une liste d’applications installables.</li>
+    </ul>
+  </div>
+
+  <div class="chap flow" id="p-f"><div class="k">Partie F</div><h2>Récapitulatif</h2><p>Les 30 fonctionnalités, leur axe, leur priorité, leur phase et la nécessité de modifier le backend.</p></div>
+  <table class="dense recap">
+    <thead><tr><th style="width:8mm">N°</th><th>Fonctionnalité</th><th style="width:40mm">Axe</th><th style="width:22mm">Priorité</th><th style="width:13mm">Phase</th><th style="width:24mm">Backend</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Moteur de disponibilité et contrôle des chevauchements</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>2</td><td>Prix calculé à la réservation</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>3</td><td>Folio de séjour et facture automatique</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>4</td><td>Facture légale : numérotation, avoirs et PDF</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>5</td><td>Planning graphique des chambres</td><td>Cœur hôtelier</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>6</td><td>Gouvernance reliée au statut des chambres</td><td>Cœur hôtelier</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>7</td><td>Groupes, allotements et séminaires</td><td>Cœur hôtelier</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>8</td><td>Réservation en ligne sur le site public</td><td>Ventes et paiements</td><td>Haute</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>9</td><td>Paiement mobile money et carte</td><td>Ventes et paiements</td><td>Haute</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>10</td><td>Channel manager réel</td><td>Ventes et paiements</td><td>Haute</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>11</td><td>Espace client</td><td>Ventes et paiements</td><td>Moyenne</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>12</td><td>Check-in en ligne et clé mobile</td><td>Ventes et paiements</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>13</td><td>Envoi réel des e-mails, SMS et WhatsApp</td><td>Ventes et paiements</td><td>Haute</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>14</td><td>Application mobile client (PWA)</td><td>Mobile et expérience</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>15</td><td>Application mobile du personnel, hors ligne</td><td>Mobile et expérience</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>16</td><td>Langues et devises</td><td>Mobile et expérience</td><td>Moyenne</td><td>3</td><td class="yes-c">Oui</td></tr>
+      <tr><td>17</td><td>Référencement et performance du site public</td><td>Mobile et expérience</td><td>Moyenne</td><td>4</td><td class="no-c">Non</td></tr>
+      <tr><td>18</td><td>Écrans ERP complets et menu selon les droits</td><td>Back-office et pilotage</td><td>Haute</td><td>1</td><td class="no-c">Non</td></tr>
+      <tr><td>19</td><td>Tableau de bord en temps réel</td><td>Back-office et pilotage</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>20</td><td>IA et rapports branchés sur les données réelles</td><td>Back-office et pilotage</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>21</td><td>Recommandations de revenue management</td><td>Back-office et pilotage</td><td>Selon marché</td><td>5</td><td class="yes-c">Oui</td></tr>
+      <tr><td>22</td><td>Consolidation multi-établissements et budgets</td><td>Back-office et pilotage</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>23</td><td>Fiche de police et registre des voyageurs</td><td>Conformité</td><td>Haute</td><td>2</td><td class="yes-c">Oui</td></tr>
+      <tr><td>24</td><td>Protection des données personnelles</td><td>Conformité</td><td>Haute</td><td>1</td><td class="yes-c">Oui</td></tr>
+      <tr><td>25</td><td>Observabilité, sauvegardes et reprise</td><td>Conformité</td><td>Haute</td><td>1</td><td class="yes-c">Oui</td></tr>
+      <tr><td>26</td><td>Maintenance préventive et équipements</td><td>Conformité</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>27</td><td>Paie adaptée à la Côte d’Ivoire</td><td>Écosystème</td><td>Moyenne</td><td>4</td><td class="yes-c">Oui</td></tr>
+      <tr><td>28</td><td>Portail des propriétaires et des partenaires</td><td>Écosystème</td><td>Selon marché</td><td>5</td><td class="yes-c">Oui</td></tr>
+      <tr><td>29</td><td>E-réputation</td><td>Écosystème</td><td>Selon marché</td><td>5</td><td class="yes-c">Oui</td></tr>
+      <tr><td>30</td><td>Offre SaaS : abonnements et facturation de la plateforme</td><td>Écosystème</td><td>Selon marché</td><td>5</td><td class="yes-c">Oui</td></tr>
+    </tbody>
+  </table>
+  <p class="note">Priorités et phases sont des recommandations ; chaque fonctionnalité peut ensuite être découpée en chantiers estimés. Les chemins « à créer » sont des propositions à confirmer lors de la conception détaillée. Les 14 mesures de sécurité (partie C) précèdent toute mise en production.</p>
+</div>
+</body>
+</html>
